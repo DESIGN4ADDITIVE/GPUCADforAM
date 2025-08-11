@@ -80,7 +80,7 @@ Vulkan Basics  - *https://vulkan-tutorial.com/*
 
 # SaschaWillems/Vulkan
 
-*Vulkan InputAttachments and subpasses *
+*Vulkan InputAttachments and subpasses*
 
   * *https://www.saschawillems.de/blog/2018/07/19/vulkan-input-attachments-and-sub-passes/*
 

@@ -37,3 +37,4 @@ For more details please check DEPENDENCIES.md file.
 6. In the ' Makefile ' provide the compute capability value in 'CURRENT_SM ' (here 8.9 so '89'). You can either use the link ' https://developer.nvidia.com/cuda-gpus ' or the command ' nvidia-smi --query-gpu=gpu_name,compute_cap --format=csv '
 7. Next type ' make all '
 8. Check for an output you get in the terminal  message is ' Compilation Completed! ' for a successful compilation.
+9. Got to 'GPUCADforAM/bin' folder. Open a command terminal within the folder and type './GPUCADforAM' or double click on the executable 'GPUCADforAM'.

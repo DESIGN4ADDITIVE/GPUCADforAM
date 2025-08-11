@@ -55,7 +55,19 @@ Theory and Numerical Implementation by Dr. Raymond Rumpf
 Youtube link to Playlist - *https://www.youtube.com/watch?v=b26ZBgspv7M&list=PLLYQF5WvJdJXE-aP7oF5ucXcCfHmub34A*
 
 
+# Top3d
+
+Paper - *https://rdcu.be/cVZ16*
+
+Tutorial - Specific to heat conduction
+
+*https://www.top3d.app/tutorials/heat-conduction-top3d*
+
+
+
+
 # Dear ImGui
+
 *https://github.com/ocornut/imgui*
 
 Bloat-free Graphical User interface for C++ with minimal dependencies

@@ -570,9 +570,9 @@ class Multitopo : public VulkanBaseApp, Modelling
         //////////////////////////////////////////////////////////////// 
     {
            
-        char aone[] = "src/shaders/structure_write_grid.vert.spv";
-        char atwo[] = "src/shaders/structure_write_grid.geom.spv";
-        char athree[]="src/shaders/structure_write_grid.frag.spv";
+        char aone[] = "../src/shaders/structure_write_grid.vert.spv";
+        char atwo[] = "../src/shaders/structure_write_grid.geom.spv";
+        char athree[]="../src/shaders/structure_write_grid.frag.spv";
         
         char * write_vertex_shader_path = &aone[0];
         char * write_geometry_shader_path = &atwo[0];
@@ -583,9 +583,9 @@ class Multitopo : public VulkanBaseApp, Modelling
         shaderFiles.push_back(std::make_pair(VK_SHADER_STAGE_FRAGMENT_BIT, write_fragment_shader_path));
 
 
-        char bone[] = "src/shaders/structure_read_grid.vert.spv";
-        char btwo[]="src/shaders/structure_read_grid.geom.spv";
-        char bthree[]="src/shaders/structure_read_grid.frag.spv";
+        char bone[] = "../src/shaders/structure_read_grid.vert.spv";
+        char btwo[]="../src/shaders/structure_read_grid.geom.spv";
+        char bthree[]="../src/shaders/structure_read_grid.frag.spv";
         
         char * read_vertex_shader_path = &bone[0];
         char * read_geometry_shader_path = &btwo[0];
@@ -595,9 +595,9 @@ class Multitopo : public VulkanBaseApp, Modelling
         shaderFilesread.push_back(std::make_pair(VK_SHADER_STAGE_FRAGMENT_BIT, read_fragment_shader_path));
 
 
-        char cone[] = "src/shaders/structure_write_mesh.vert.spv";
-        char ctwo[]="src/shaders/structure_write_mesh.geom.spv";
-        char cthree[]="src/shaders/structure_write_mesh.frag.spv";
+        char cone[] = "../src/shaders/structure_write_mesh.vert.spv";
+        char ctwo[]="../src/shaders/structure_write_mesh.geom.spv";
+        char cthree[]="../src/shaders/structure_write_mesh.frag.spv";
         
         char * write_bmesh_vertex_shader_path = &cone[0];
         char * write_bmesh_geometry_shader_path = &ctwo[0];
@@ -606,9 +606,9 @@ class Multitopo : public VulkanBaseApp, Modelling
         shaderFilesone.push_back(std::make_pair(VK_SHADER_STAGE_GEOMETRY_BIT, write_bmesh_geometry_shader_path));
         shaderFilesone.push_back(std::make_pair(VK_SHADER_STAGE_FRAGMENT_BIT, write_bmesh_fragment_shader_path));
 
-        char done[] = "src/shaders/structure_read_mesh.vert.spv";
-        char dtwo[]="src/shaders/structure_read_mesh.geom.spv";
-        char dthree[]="src/shaders/structure_read_mesh.frag.spv";
+        char done[] = "../src/shaders/structure_read_mesh.vert.spv";
+        char dtwo[]="../src/shaders/structure_read_mesh.geom.spv";
+        char dthree[]="../src/shaders/structure_read_mesh.frag.spv";
         
         char * read_bmesh_vertex_shader_path = &done[0];
         char * read_bmesh_geometry_shader_path = &dtwo[0];

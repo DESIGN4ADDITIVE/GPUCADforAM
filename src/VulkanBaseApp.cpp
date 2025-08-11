@@ -314,7 +314,7 @@ void VulkanBaseApp::initImgui()
         ImGuiIO& io = ImGui::GetIO(); 
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-        io.Fonts->AddFontFromFileTTF("src/fonts/Cousine-Regular.ttf",25);
+        io.Fonts->AddFontFromFileTTF("../src/fonts/Cousine-Regular.ttf",25);
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
         ImGuiStyle& style = ImGui::GetStyle();

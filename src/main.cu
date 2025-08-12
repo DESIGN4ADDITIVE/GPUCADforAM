@@ -2,6 +2,10 @@
 
 #include <sys/time.h>
 
+#include <sys/stat.h>
+
+#include <errno.h>
+
 #include <unistd.h>
 
 #include "VulkanBaseApp.h"
@@ -3771,36 +3775,61 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             if(ImguiApp::export_data_primitive)
             {
-                const char *filenameshape;
+                
+                int check_folder = mkdir("../Results_Modelling", 0777);
 
-                if(!show_primitive_lattice)
+                if ( (check_folder != 0) && (errno != EEXIST))
                 {
-                    filenameshape = "Shape.obj";
-                }   
-                else
-                {
-                    filenameshape = "Shape_Lattice.obj";
+                    throw std::runtime_error("Failed to create 'Results_Modelling' folder ");
                 }
 
-                output_file.file_write(d_postwo,totalVertstwo,filenameshape);
+                else
+                {
+                    const char *filenameshape;
+
+                    if(!show_primitive_lattice)
+                    {
+                        filenameshape = "../Results_Modelling/Shape.obj";
+                    }   
+                    else
+                    {
+                        filenameshape = "../Results_Modelling/Shape_Lattice.obj";
+                    }
+
+                    output_file.file_write(d_postwo,totalVertstwo,filenameshape);
+
+                
+                }
 
                 ImguiApp::export_data_primitive = false;
             }
 
             if(ImguiApp::export_data_optimise)
             {
-                const char *filenameoptimise;
+                int check_folder = mkdir("../Results_Optimise", 0777);
 
-                if(topo_done_lattice_do && !show_lattice_data)
+                if ( (check_folder != 0) && (errno != EEXIST))
                 {
-                    filenameoptimise = "Optimise_shape.obj";
+                    throw std::runtime_error("Failed to create 'Results_Optimise' folder ");
                 }
+
                 else
                 {
-                    filenameoptimise = "Optimise_Lattice_shape.obj";
-                }
 
-                output_file.file_write(d_postwo,totalVertstwo,filenameoptimise);
+                    const char *filenameoptimise;
+
+                    if(topo_done_lattice_do && !show_lattice_data)
+                    {
+                        filenameoptimise = "../Results_Optimise/Optimise_shape.obj";
+                    }
+                    else
+                    {
+                        filenameoptimise = "../Results_Optimise/Optimise_Lattice_shape.obj";
+                    }
+
+                    output_file.file_write(d_postwo,totalVertstwo,filenameoptimise);
+
+                }
 
                 ImguiApp::export_data_optimise = false;
             }
@@ -3808,13 +3837,24 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             if(ImguiApp::export_data_lattice)
             {
-                const char *filenameone = "Unit_Lattice.obj";
+                int check_folder = mkdir("../Results_Lattice", 0777);
 
-                output_file.file_write(d_posone,totalVertsone,filenameone);
+                if ( (check_folder != 0) && (errno != EEXIST))
+                {
+                    throw std::runtime_error("Failed to create 'Results_Lattice' folder ");
+                }
+                else
+                {
+                
+                    const char *filenameone = "../Results_Lattice/Unit_Lattice.obj";
 
-                const char *filenametwo = "Spatial_Lattice.obj";
+                    output_file.file_write(d_posone,totalVertsone,filenameone);
 
-                output_file.file_write(d_postwo,totalVertstwo,filenametwo);
+                    const char *filenametwo = "../Results_Lattice/Spatial_Lattice.obj";
+
+                    output_file.file_write(d_postwo,totalVertstwo,filenametwo);
+
+                }
 
                 ImguiApp::export_data_lattice = false;
             }

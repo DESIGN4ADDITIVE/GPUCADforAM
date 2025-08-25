@@ -136,9 +136,6 @@ VulkanBaseApp::VulkanBaseApp(const std::string& appName, bool enableValidation) 
     show_grid(true),
     shift(false),
     reset(false),
-    retain(false),
-    undoo(false),
-    calculate(true),
     topo_data(false)
     {
      
@@ -2394,7 +2391,7 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
          
             ImguiApp::show_cylinder_axis_center(
             ImguiApp::center,ImguiApp::angles,ImguiApp::axis,ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset,&retain,&undoo, &calculate);
+            ImguiApp::execute_signal,&shift,&reset);
             
         }
 
@@ -2402,41 +2399,41 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
         {
             ImguiApp::show_cylinder_axis_center(
             ImguiApp::center,ImguiApp::angles,ImguiApp::axis, ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset,&retain,&undoo, &calculate);
+            ImguiApp::execute_signal,&shift,&reset);
         }
 
         if(sphere_shell_selected)
         {
             ImguiApp::show_cylinder_axis_center(
             ImguiApp::center,ImguiApp::angles,ImguiApp::axis, ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset,&retain,&undoo, &calculate);
+            ImguiApp::execute_signal,&shift,&reset);
         }
 
         if(cuboid_selected)
         {
             ImguiApp::show_cylinder_axis_center(
             ImguiApp::center,ImguiApp::angles,ImguiApp::axis,ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset,&retain,&undoo, &calculate);
+            ImguiApp::execute_signal,&shift,&reset);
         }
 
         if(cuboid_shell_selected)
         {
             ImguiApp::show_cylinder_axis_center(
             ImguiApp::center,ImguiApp::angles,ImguiApp::axis, ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset,&retain,&undoo, &calculate);
+            ImguiApp::execute_signal,&shift,&reset);
         }
         if(torus_selected)
         {
             ImguiApp::show_cylinder_axis_center(
             ImguiApp::center,ImguiApp::angles,ImguiApp::axis, ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset,&retain,&undoo, &calculate);
+            ImguiApp::execute_signal,&shift,&reset);
         }
 
         if(cone_selected)
         {
             ImguiApp::show_cylinder_axis_center(
             ImguiApp::center,ImguiApp::angles,ImguiApp::axis, ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset,&retain,&undoo, &calculate);
+            ImguiApp::execute_signal,&shift,&reset);
         }
 
         if(VulkanBaseApp::undoo)

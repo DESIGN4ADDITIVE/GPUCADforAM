@@ -11,6 +11,10 @@ bool ImguiApp::vulkan_buffer_created = false;
 
 bool ImguiApp::svl_data = false;
 
+bool ImguiApp::retain = false;
+bool ImguiApp::calculate = true;
+bool ImguiApp::undoo = false;
+
 uint ImguiApp::lattice_type_index = 0;
 uint ImguiApp::lattice_size_index = 0;
 
@@ -1285,7 +1289,7 @@ void ImguiApp::show_select_support_thermal()
 }
 
 
-void ImguiApp::show_cylinder_axis_center(float3& center,float3& angles,float3& axis, bool execute_done, bool execute_signal,bool* shift, bool* reset,bool* retain, bool* undoo, bool* calculate)
+void ImguiApp::show_cylinder_axis_center(float3& center,float3& angles,float3& axis, bool execute_done, bool execute_signal,bool* shift, bool* reset)
 {
 
             if(ImguiApp::cylind_selected)
@@ -1363,9 +1367,9 @@ void ImguiApp::show_cylinder_axis_center(float3& center,float3& angles,float3& a
                 if (ImGui::Button("RETAIN"))
                 {
         
-                    *retain = true;
-                    *calculate = false;
-                    *undoo = false;
+                    ImguiApp::retain = true;
+                    ImguiApp::calculate = false;
+                    ImguiApp::undoo = false;
                 }
 
                 ImGui::SameLine();
@@ -1373,17 +1377,17 @@ void ImguiApp::show_cylinder_axis_center(float3& center,float3& angles,float3& a
                 ImGui::SameLine();
                 if(ImGui::Button("UNDO"))
                 {
-                    *undoo = true;
-                    *calculate = false;
-                    *retain = false;
+                    ImguiApp::undoo = true;
+                    ImguiApp::calculate = false;
+                    ImguiApp::retain = false;
                 }
 
                 ImGui::NewLine();
                 if(ImGui::Button("CONTINUE"))
                 {
-                    *calculate = true;
-                    *retain = false;
-                    *undoo = false;
+                    ImguiApp::calculate = true;
+                    ImguiApp::retain = false;
+                    ImguiApp::undoo = false;
                     ImguiApp::show_model = true;
                     ImguiApp::show_primitive_lattice = false;
                 }
@@ -1393,11 +1397,11 @@ void ImguiApp::show_cylinder_axis_center(float3& center,float3& angles,float3& a
                 {
                     if(ImGui::Button("GENERATE LATTICE"))
                     {
-                        if(!*retain)
+                        if(!ImguiApp::retain)
                         {
-                            *retain = true;
-                            *calculate = false;
-                            *undoo = false;
+                            ImguiApp::retain = true;
+                            ImguiApp::calculate = false;
+                            ImguiApp::undoo = false;
                         }
                         ImguiApp::primitive_done_lattice_do = true;
                         

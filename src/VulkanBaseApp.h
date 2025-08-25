@@ -66,9 +66,7 @@ protected:
     bool show_mesh;
     bool shift;
     bool reset;
-    bool retain;
-    bool undoo;
-    bool calculate;
+
     
 
     static const size_t max_inflight_frames;

@@ -131,6 +131,11 @@ class ImguiApp
     static bool update_isorange;
     static bool update_unit_isorange;
 
+
+    static bool retain;
+    static bool calculate;
+    static bool undoo;
+
     public:
 
     static float radius;
@@ -203,7 +208,7 @@ class ImguiApp
     static void show_select_support_structure(bool *window);
     static void show_select_load_thermal();
     static void show_select_support_thermal();
-    static void show_cylinder_axis_center(float3& center,float3& angles,float3& axis, bool execute_done, bool execute_signal,bool* shift, bool* reset,bool* retain, bool* undoo, bool* calculate );
+    static void show_cylinder_axis_center(float3& center,float3& angles,float3& axis, bool execute_done, bool execute_signal,bool* shift, bool* reset);
     void make_inactive(std::vector<bool*> window_bools,bool* active);
     void make_all_inactive(std::vector<bool*> window_bools);
     static void show_fea_settings();

@@ -2703,7 +2703,7 @@ class Multitopo : public VulkanBaseApp, Modelling
     void show_model()
     {
           
-        if(VulkanBaseApp::retain)
+        if(ImguiApp::retain)
         {
             retain_boundary(d_final_boundary,d_boundary,d_inter_boundary,NumX,NumY,NumZ);
             cudaMemcpy(d_final_boundary, d_inter_boundary, (NumX*NumY*NumZ) * sizeof(float), cudaMemcpyDeviceToDevice);
@@ -2718,12 +2718,12 @@ class Multitopo : public VulkanBaseApp, Modelling
             d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
             &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,d_volume_twice,0.0);
 
-            VulkanBaseApp::retain = false;
+            ImguiApp::retain = false;
             
         }
 
 
-        if(VulkanBaseApp::calculate)
+        if(ImguiApp::calculate)
         {
             
             if(cylind_selected || cylind_disc_selected)
@@ -2759,7 +2759,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         isosurf.computeIsosurface(d_inter_boundary,d_pos,d_normal,0.0,numVoxels,d_voxelVerts,d_voxelVertsScan,
         d_voxelOccupied,d_voxelOccupiedScan,gridSize,gridSizeShift,gridSizeMask,voxelSize,gridcenter,
-        &activeVoxels,&totalVerts,d_compVoxelArray,maxmemverts,d_final_boundary,d_boundary,0.0,0.0,VulkanBaseApp::retain);
+        &activeVoxels,&totalVerts,d_compVoxelArray,maxmemverts,d_final_boundary,d_boundary,0.0,0.0,ImguiApp::retain);
         
 
     }
@@ -3872,7 +3872,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
                 ImguiApp::show_unit_lattice_data = false;
 
-                VulkanBaseApp::calculate = true;
+                ImguiApp::calculate = true;
     
                 vkDeviceWaitIdle(device);
 

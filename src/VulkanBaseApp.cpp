@@ -2389,51 +2389,37 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
         if (cylind_selected || cylind_disc_selected)
         {
          
-            ImguiApp::show_cylinder_axis_center(
-            ImguiApp::center,ImguiApp::angles,ImguiApp::axis,ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset);
+            ImguiApp::show_selected_primitive();
             
         }
 
         if(sphere_selected)
         {
-            ImguiApp::show_cylinder_axis_center(
-            ImguiApp::center,ImguiApp::angles,ImguiApp::axis, ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset);
+            ImguiApp::show_selected_primitive();
         }
 
         if(sphere_shell_selected)
         {
-            ImguiApp::show_cylinder_axis_center(
-            ImguiApp::center,ImguiApp::angles,ImguiApp::axis, ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset);
+            ImguiApp::show_selected_primitive();
         }
 
         if(cuboid_selected)
         {
-            ImguiApp::show_cylinder_axis_center(
-            ImguiApp::center,ImguiApp::angles,ImguiApp::axis,ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset);
+            ImguiApp::show_selected_primitive();
         }
 
         if(cuboid_shell_selected)
         {
-            ImguiApp::show_cylinder_axis_center(
-            ImguiApp::center,ImguiApp::angles,ImguiApp::axis, ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset);
+            ImguiApp::show_selected_primitive();
         }
         if(torus_selected)
         {
-            ImguiApp::show_cylinder_axis_center(
-            ImguiApp::center,ImguiApp::angles,ImguiApp::axis, ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset);
+            ImguiApp::show_selected_primitive();
         }
 
         if(cone_selected)
         {
-            ImguiApp::show_cylinder_axis_center(
-            ImguiApp::center,ImguiApp::angles,ImguiApp::axis, ImguiApp::execute_done,
-            ImguiApp::execute_signal,&shift,&reset);
+            ImguiApp::show_selected_primitive();
         }
 
         if(VulkanBaseApp::undoo)

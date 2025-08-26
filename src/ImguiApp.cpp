@@ -178,6 +178,10 @@ bool ImguiApp::thermal = false;
 bool ImguiApp::primitives = false;
 bool ImguiApp::lattice = false;
 
+float3 ImguiApp::center = {0.0,0.0,0.0};
+float3 ImguiApp::axis = {0.0,0.0,1.0};
+float3 ImguiApp::angles = {0.0,0.0,0.0};
+
 Topopt_val::Topopt_val()
 {
 
@@ -189,38 +193,33 @@ Topopt_val::~Topopt_val()
 }
 /////////////////////////////////////////////////////////////////////
 
-ImguiApp::ImguiApp():
-
-center{0.0,0.0,0.0},
-axis{0.0,0.0,1.0},
-angles{0.0,0.0,0.0}
-
+ImguiApp::ImguiApp()
 {
     window_bools = {
-        &cylind_selected,
-        &cylind_disc_selected,
-        &cuboid_selected,
-        &cuboid_shell_selected,
-        &sphere_selected,
-        &sphere_shell_selected,
-        &torus_selected,
-        &cone_selected,
-        &view_settings,
-        &grid_settings,
-        &background_color,
-        &execute_optimize,
-        &execute_lattice,
-        &execute_primitive,
-        &select_load_node,
-        &select_support_node,
-        &spatial_angle_window,
-        &spatial_period_window,
-        &fea_settings,
-        &optimisation_settings,
-        &cg_solver_settings,
-        &unit_lattice_settings,
-        &export_settings,
-        &debug_window
+    &cylind_selected,
+    &cylind_disc_selected,
+    &cuboid_selected,
+    &cuboid_shell_selected,
+    &sphere_selected,
+    &sphere_shell_selected,
+    &torus_selected,
+    &cone_selected,
+    &view_settings,
+    &grid_settings,
+    &background_color,
+    &execute_optimize,
+    &execute_lattice,
+    &execute_primitive,
+    &select_load_node,
+    &select_support_node,
+    &spatial_angle_window,
+    &spatial_period_window,
+    &fea_settings,
+    &optimisation_settings,
+    &cg_solver_settings,
+    &unit_lattice_settings,
+    &export_settings,
+    &debug_window
         
     
 
@@ -251,7 +250,7 @@ angles{0.0,0.0,0.0}
  }
 
 
- void sphere_settings(float3& center, bool sphere_shell_selected)
+ void sphere_settings()
  {
 
     ////////////////////////////////////////////////////////////////
@@ -261,7 +260,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.x = c_x;
+                ImguiApp::center.x = c_x;
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
@@ -269,7 +268,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.y = c_y;
+                ImguiApp::center.y = c_y;
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
@@ -277,7 +276,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.z = c_z;
+                ImguiApp::center.z = c_z;
             }
      
 
@@ -301,7 +300,7 @@ angles{0.0,0.0,0.0}
             ImGui::SliderFloat("Wall Thickness ", &thick,0, 20, "%.1f");
             thik = ImGui::IsItemActive();  
          
-            if(thik && sphere_shell_selected)
+            if(thik && ImguiApp::sphere_shell_selected)
             {
                 ImguiApp::sphere_thickness = thick;
           
@@ -310,7 +309,7 @@ angles{0.0,0.0,0.0}
 
 
 
- void cylinder_settings(float3& center,float3& axis, bool cylind_disc_selected)
+ void cylinder_settings()
  {
     ////////////////////////////////////////////////////////////////
             ImGui::SeparatorText("Center");
@@ -319,7 +318,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.x = c_x;
+                ImguiApp::center.x = c_x;
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
@@ -327,7 +326,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.y = c_y;
+                ImguiApp::center.y = c_y;
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
@@ -335,7 +334,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.z = c_z;
+                ImguiApp::center.z = c_z;
             }
            
             /////////////////////////////////////////////////////////////
@@ -345,9 +344,9 @@ angles{0.0,0.0,0.0}
             ImGui::DragFloat3("Axis",a_xis,0.01,-1.0,1.0,"%.1f");
             if(ImGui::IsItemActive())
             {
-                axis.x = a_xis[0];
-                axis.y = a_xis[1];
-                axis.z = a_xis[2];
+                ImguiApp::axis.x = a_xis[0];
+                ImguiApp::axis.y = a_xis[1];
+                ImguiApp::axis.z = a_xis[2];
             }
           
            
@@ -373,7 +372,7 @@ angles{0.0,0.0,0.0}
                 ImguiApp::thickness_axial = thick_axial;
             }
 
-            if(cylind_disc_selected)
+            if(ImguiApp::cylind_disc_selected)
             {
                 static float thick = 2.0f;
                 ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
@@ -388,7 +387,7 @@ angles{0.0,0.0,0.0}
  }
 
 
-  void cuboid_settings(float3& center, float3& angles, bool cuboid_shell_selected)
+  void cuboid_settings()
  {
 
     ////////////////////////////////////////////////////////////////
@@ -398,7 +397,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.x = c_x;
+                ImguiApp::center.x = c_x;
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
@@ -406,7 +405,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.y = c_y;
+                ImguiApp::center.y = c_y;
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
@@ -414,7 +413,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.z = c_z;
+                ImguiApp::center.z = c_z;
             }
      
 
@@ -442,9 +441,9 @@ angles{0.0,0.0,0.0}
             zz_yaw = ImGui::IsItemActive();
             if(xx_roll || yy_pitch || zz_yaw)
             {
-                angles.x = (x_roll/180)*3.14;
-                angles.y = (y_pitch/180)*3.14;
-                angles.z = (z_yaw/180)*3.14;
+                ImguiApp::angles.x = (x_roll/180)*3.14;
+                ImguiApp::angles.y = (y_pitch/180)*3.14;
+                ImguiApp::angles.z = (z_yaw/180)*3.14;
             }
      
             ImGui::SeparatorText("Width");
@@ -473,7 +472,7 @@ angles{0.0,0.0,0.0}
           
             }
 
-            if(cuboid_shell_selected)
+            if(ImguiApp::cuboid_shell_selected)
             {
                 ImGui::SeparatorText("Thickness");
                 static bool cu_thick = false;
@@ -490,7 +489,7 @@ angles{0.0,0.0,0.0}
  }
 
 
- void torus_settings(float3& center, float3& angles )
+ void torus_settings()
  {
 
     ////////////////////////////////////////////////////////////////
@@ -500,7 +499,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.x = c_x;
+                ImguiApp::center.x = c_x;
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
@@ -508,7 +507,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.y = c_y;
+                ImguiApp::center.y = c_y;
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
@@ -516,7 +515,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.z = c_z;
+                ImguiApp::center.z = c_z;
             }
      
 
@@ -544,9 +543,9 @@ angles{0.0,0.0,0.0}
             zz_yaw = ImGui::IsItemActive();
             if(xx_roll || yy_pitch || zz_yaw)
             {
-                angles.x = (x_roll/180)*3.14;
-                angles.y = (y_pitch/180)*3.14;
-                angles.z = (z_yaw/180)*3.14;
+                ImguiApp::angles.x = (x_roll/180)*3.14;
+                ImguiApp::angles.y = (y_pitch/180)*3.14;
+                ImguiApp::angles.z = (z_yaw/180)*3.14;
             }
      
             ImGui::SeparatorText("Torus Radius");
@@ -573,7 +572,7 @@ angles{0.0,0.0,0.0}
  }
 
 
-  void cone_settings(float3& center, float3& angles)
+  void cone_settings()
  {
       ////////////////////////////////////////////////////////////////
             ImGui::SeparatorText("Cone Center");
@@ -582,7 +581,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("x1", &co_x, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.x = co_x;
+                ImguiApp::center.x = co_x;
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
@@ -590,7 +589,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("y1", &co_y, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.y = co_y;
+                ImguiApp::center.y = co_y;
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
@@ -598,7 +597,7 @@ angles{0.0,0.0,0.0}
             ImGui::InputFloat("z1", &co_z, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
-                center.z = co_z;
+                ImguiApp::center.z = co_z;
             }
      
 
@@ -626,9 +625,9 @@ angles{0.0,0.0,0.0}
             cone_yaw = ImGui::IsItemActive();
             if(cone_roll || cone_pitch || cone_yaw)
             {
-                angles.x = (conx_roll/180)*3.14;
-                angles.y = (cony_pitch/180)*3.14;
-                angles.z = (conz_yaw/180)*3.14;
+                ImguiApp::angles.x = (conx_roll/180)*3.14;
+                ImguiApp::angles.y = (cony_pitch/180)*3.14;
+                ImguiApp::angles.z = (conz_yaw/180)*3.14;
   
 
             }
@@ -1289,7 +1288,7 @@ void ImguiApp::show_select_support_thermal()
 }
 
 
-void ImguiApp::show_cylinder_axis_center(float3& center,float3& angles,float3& axis, bool execute_done, bool execute_signal,bool* shift, bool* reset)
+void ImguiApp::show_selected_primitive()
 {
 
             if(ImguiApp::cylind_selected)
@@ -1339,26 +1338,26 @@ void ImguiApp::show_cylinder_axis_center(float3& center,float3& angles,float3& a
             ///////////////////////////////////////////////////////////////////////////////////////////////
             if(ImguiApp::cylind_selected || ImguiApp::cylind_disc_selected)
             {
-                cylinder_settings(center,axis,cylind_disc_selected);
+                cylinder_settings();
             }
 
             if(ImguiApp::sphere_selected || ImguiApp::sphere_shell_selected)
             {
-                sphere_settings(center,ImguiApp::sphere_shell_selected);
+                sphere_settings();
             }
 
             if(ImguiApp::cuboid_selected || ImguiApp::cuboid_shell_selected)
             {
-                cuboid_settings(center,angles,ImguiApp::cuboid_shell_selected);
+                cuboid_settings();
             }
 
             if(ImguiApp::torus_selected)
             {
-                torus_settings(center,angles);
+                torus_settings();
             }
             if(ImguiApp::cone_selected)
             {
-                cone_settings(center,angles);
+                cone_settings();
             }
         
             if(ImguiApp::boundary_buffers)

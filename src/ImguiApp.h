@@ -35,18 +35,7 @@ class ImguiApp
     static bool export_data_primitive;
     static bool export_data_optimise;
     static bool export_data_lattice;
-
-    
-    static bool cylind_selected;
-    static bool cylind_disc_selected;
-    static bool cuboid_selected ;
-    static bool cuboid_shell_selected;
-    static bool sphere_selected ;
-    static bool sphere_shell_selected;
-    static bool torus_selected ;
-    static bool cone_selected ;
   
-
     static bool view_settings;
     static bool grid_settings;
     static bool background_color;
@@ -138,6 +127,15 @@ class ImguiApp
 
     public:
 
+    static bool cylind_selected;
+    static bool cylind_disc_selected;
+    static bool cuboid_selected ;
+    static bool cuboid_shell_selected;
+    static bool sphere_selected ;
+    static bool sphere_shell_selected;
+    static bool torus_selected ;
+    static bool cone_selected ;
+
     static float radius;
     static float thickness_radial;
     static float thickness_axial;
@@ -168,9 +166,9 @@ class ImguiApp
     std::vector<bool*> view_bools;
     std::vector<bool*> physics_bools;
 
-    float3 center;
-    float3 axis;
-    float3 angles;
+    static float3 center;
+    static float3 axis;
+    static float3 angles;
 
     /////////////////////////////////////////////////////////////
     
@@ -201,14 +199,13 @@ class ImguiApp
     static void show_view_settings(bool *view_setting, bool *shift, bool *reset,bool *show_grid, bool *show_mesh ,float *f1,float *f2, float *f3, float *f4);
     static void show_execute_topo(bool *execute_setting, bool *execute_signal, bool *execute_done );
     static void show_execute_lattice(bool *execute_lattice, bool *execute_signal, bool *execute_done );
-    // static void show_execute_primitive(bool *execute_primitive, bool *execute_signal, bool *execute_code, bool *execute_done );
     static void show_grid_settings(bool *grid_setting, bool vulkan_buffer_created, ImVec4 clear_color);
     static void show_background_color_settings(bool *background_color, ImVec4& clear_color);
     static void show_select_load_structure(bool *window);
     static void show_select_support_structure(bool *window);
     static void show_select_load_thermal();
     static void show_select_support_thermal();
-    static void show_cylinder_axis_center(float3& center,float3& angles,float3& axis, bool execute_done, bool execute_signal,bool* shift, bool* reset);
+    static void show_selected_primitive();
     void make_inactive(std::vector<bool*> window_bools,bool* active);
     void make_all_inactive(std::vector<bool*> window_bools);
     static void show_fea_settings();

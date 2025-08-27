@@ -229,6 +229,6 @@ run: build
 	./bin/GPUCADforAM
 
 clean:
-	rm -f $(BUILDDIR)/*.o 
-	rm -f $(BINDIR)/GPUCADforAM
+	rm -r $(BUILDDIR)/
+	rm -r $(BINDIR)/
 

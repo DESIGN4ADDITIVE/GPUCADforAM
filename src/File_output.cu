@@ -28,9 +28,9 @@ void File_output::file_write(float4 *d_pos, uint totalVerts, const char *filenam
     for (int i=0;i<totalVerts;i++)
     {
     
-        float v_x = latttice_data[i].x;
-        float v_y = latttice_data[i].y;
-        float v_z = latttice_data[i].z;
+        float v_x = int(latttice_data[i].x * 1000) * 0.001;
+        float v_y = int(latttice_data[i].y * 1000) * 0.001;
+        float v_z = int(latttice_data[i].z * 1000) * 0.001;
         
         vec_flot =  {v_x,v_y,v_z};
 

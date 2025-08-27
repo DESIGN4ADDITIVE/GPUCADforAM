@@ -286,7 +286,7 @@ ImguiApp::ImguiApp()
             static bool thik_ax = false;
             static float rad = 5.0f;
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("Sphere Radius", &rad,-100, 100, "%.1f");
+            ImGui::SliderFloat("Sphere Radius", &rad,2, 100, "%.1f");
             rad1 = ImGui::IsItemActive();
 
             if(rad1)
@@ -297,7 +297,7 @@ ImguiApp::ImguiApp()
 
             static float thick = 2.0f;
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("Wall Thickness ", &thick,0, 20, "%.1f");
+            ImGui::SliderFloat("Wall Thickness ", &thick,1, 20, "%.1f");
             thik = ImGui::IsItemActive();  
          
             if(thik && ImguiApp::sphere_shell_selected)

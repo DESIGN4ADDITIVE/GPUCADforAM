@@ -53,6 +53,10 @@ LIBRARIES += -lcufft
 BUILDDIR = build
 BINDIR = bin
 
+PRIMITIVE = Results_Modelling
+LATTICE = Results_Lattice
+OPTIMISE = Results_Optimise
+
 ################################################################################
 msg1 := "Compiling Shaders  - Step 1 of 23"
 
@@ -228,7 +232,31 @@ $(BINDIR)/GPUCADforAM: $(OBJS)
 run: build
 	./bin/GPUCADforAM
 
+
+
 clean:
-	rm -r $(BUILDDIR)/
-	rm -r $(BINDIR)/
+	rm -f src/shaders/*.spv
+
+	@if [ -d "$(BUILDDIR)" ]; then \
+	echo "Removing  '$(BUILDDIR)' folder "; \
+	rm -rf "$(BUILDDIR)"; fi
+
+	@if [ -d "$(BINDIR)" ]; then \
+	echo "Removing  '$(BINDIR)' folder "; \
+	rm -rf "$(BINDIR)"; fi
+
+	@if [ -d "$(PRIMITIVE)" ]; then \
+	echo "Removing  '$(PRIMITIVE)' folder "; \
+	rm -rf "$(PRIMITIVE)"; fi
+
+	@if [ -d "$(LATTICE)" ]; then \
+	echo "Removing  '$(LATTICE)' folder "; \
+	rm -rf "$(LATTICE)"; fi
+
+	@if [ -d "$(OPTIMISE)" ]; then \
+	echo "Removing  '$(OPTIMISE)' folder "; \
+	rm -rf "$(OPTIMISE)"; fi
+
+
+
 

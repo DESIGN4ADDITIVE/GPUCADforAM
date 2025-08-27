@@ -85,6 +85,9 @@ void Isosurface::computeIsosurface(float* vol, float4* pos , float4* norm, float
             
         }
        
+        checkCudaErrors(cudaMemset(pos,0,maxVerts));
+        checkCudaErrors(cudaMemset(norm,0,maxVerts));
+
         dim3 grid2((int) ceil(*activeVoxels / (float)NTHREADS), 1, 1);
        
         dim3 tids2(NTHREADS,1,1);

@@ -39,6 +39,10 @@ For more details please check DEPENDENCIES.md file.
 8. Check for an output you get in the terminal  message is ' Compilation Completed! ' for a successful compilation.
 9. Got to 'GPUCADforAM/bin' folder. Open a command terminal within the folder and type './GPUCADforAM' or double click on the executable 'GPUCADforAM'.
 
-## Installation Demo 
+## Demo - Installation 
 
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/VFgrwhIZFUg/0.jpg)](http://www.youtube.com/watch?v=VFgrwhIZFUg "GPUCADforAM")
+
+## Demo - Primitive Modelling
+
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/_qA05n181Pw/0.jpg)](http://www.youtube.com/watch?v=_qA05n181Pw "GPUCADforAM")

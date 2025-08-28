@@ -280,6 +280,7 @@ ImguiApp::ImguiApp()
             }
      
 
+            ImGui::NewLine();
 
             static bool rad1 = false;
             static bool thik = false;
@@ -294,16 +295,19 @@ ImguiApp::ImguiApp()
                 ImguiApp::sphere_radius = rad;
             }
 
-
-            static float thick = 2.0f;
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("Wall Thickness ", &thick,1, 20, "%.1f");
-            thik = ImGui::IsItemActive();  
-         
-            if(thik && ImguiApp::sphere_shell_selected)
+            if(ImguiApp::sphere_shell_selected)
             {
-                ImguiApp::sphere_thickness = thick;
-          
+                ImGui::NewLine();
+                static float thick = 2.0f;
+                ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+                ImGui::SliderFloat("Wall Thickness ", &thick,1, 20, "%.1f");
+                thik = ImGui::IsItemActive();  
+            
+                if(thik )
+                {
+                    ImguiApp::sphere_thickness = thick;
+            
+                }
             }
  }
 

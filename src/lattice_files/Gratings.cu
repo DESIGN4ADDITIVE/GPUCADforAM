@@ -1828,15 +1828,15 @@ void Gratings::topo_field(float *topo_field,float *isosurf,float volfrac, int NX
 }
 
 
-__global__ void primitive_field_kernel(float *primitive_field, float *isourf, float isoval, uint size)
+__global__ void primitive_field_kernel(grid_points *primitive_field, float *isourf, float isoval, uint size)
 {
 	int tx = threadIdx.x;
 	int ind = blockIdx.x*blockDim.x+tx;
 	float a = 0.0;
 	if(ind < size )
 	{
-		a = primitive_field[ind];
-		if(a > isoval)
+		a = primitive_field[ind].val;
+		if(a > -1)
 		{
 			isourf[ind] = 0.0;
 			
@@ -1846,7 +1846,7 @@ __global__ void primitive_field_kernel(float *primitive_field, float *isourf, fl
 
 }
 
-void Gratings::primitive_field(float *primitive_field,float *isosurf,float isoval, int NX ,int NY, int NZ)
+void Gratings::primitive_field(grid_points *primitive_field,float *isosurf,float isoval, int NX ,int NY, int NZ)
 {
 	uint sizee = NX*NY*NZ;
 	dim3 grids(ceil((sizee)/float(1024)),1,1);

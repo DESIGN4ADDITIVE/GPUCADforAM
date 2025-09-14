@@ -11,10 +11,26 @@ Isosurface::~Isosurface()
 
 }
 
-void Isosurface::computeIsosurface(float* vol, float4* pos , float4* norm, float isoValue,
+
+void Isosurface::copy_parameter(uint *voxel_verts, uint * voxel_vertsscan, float isoValue,
+    uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,uint numVoxels,
+    uint *activeVoxels,uint *d_compVoxelArray, grid_points *vol_one,float* vol_two, uint *totalverts_1)
+    
+    {
+          
+        dim3 grid(ceil(numVoxels/float(1024)), 1, 1);
+        dim3 threads(1024,1,1);
+
+        classify_copy_Voxel_lattice(grid,threads,voxel_verts,vol_two,vol_one,
+                            gridSize, gridSizeShift, gridSizeMask, 
+                            numVoxels,voxelSize,isoValue);
+        
+    }
+
+void Isosurface::computeIsosurface(float4* pos , float4* norm, float isoValue,
     uint numVoxels, uint *d_voxelVerts,uint *d_voxelVertsScan, uint *d_voxelOccupied,uint *d_voxelOccupiedScan,
     uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,
-    uint *activeVoxels, uint *totalVerts, uint *d_compVoxelArray, uint maxVerts, float* vol_one,float* vol_two, 
+    uint *activeVoxels, uint *totalVerts,uint totalVerts_1, uint *d_compVoxelArray, uint maxVerts, grid_points  *vol_one,float* vol_two,
     float isovalue1,float iso1, bool retain)
     
          {
@@ -29,9 +45,9 @@ void Isosurface::computeIsosurface(float* vol, float4* pos , float4* norm, float
         }
     
         classifyVoxel_lattice(grid,threads,
-                            d_voxelVerts, d_voxelOccupied, vol_one,vol_two,
+                            d_voxelVerts,d_voxelOccupied,vol_two,
                             gridSize, gridSizeShift, gridSizeMask,
-                            numVoxels, voxelSize, isoValue);
+                            numVoxels, voxelSize, isoValue,vol_one);
  
         ////// Numbering active voxels ///////
         
@@ -91,13 +107,12 @@ void Isosurface::computeIsosurface(float* vol, float4* pos , float4* norm, float
         dim3 grid2((int) ceil(*activeVoxels / (float)NTHREADS), 1, 1);
        
         dim3 tids2(NTHREADS,1,1);
-       
-        generateTriangles_lattice(grid2, tids2, pos, norm,
-                                d_compVoxelArray,
-                                d_voxelVertsScan, vol,
+
+        generateTriangles_lattice(grid2, tids2, pos, norm,d_compVoxelArray,
+                                d_voxelVertsScan,
                                 gridSize, gridSizeShift, gridSizeMask,
-                                voxelSize,gridcenter, isoValue, *activeVoxels,
-                                maxVerts,*totalVerts,vol_one,vol_two,isovalue1,iso1,retain);
+                                voxelSize,gridcenter, isoValue,*activeVoxels,
+                                maxVerts,*totalVerts,vol_one,vol_two,isovalue1,iso1,retain,d_voxelVerts);
 
     }
 

@@ -217,9 +217,7 @@ class Multitopo : public VulkanBaseApp, Modelling
   
     float *d_boundary = NULL;
 
-    float *d_final_boundary = NULL;
-
-    float *d_inter_boundary = NULL;
+    grid_points *vol_one = NULL;
 
     REAL3 *d_us;
 
@@ -506,9 +504,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         d_boundary(nullptr),
 
-        d_inter_boundary(nullptr),
-
-        d_final_boundary(nullptr),
+        vol_one(nullptr),
 
         OptIter(0),
     
@@ -1165,30 +1161,17 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     void fillRenderingCommandBufferthree(VkCommandBuffer& commandBuffer) {
    
-        if((!show_primitive_lattice))
-        {
-            VkBuffer vertexBuffers[] = {v_pos_s, v_norm_s};
 
-            VkDeviceSize offsets[] = { 0, 0 };
+        VkBuffer vertexBuffers[] = {vpos_two, vnorm_two};
 
-            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(VulkanBaseApp::LightPushConstants),&push_constants);
-            
-            vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
+        VkDeviceSize offsets[] = { 0, 0 };
 
-            vkCmdDraw(commandBuffer, (uint32_t)(totalVerts), 1, 0, 0);
-        }
-        if(show_primitive_lattice)
-        {
-            VkBuffer vertexBuffers[] = {vpos_two, vnorm_two};
-
-            VkDeviceSize offsets[] = { 0, 0 };
-
-            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(VulkanBaseApp::LightPushConstants),&push_constants);
-            
-            vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
-            
-            vkCmdDraw(commandBuffer, (uint32_t)(totalVertstwo), 1, 0, 0);
-        }
+        vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(VulkanBaseApp::LightPushConstants),&push_constants);
+        
+        vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
+        
+        vkCmdDraw(commandBuffer, (uint32_t)(totalVertstwo), 1, 0, 0);
+    
     }
 
 
@@ -1263,31 +1246,16 @@ class Multitopo : public VulkanBaseApp, Modelling
     void fillRenderingCommandBufferthree_subpass1(VkCommandBuffer& commandBuffer) 
     {
 
-        if((!show_primitive_lattice))
-        {
-            VkBuffer vertexBuffers[] = {v_pos_s, v_norm_s};
-            
-            VkDeviceSize offsets[] = { 0, 0 };
-            
-            vkCmdPushConstants(commandBuffer,pipelineLayoutread,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT ,0,sizeof(VulkanBaseApp::LightPushConstants),&push_constants);
-            
-            vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
-            
-            vkCmdDraw(commandBuffer, (uint32_t)(totalVerts), 1, 0, 0);
-        }
-
-        if(show_primitive_lattice)
-        {
-            VkBuffer vertexBuffers[] = {vpos_two, vnorm_two};
-            
-            VkDeviceSize offsets[] = { 0, 0 };
-            
-            vkCmdPushConstants(commandBuffer,pipelineLayoutread,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT ,0,sizeof(VulkanBaseApp::LightPushConstants),&push_constants);
-            
-            vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
-            
-            vkCmdDraw(commandBuffer, (uint32_t)(totalVertstwo), 1, 0, 0);
-        }
+        VkBuffer vertexBuffers[] = {vpos_two, vnorm_two};
+        
+        VkDeviceSize offsets[] = { 0, 0 };
+        
+        vkCmdPushConstants(commandBuffer,pipelineLayoutread,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT ,0,sizeof(VulkanBaseApp::LightPushConstants),&push_constants);
+        
+        vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
+        
+        vkCmdDraw(commandBuffer, (uint32_t)(totalVertstwo), 1, 0, 0);
+        
 
     }
 
@@ -1510,6 +1478,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             else
             {
                 show_unit_lattice_data = false;
+
                 if ((VulkanBaseApp::shift))
                 {
                     
@@ -1531,6 +1500,7 @@ class Multitopo : public VulkanBaseApp, Modelling
                         c_1 = (dist2*1.2f)*cos(angle) + (NumZ-1)/2.0f;
                     }
                     angle += 0.001;
+                    
                 }
 
                 else if(VulkanBaseApp::view_front)
@@ -1890,13 +1860,9 @@ class Multitopo : public VulkanBaseApp, Modelling
         checkCudaErrors(cudaMemset(d_postwo, 0.0, maxmemvertstwo * sizeof(*d_postwo)));
         checkCudaErrors(cudaMemset(d_normaltwo, 0.0, maxmemvertstwo * sizeof(*d_postwo)));
         checkCudaErrors(cudaMemset(d_volume_twice,0.0,sizeof(float)*NumX2 * NumY2*NumZ2));
-        checkCudaErrors(cudaMemset(d_boundary, 0.0, (NumX *NumY * NumZ) * sizeof(*d_boundary)));
-        checkCudaErrors(cudaMemset(d_inter_boundary, 0.0, (NumX *NumY * NumZ) * sizeof(*d_inter_boundary)));
-        checkCudaErrors(cudaMemset(d_pos, 0.0, (NumX *NumY * NumZ) * sizeof(*d_pos)));
-        checkCudaErrors(cudaMemset(d_normal, 0.0, (NumX *NumY * NumZ) * sizeof(*d_normal)));
+        checkCudaErrors(cudaMemset(d_boundary, 0.0, (NumX2 *NumY2 * NumZ2) * sizeof(*d_boundary)));
+        checkCudaErrors(cudaMemset(vol_one, 0.0, (NumX2 *NumY2 * NumZ2) * sizeof(*vol_one)));
 
-        init_final_boundary(d_final_boundary,NumX,NumY,NumZ);
-        
     }
 
     void erase_topo_data()
@@ -2681,17 +2647,13 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     void init_Boundary()
     {
-        checkCudaErrors(cudaMalloc((void **)&d_boundary, sizeof(float) * (NumX*NumY*NumZ)));
+        checkCudaErrors(cudaMalloc((void **)&d_boundary, sizeof(float) * (NumX2*NumY2*NumZ2)));
 
-        checkCudaErrors(cudaMalloc((void **)&d_inter_boundary, sizeof(float) * (NumX*NumY*NumZ)));
+        checkCudaErrors(cudaMalloc((void **)&vol_one, sizeof(*vol_one) * (NumX2*NumY2*NumZ2)));
 
-        checkCudaErrors(cudaMalloc((void **)&d_final_boundary, sizeof(float) * (NumX*NumY*NumZ)));
+        cudaMemset(d_boundary,0,sizeof(float) * size2);
 
-        cudaMemset(d_boundary,0,sizeof(float) * size);
-
-        cudaMemset(d_inter_boundary,0,sizeof(float) * size);
-
-        init_final_boundary(d_final_boundary,NumX,NumY,NumZ);
+        cudaMemset(vol_one,0,sizeof(*vol_one) *size2 );
 
         ImguiApp::boundary_buffers = true;
 
@@ -2705,18 +2667,14 @@ class Multitopo : public VulkanBaseApp, Modelling
           
         if(ImguiApp::retain)
         {
-            retain_boundary(d_final_boundary,d_boundary,d_inter_boundary,NumX,NumY,NumZ);
-            cudaMemcpy(d_final_boundary, d_inter_boundary, (NumX*NumY*NumZ) * sizeof(float), cudaMemcpyDeviceToDevice);
 
-            lattice.copytotexture(d_final_boundary,devPitchedPtr,NumX,NumY,NumZ);
-
-            lattice.updateTexture(devPitchedPtr);
-
-            lattice.refine(d_volume_twice,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
-
-            isosurf.computeIsosurface_2(d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+            isosurf.copy_parameter(d_voxelVertstwo,d_voxelVertsScantwo,0.0,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,numVoxelstwo,&activeVoxelstwo,d_compVoxelArraytwo,vol_one,d_boundary,
+            &totalVertstwo);
+            
+            isosurf.computeIsosurface(d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
             d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
-            &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,d_volume_twice,0.0);
+            &activeVoxelstwo,&totalVertstwo,totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,0.0,0.0,ImguiApp::retain);
+            
 
             ImguiApp::retain = false;
             
@@ -2725,42 +2683,59 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         if(ImguiApp::calculate)
         {
-            
+            bool compute_iso = false;
+
             if(cylind_selected || cylind_disc_selected)
             {
                 
-                distance_from_line(d_boundary,ImguiApp::center,ImguiApp::axis,ImguiApp::radius, ImguiApp::thickness_radial,ImguiApp::thickness_axial,NumX,NumY,NumZ,cylind_disc_selected);
+                distance_from_line(d_boundary,ImguiApp::center,ImguiApp::axis,ImguiApp::radius, ImguiApp::thickness_radial,ImguiApp::thickness_axial,NumX2,NumY2,NumZ2,cylind_disc_selected);
+                
+                compute_iso = true;
             }
 
             if(sphere_selected || sphere_shell_selected)
             {
-                sphere_with_center(d_boundary,center,ImguiApp::sphere_radius,ImguiApp::sphere_thickness,NumX,NumY,NumZ,ImguiApp::sphere_shell_selected);
+                sphere_with_center(d_boundary,center,ImguiApp::sphere_radius,ImguiApp::sphere_thickness,NumX2,NumY2,NumZ2,ImguiApp::sphere_shell_selected);
+
+                compute_iso = true;
             }
             if(cuboid_selected)
             {
-                cuboid(d_boundary,center,angles,ImguiApp::cuboid_x,ImguiApp::cuboid_y,ImguiApp::cuboid_z,NumX,NumY,NumZ);
+                cuboid(d_boundary,center,angles,ImguiApp::cuboid_x,ImguiApp::cuboid_y,ImguiApp::cuboid_z,NumX2,NumY2,NumZ2);
                 
+                compute_iso = true;
             }
             if(cuboid_shell_selected)
             {
-                cuboid_shell(d_boundary,center,angles,ImguiApp::cuboid_x,ImguiApp::cuboid_y,ImguiApp::cuboid_z,ImguiApp::cu_sh_thick,NumX,NumY,NumZ);
+                cuboid_shell(d_boundary,center,angles,ImguiApp::cuboid_x,ImguiApp::cuboid_y,ImguiApp::cuboid_z,ImguiApp::cu_sh_thick,NumX2,NumY2,NumZ2);
+            
+                compute_iso = true;
             }
             if(torus_selected)
             {
-                torus_with_center(d_boundary,center,angles,ImguiApp::torus_radius,ImguiApp::torus_circle_radius,NumX,NumY,NumZ);
+                torus_with_center(d_boundary,center,angles,ImguiApp::torus_radius,ImguiApp::torus_circle_radius,NumX2,NumY2,NumZ2);
+            
+                compute_iso = true;
             }
             if(cone_selected)
             {
                 
-                cone_with_base_radius_height(d_boundary,center,angles,ImguiApp::base_radius,ImguiApp::cone_height,NumX,NumY,NumZ);
+                cone_with_base_radius_height(d_boundary,center,angles,ImguiApp::base_radius,ImguiApp::cone_height,NumX2,NumY2,NumZ2);
+            
+                compute_iso = true;
             }
             
-        }
-
-        isosurf.computeIsosurface(d_inter_boundary,d_pos,d_normal,0.0,numVoxels,d_voxelVerts,d_voxelVertsScan,
-        d_voxelOccupied,d_voxelOccupiedScan,gridSize,gridSizeShift,gridSizeMask,voxelSize,gridcenter,
-        &activeVoxels,&totalVerts,d_compVoxelArray,maxmemverts,d_final_boundary,d_boundary,0.0,0.0,ImguiApp::retain);
         
+
+            if(compute_iso)
+            {
+                isosurf.computeIsosurface(d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                &activeVoxelstwo,&totalVertstwo,totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,0.0,0.0,ImguiApp::retain);
+                
+            }
+
+        }
 
     }
 
@@ -3309,7 +3284,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
                         if(ImguiApp::primitives)
                         {
-                            lattice.primitive_field(d_volume_twice,d_volumethree_one,0.0,NumX2,NumY2,NumZ2);
+                            lattice.primitive_field(vol_one,d_volumethree_one,0.0,NumX2,NumY2,NumZ2);
                         }
                         else if(ImguiApp::structural || ImguiApp::thermal)
                         {
@@ -3589,12 +3564,6 @@ class Multitopo : public VulkanBaseApp, Modelling
             
                 check_lattice();
 
-                lattice.copytotexture(d_final_boundary,devPitchedPtr,NumX,NumY,NumZ);
-
-                lattice.updateTexture(devPitchedPtr);
-
-                lattice.refine(d_volume_twice,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
-
                 spatial_lattice_run();
 
                 ImguiApp::execute_primitive_lattice = false;
@@ -3668,12 +3637,6 @@ class Multitopo : public VulkanBaseApp, Modelling
                         ImguiApp::show_primitive_lattice = true;
 
                         check_lattice();
-
-                        lattice.copytotexture(d_final_boundary,devPitchedPtr,NumX,NumY,NumZ);
-
-                        lattice.updateTexture(devPitchedPtr);
-
-                        lattice.refine(d_volume_twice,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
 
                         spatial_lattice_run();
                   
@@ -4017,15 +3980,11 @@ class Multitopo : public VulkanBaseApp, Modelling
             checkCudaErrors(cudaFree(d_boundary));
         }
 
-        if(d_inter_boundary)
+        if(vol_one)
         {
-            checkCudaErrors(cudaFree(d_inter_boundary));
+            checkCudaErrors(cudaFree(vol_one));
         }
 
-        if(d_final_boundary)
-        {
-            checkCudaErrors(cudaFree(d_final_boundary));
-        }
     }
 
     void cleanup_cuda_storage_buffer_handle()

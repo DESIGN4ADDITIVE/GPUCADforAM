@@ -67,13 +67,13 @@ void File_output::file_write(float4 *d_pos, uint totalVerts, const char *filenam
             
         if((faces[i] != faces[i+1]) && (faces[i] != faces[i+2]) && (faces[i+1] != faces[i+2] ))
         {
-            face_flot =  {faces[i],faces[i+1],faces[i+2]};
+            face_flot =  {faces[i+2],faces[i+1],faces[i]};
                 
                 
             if(face_check.count(face_flot) == 0)
             {
                 face_check[face_flot] = 1;
-                mfile_latttice<<" f  "<<faces[i]<<" "<<faces[i+1]<<" "<<faces[i+2]<<"\n";
+                mfile_latttice<<" f  "<<faces[i+2]<<" "<<faces[i+1]<<" "<<faces[i]<<"\n";
                     
             }
         }

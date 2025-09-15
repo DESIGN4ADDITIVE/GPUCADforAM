@@ -2685,42 +2685,42 @@ class Multitopo : public VulkanBaseApp, Modelling
         {
             bool compute_iso = false;
 
-            if(cylind_selected || cylind_disc_selected)
+             if(cylind_selected || cylind_disc_selected)
             {
                 
-                distance_from_line(d_boundary,ImguiApp::center,ImguiApp::axis,ImguiApp::radius, ImguiApp::thickness_radial,ImguiApp::thickness_axial,NumX2,NumY2,NumZ2,cylind_disc_selected);
+                distance_from_line(d_boundary, ImguiApp::center,ImguiApp::axis, 2 * ImguiApp::radius, 2 * ImguiApp::thickness_radial, 2 * ImguiApp::thickness_axial,NumX2,NumY2,NumZ2,cylind_disc_selected);
                 
                 compute_iso = true;
             }
 
             if(sphere_selected || sphere_shell_selected)
             {
-                sphere_with_center(d_boundary,center,ImguiApp::sphere_radius,ImguiApp::sphere_thickness,NumX2,NumY2,NumZ2,ImguiApp::sphere_shell_selected);
+                sphere_with_center(d_boundary,center, 2 * ImguiApp::sphere_radius, 2 * ImguiApp::sphere_thickness,NumX2,NumY2,NumZ2, ImguiApp::sphere_shell_selected);
 
                 compute_iso = true;
             }
             if(cuboid_selected)
             {
-                cuboid(d_boundary,center,angles,ImguiApp::cuboid_x,ImguiApp::cuboid_y,ImguiApp::cuboid_z,NumX2,NumY2,NumZ2);
+                cuboid(d_boundary,center,angles, 2 * ImguiApp::cuboid_x, 2 * ImguiApp::cuboid_y, 2 * ImguiApp::cuboid_z,NumX2,NumY2,NumZ2);
                 
                 compute_iso = true;
             }
             if(cuboid_shell_selected)
             {
-                cuboid_shell(d_boundary,center,angles,ImguiApp::cuboid_x,ImguiApp::cuboid_y,ImguiApp::cuboid_z,ImguiApp::cu_sh_thick,NumX2,NumY2,NumZ2);
+                cuboid_shell(d_boundary,center,angles, 2 * ImguiApp::cuboid_x, 2 * ImguiApp::cuboid_y, 2 * ImguiApp::cuboid_z, 2 *ImguiApp::cu_sh_thick,NumX2,NumY2,NumZ2);
             
                 compute_iso = true;
             }
             if(torus_selected)
             {
-                torus_with_center(d_boundary,center,angles,ImguiApp::torus_radius,ImguiApp::torus_circle_radius,NumX2,NumY2,NumZ2);
+                torus_with_center(d_boundary,center,angles,  2 * ImguiApp::torus_radius, 2 * ImguiApp::torus_circle_radius,NumX2,NumY2,NumZ2);
             
                 compute_iso = true;
             }
             if(cone_selected)
             {
                 
-                cone_with_base_radius_height(d_boundary,center,angles,ImguiApp::base_radius,ImguiApp::cone_height,NumX2,NumY2,NumZ2);
+                cone_with_base_radius_height(d_boundary,center,angles, 2 * ImguiApp::base_radius, 2 * ImguiApp::cone_height,NumX2,NumY2,NumZ2);
             
                 compute_iso = true;
             }

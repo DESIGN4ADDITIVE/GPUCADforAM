@@ -1570,7 +1570,7 @@ void ImguiApp::show_unit_lattice_settings()
     ImGui::NewLine();
 
     static ImGuiComboFlags flags_four = ImGuiComboFlags_WidthFitPreview;
-    const char* itemsfour[] = { "Gyroid","Schwarz P","FRD","IWP","Type4","Schwarz D"};
+    const char* itemsfour[] = { "Gyroid","Schwarz P","FRD","IWP","Cross_Cube","Schwarz D"};
     static int item_current_idxfour = 0; 
 
     const char* combo_preview_valuefour = itemsfour[item_current_idxfour];

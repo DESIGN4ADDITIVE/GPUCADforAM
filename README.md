@@ -46,3 +46,7 @@ For more details please check DEPENDENCIES.md file.
 ## Demo - Primitive Modelling
 
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/_qA05n181Pw/0.jpg)](http://www.youtube.com/watch?v=_qA05n181Pw "GPUCADforAM")
+
+## Demo - Unit Lattice generation
+
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/_DCmOFsKEww/0.jpg)](http://www.youtube.com/watch?v=_DCmOFsKEww "GPUCADforAM")

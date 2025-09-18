@@ -214,6 +214,7 @@ class ImguiApp
     static void show_unit_lattice_settings();
     static void show_spatial_period_settings();
     static void show_spatial_angle_settings();
+    static void spatial_lattice_settings();
     static void show_export_settings();
     static void show_debugging_window();
 };

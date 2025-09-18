@@ -1694,22 +1694,7 @@ void ImguiApp::show_spatial_angle_settings()
         ImGui::EndCombo();
     }
 
- 
-
-    ImGui::NewLine();
-        
-    if(ImGui::Button("View Lattice") && !ImguiApp::view_lattice)
-    {
-        
-        if(ImguiApp::lattice_buffer_created)
-        {
-            ImguiApp::view_lattice = true;
-        }   
-        else
-        {
-            ImguiApp::debug_window = true;
-        }
-    }
+    spatial_lattice_settings();
 
     ImGui::End();
 }
@@ -1762,8 +1747,14 @@ void ImguiApp::show_spatial_period_settings()
 
     }
 
-    ImGui::NewLine();
+    spatial_lattice_settings();
 
+    ImGui::End();
+}
+
+void ImguiApp::spatial_lattice_settings()
+{
+    ImGui::NewLine();
     static bool iso_bool = false;
     static bool iso1_bool = false;
     static bool iso2_bool = false;
@@ -1803,13 +1794,22 @@ void ImguiApp::show_spatial_period_settings()
 
     ImGui::NewLine();
     
+
     if(ImGui::Button("View Lattice") && !ImguiApp::view_lattice)
     {
-        ImguiApp::view_lattice = true;
+        
+        if(ImguiApp::lattice_buffer_created)
+        {
+            ImguiApp::view_lattice = true;
+        }   
+        else
+        {
+            ImguiApp::debug_window = true;
+        }
     }
 
-    ImGui::End();
 }
+
 
 
 void ImguiApp::show_export_settings()

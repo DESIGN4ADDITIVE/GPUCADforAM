@@ -1782,32 +1782,56 @@ void ImguiApp::spatial_lattice_settings()
     is_3 = std::max(std::min(is_3,0.99f),is_1 + 0.01f);
     ImguiApp::bound_isoValtwo = is_3;
 
-   if(iso1_bool || iso2_bool )
-   {
-        if( ImguiApp::show_lattice_data)
-        {
-            ImguiApp::update_isorange = true;
-        }
+    if(iso1_bool || iso2_bool )
+    {
+            if( ImguiApp::show_lattice_data)
+            {
+                ImguiApp::update_isorange = true;
+            }
 
-   }
+            else if(ImguiApp::show_unit_lattice_data)
+            {
+                ImguiApp::update_unit_isorange = true;
+            }
+
+    }
 
 
     ImGui::NewLine();
     
-
-    if(ImGui::Button("View Lattice") && !ImguiApp::view_lattice)
+  
+    if(ImguiApp::unit_lattice_settings)
     {
+        if(ImGui::Button("View Unit Lattice") )
+        {
         
-        if(ImguiApp::lattice_buffer_created)
-        {
-            ImguiApp::view_lattice = true;
-        }   
-        else
-        {
-            ImguiApp::debug_window = true;
+            if(!ImguiApp::view_unit_lattice_data && ImguiApp::lattice_buffer_created)
+            {
+                ImguiApp::view_unit_lattice_data = true;
+            }
+            else
+            {
+                ImguiApp::debug_window = true;
+            }
         }
     }
-
+    else if(ImguiApp::spatial_angle_window || ImguiApp::spatial_period_window)
+    {
+        
+        if(ImGui::Button("View Spatial Lattice") )
+        {
+            
+            if(!ImguiApp::view_lattice && ImguiApp::lattice_buffer_created)
+            {
+                ImguiApp::view_lattice = true;
+            }
+            else
+            {
+                ImguiApp::debug_window = true;
+            }
+        }
+    }
+    
 }
 
 

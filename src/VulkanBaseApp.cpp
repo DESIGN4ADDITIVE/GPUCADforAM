@@ -2382,8 +2382,7 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
 
         if(view_settings)
         {       
-            ImguiApp::show_view_settings(&view_settings,&shift,&reset, &show_grid, &show_mesh ,&VulkanBaseApp::push_constants.p_size_1, &VulkanBaseApp::push_constants.p_size_2, &VulkanBaseApp::push_constants.p_size_3,
-            &VulkanBaseApp::push_constants.p_size_4);
+            ImguiApp::show_view_settings(&view_settings,&shift,&reset, &show_grid, &show_mesh);
         }
 
         if (cylind_selected || cylind_disc_selected)

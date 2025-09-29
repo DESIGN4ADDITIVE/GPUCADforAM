@@ -159,6 +159,10 @@ ImVec2 ImguiApp::window_extent = {50,50};
 
 ImVec4 ImguiApp::clear_color = ImVec4(0.148f, 0.148f, 0.148f, 1.00f);
 
+
+LightPushConstants ImguiApp::push_constants = {{0.0f,0.0f,0.0f,0.0f},0.0f,0.0f,0.0f,1.0f,0.0f,0.0f,0,5.0,0,15};
+
+
 /////////////////////Topopt_val//////////////////////////////
 REAL Topopt_val::Youngs_Modulus = 1.0; //Young Modulus
 REAL Topopt_val::poisson = 0.3; //Poisson's Ratio
@@ -1080,7 +1084,7 @@ void ImguiApp::show_background_color_settings(bool *background_color, ImVec4& cl
 
     ImGui::End();
 }
-void ImguiApp::show_view_settings(bool *view_setting, bool *shift, bool *reset, bool *show_grid, bool *show_mesh, float *f1,float *f2, float *f3, float *f4)
+void ImguiApp::show_view_settings(bool *view_setting, bool *shift, bool *reset, bool *show_grid, bool *show_mesh)
 {
     
     ImGui::Begin("VIEW SETTINGS", view_setting); 
@@ -1106,15 +1110,15 @@ void ImguiApp::show_view_settings(bool *view_setting, bool *shift, bool *reset, 
     ImGui::SliderFloat("Point Size2", &f1_2, 0.0f, 10.0f, "%.1f");
     static float f1_3 = 0.0f;
     ImGui::SliderFloat("Point Size3", &f1_3, 0.0f, 10.0f, "%.1f");
-    static float f1_4 = (ImguiApp::structural || ImguiApp::thermal) ? 15.0 : 3.0;
+    static float f1_4 = (ImguiApp::structural || ImguiApp::thermal) ? 15.0 : (ImguiApp::lattice) ? 1.0 : 2.0;
     ImGui::SliderFloat("Point Size4", &f1_4, 0.0f, 15.0f, "%.1f");
 
     ImGui::Checkbox("Show 3D Mesh", show_mesh);
 
-    *f1 = f1_1;
-    *f2 = f1_2;
-    *f3 = f1_3;
-    *f4 = f1_4;
+    ImguiApp::push_constants.p_size_1 = f1_1;
+    ImguiApp::push_constants.p_size_2 = f1_2;
+    ImguiApp::push_constants.p_size_3 = f1_3;
+    ImguiApp::push_constants.p_size_4 = f1_4;
 
     ImGui::End();
 }

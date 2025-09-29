@@ -16,13 +16,32 @@
 #include <cuda_runtime_api.h>
 
 
+typedef float fvec4[4];
 
+struct LightPushConstants
+{
+    
+    fvec4 eyes;
+    float p_size_1;
+    float p_size_2;
+    float p_size_3;
+    float p_size_4;
+    float mouse_x;
+    float mouse_y;
+    int mouse_click;
+    float pix_delta;
+    int support;
+    float point_size;
+
+} ;
 
 class ImguiApp 
 {
     
 
     protected:
+
+    static LightPushConstants push_constants;
 
     static bool vulkan_buffer_created;
     static int grid_value;
@@ -196,7 +215,7 @@ class ImguiApp
 
     ImguiApp();
     ~ImguiApp();
-    static void show_view_settings(bool *view_setting, bool *shift, bool *reset,bool *show_grid, bool *show_mesh ,float *f1,float *f2, float *f3, float *f4);
+    static void show_view_settings(bool *view_setting, bool *shift, bool *reset,bool *show_grid, bool *show_mesh );
     static void show_execute_topo(bool *execute_setting, bool *execute_signal, bool *execute_done );
     static void show_execute_lattice(bool *execute_lattice, bool *execute_signal, bool *execute_done );
     static void show_grid_settings(bool *grid_setting, bool vulkan_buffer_created, ImVec4 clear_color);

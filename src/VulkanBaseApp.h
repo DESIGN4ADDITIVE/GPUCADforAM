@@ -19,28 +19,9 @@
 
 struct GLFWwindow;
 
-typedef float fvec4[4];
-
 class VulkanBaseApp :public ImguiApp
 {
 public:
-    
-    struct LightPushConstants
-    {
-        
-        fvec4 eyes;
-        float p_size_1 = 2.0f;
-        float p_size_2 = 2.0f;
-        float p_size_3 = 2.0f;
-        float p_size_4 = 3.0f;
-        float mouse_x = 0.0f;
-        float mouse_y = 0.0f;
-        int mouse_click = 0;
-        float pix_delta = 5.0;
-        int support = 0;
-        float point_size = 15;
-
-    } push_constants;
     
     VulkanBaseApp(const std::string& appName, bool enableValidation = false);
     static VkExternalSemaphoreHandleTypeFlagBits getDefaultSemaphoreHandleType();

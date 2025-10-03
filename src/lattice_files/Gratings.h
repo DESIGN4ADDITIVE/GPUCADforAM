@@ -36,7 +36,7 @@ class  Gratings
     void VecSMultAdd_lattice (float *d_v, float a1, float *d_w, const float a2,const int NX, const int NY, const int NZ);
 
     void finding_phi(float *d_phi,float *d_period,int x_dim, int y_dim, int z_dim, int i, int j, int k,float dx, float dy, float dz, char latticetype_one ,
-    int unform_type, float const_peirod, float x_period, float y_period, float z_period);
+    int unform_type, float const_peirod, float x_period, float y_period, float z_period, float lcon, float lcon_1, bool sinewave_zaxis);
 
     void GPUCG_lattice(float *d_phi, const int iter, const int OptIter, const float EndRes, int &FinalIter, float &FinalRes);
     

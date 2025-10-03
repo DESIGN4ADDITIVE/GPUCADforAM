@@ -3268,7 +3268,7 @@ class Multitopo : public VulkanBaseApp, Modelling
                     {
                     
                         lattice.finding_phi(d_phi,d_period,NumX,NumY,NumZ,i,j,k,dx,dy,dz,latticetype_one,
-                        period_type,period_of_grating,x_period,y_period,z_period);
+                        period_type,period_of_grating,x_period,y_period,z_period, ImguiApp::lcon, ImguiApp::lcon_1,ImguiApp::sinewave_zaxis);
                     
                         lattice.GPUCG_lattice(d_phi,500,1,0.01, FinalIter_l, FinalRes_l);
                         

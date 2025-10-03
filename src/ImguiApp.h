@@ -146,6 +146,9 @@ class ImguiApp
 
     public:
 
+    static float lcon;
+    static float lcon_1;
+
     static bool cylind_selected;
     static bool cylind_disc_selected;
     static bool cuboid_selected ;
@@ -196,6 +199,8 @@ class ImguiApp
     static float x_period;
     static float y_period;
     static float z_period;
+
+    static bool sinewave_zaxis;
 
     ////////////////////////////////////////////////////////////
 

@@ -44,6 +44,8 @@ float ImguiApp::x_period = 30.0;
 float ImguiApp::y_period = 30.0;
 float ImguiApp::z_period = 30.0;
 
+bool ImguiApp::sinewave_zaxis = false;
+
 bool ImguiApp::update_isorange = false;
 bool ImguiApp::update_unit_isorange = false;
 
@@ -61,6 +63,9 @@ bool ImguiApp::execute_primitive_lattice = false;
 bool ImguiApp::execute_lattice_data = false;
 
 bool ImguiApp::view_lattice = false;
+
+float ImguiApp::lcon = 0.16;
+float ImguiApp::lcon_1 = 0.6;
 
 
 ////////////PRIMITVE//////////////////////////
@@ -1675,7 +1680,7 @@ void ImguiApp::show_spatial_angle_settings()
     ImGui::SetWindowCollapsed(false,2);
     ImGui::Text("ANGLE PARAMETERS");
 
-        static ImGuiComboFlags flags = ImGuiComboFlags_WidthFitPreview;
+    static ImGuiComboFlags flags = ImGuiComboFlags_WidthFitPreview;
 
     const char* items[] = { "Normal","Bend","Round","Sinewave"};
     static int item_current_idx = 0; 
@@ -1694,8 +1699,38 @@ void ImguiApp::show_spatial_angle_settings()
             if (is_selected)
                 ImGui::SetItemDefaultFocus();
         }
+
         
         ImGui::EndCombo();
+    }
+
+    if(ImguiApp::lattice_type_index == 3)
+    {
+        ImGui::NewLine();
+        ImGui::Text("Sinewave Parameters ");
+        static float amp_sin = 0.6f;
+        ImGui::SliderFloat("Amplitude ", &amp_sin,0.02, 5, "%.3f");
+        ImguiApp::lcon = amp_sin;
+
+        ImGui::NewLine();
+        static int freq_sin = 1;
+        ImGui::SliderInt("Frequency ", &freq_sin,1, 100);
+        ImguiApp::lcon_1 = float(freq_sin);
+
+        ImGui::NewLine();
+        static int sin_zaxis = 0;
+        ImGui::RadioButton("Zaxis InActive ", &sin_zaxis,0); ImGui::SameLine();
+        ImGui::RadioButton("Zaxis Active ", &sin_zaxis,1);
+
+        if(sin_zaxis == 1)
+        {
+            ImguiApp::sinewave_zaxis = true;
+        }
+        else
+        {
+            ImguiApp::sinewave_zaxis = false;
+        }
+
     }
 
     spatial_lattice_settings();

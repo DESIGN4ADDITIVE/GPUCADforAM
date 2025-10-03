@@ -108,7 +108,7 @@ __global__ void VecSMultAddKernel_lattice(float *d_v, const float a1, float *d_w
 
 
 __global__ void finding_phi_kernel(float *d_phi, float *d_period,int x_dim,int y_dim,int z_dim,int i ,int j, int k,
-float dx, float dy, float dz,  char latticetype_one, int uniform_type, float const_peirod, float x_period, float y_period, float z_period)
+float dx, float dy, float dz,  char latticetype_one, int uniform_type, float const_peirod, float x_period, float y_period, float z_period, float lconn, float lconn_1, bool sinewave_zaxis)
 {
 
 
@@ -323,27 +323,27 @@ float dx, float dy, float dz,  char latticetype_one, int uniform_type, float con
 				mean_y = 0;
 				mean_z = 0;
 
-				const float lcon = 0.6;
-				const float lcon_1 = 0.16;
+				float lcon = lconn;
+				float lcon_1 = float(lconn_1);
 				yy = ((y+1) - mean_y)*dx;
 				float xx1 = ((x1+1) - mean_x)*dx;
 				float zz1 = ((z1+1) - mean_z)*dz;
-				theta1 = lcon*sin(lcon_1 * xx1);
-				theta5 = lcon*sin(lcon_1 * zz1);
+				theta1 = lcon*sinf(6.28 * lcon_1 * xx1);
+				theta5 = lcon*sinf(6.28 * lcon_1 * zz1);
 				float xx2 = ((x2+1) - mean_x)*dx;
 				float zz2 = ((z2+1) - mean_z)*dz;
-				theta2 = lcon*sin(lcon_1 * xx2);
-				theta6 = lcon*sin(lcon_1 * zz2);
+				theta2 = lcon*sinf(6.28 * lcon_1 * xx2);
+				theta6 = lcon*sinf(6.28 * lcon_1 * zz2);
 
 
 				xx = ((x+1) - mean_x) *dx;
 				zz = ((z+1) - mean_z) *dz;
 				
-				theta3 = lcon * sin(lcon_1 * xx);
-				theta7 = lcon * sin(lcon_1 * zz);
+				theta3 = lcon * sinf(6.28 * lcon_1 * xx);
+				theta7 = lcon * sinf(6.28 * lcon_1 * zz);
 				
-				theta4 = lcon * sin(lcon_1 * xx);
-				theta8 = lcon * sin(lcon_1 * zz);
+				theta4 = lcon * sinf(6.28 * lcon_1 * xx);
+				theta8 = lcon * sinf(6.28 * lcon_1 * zz);
 			}
 			
 			
@@ -389,14 +389,11 @@ float dx, float dy, float dz,  char latticetype_one, int uniform_type, float con
 		}
 
 		
-		
-		
+		kx1 = ((2*M_PI)/per_1)*(i*cosf(theta1) - j *sinf(theta1));
+		kx2 = ((2*M_PI)/per_2)*(i*cosf(theta2) - j *sinf(theta2));
 
-		kx1 = ((2*M_PI)/per_1)*(i*cosf(theta1) - j *sinf(con * theta1 - angl));
-		kx2 = ((2*M_PI)/per_2)*(i*cosf(theta2) - j *sinf(con * theta2 - angl));
-
-		ky1 = ((2*M_PI)/per_3)*(i*sinf(theta3) + j *cosf(con * theta3 + angl));
-		ky2 = ((2*M_PI)/per_4)*(i*sinf(theta4) + j *cosf(con * theta4 + angl));
+		ky1 = ((2*M_PI)/per_3)*(i*sinf(theta3) + j *cosf(theta3));
+		ky2 = ((2*M_PI)/per_4)*(i*sinf(theta4) + j *cosf(theta4));
 
 		kz1 = ((2*M_PI)/per_5)*k;
 		kz2 = ((2*M_PI)/per_6)*k;
@@ -405,16 +402,19 @@ float dx, float dy, float dz,  char latticetype_one, int uniform_type, float con
 
 		if(latticetype_one == 's')
 		{
-			kz1 = ((2*M_PI)/per_5)*(j*sinf(theta5) + k *cosf(con * theta5 - angl));
-			kz2 = ((2*M_PI)/per_6)*(j*sinf(theta6) + k *cosf(con * theta6 - angl));
+			if(sinewave_zaxis)
+			{
+				kz1 = ((2*M_PI)/per_5)*(j*sinf(theta5) + k *cosf(con * theta5 - angl));
+				kz2 = ((2*M_PI)/per_6)*(j*sinf(theta6) + k *cosf(con * theta6 - angl));
 
-			ky1 = ((2*M_PI)/per_3)*(j*cosf(theta7) - k *sinf(con * theta7 + angl));
-			ky2 = ((2*M_PI)/per_4)*(j*cosf(theta8) - k *sinf(con * theta8 + angl));
+				ky1 = ((2*M_PI)/per_3)*(j*cosf(theta7) - k *sinf(con * theta7 + angl));
+				ky2 = ((2*M_PI)/per_4)*(j*cosf(theta8) - k *sinf(con * theta8 + angl));
 
-			kx1 = ((2*M_PI)/per_1)*i;
-			kx2 = ((2*M_PI)/per_2)*i;
+				kx1 = ((2*M_PI)/per_1)*i;
+				kx2 = ((2*M_PI)/per_2)*i;
 
-			phii += (a1*kx1 + a2 * kx2) + (b1 * ky1 + b2 * ky2 ) + (c1 *kz1 + c2 *kz2);
+				phii += (a1*kx1 + a2 * kx2) + (b1 * ky1 + b2 * ky2 ) + (c1 *kz1 + c2 *kz2);
+			}
 		}
 	
 		__syncthreads();
@@ -746,12 +746,12 @@ __global__ void svl_kernel(float *d_svl,float2 *d_grating, int NX, int NY,int NZ
 		c = data_fft[indxx];
 
 		float d = (a.x * c.x) - (a.y * (c.y));
-		// float d = a.x;
+		//float d = a.x;
 		__syncthreads();
 	
 
 		d_svl[tx] =  b + d;
-		// d_svl[tx] =  d;
+		//d_svl[tx] +=  d;
 
 
 		__syncthreads();
@@ -1095,13 +1095,13 @@ void Gratings::GPUCleanUp()
 }
 
 void Gratings::finding_phi(float *d_phi ,float *d_period, int x_dim ,int y_dim, int z_dim, int i, int j, int k, float dx, float dy, float dz,
-char latticetype_one , int unform_type, float const_peirod, float x_period, float y_period, float z_period)
+char latticetype_one , int unform_type, float const_peirod, float x_period, float y_period, float z_period, float lcon, float lcon_1, bool sinewave_zaxis)
 {
 	dim3 grids(ceil((x_dim*y_dim*z_dim)/float(1024)),1,1);
 	dim3 tids(1024,1,1);
 
 	finding_phi_kernel<<<grids,tids>>>(d_phi, d_period, x_dim, y_dim, z_dim, i, j, k, dx, dy, dz, latticetype_one,
-	unform_type, const_peirod, x_period, y_period, z_period);
+	unform_type, const_peirod, x_period, y_period, z_period, lcon, lcon_1, sinewave_zaxis);
 	cudaDeviceSynchronize();
 };
 

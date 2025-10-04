@@ -1619,56 +1619,11 @@ void ImguiApp::show_unit_lattice_settings()
             ImguiApp::approx_unit_lattice = true;
             ImguiApp::real_unit_lattice = false;
         }
-        
-        ImGui::NewLine();
-        static bool iso_ubool = false;
-        static bool iso1_ubool = false;
-        static bool iso2_ubool = false;
-        ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-        static float is_1 = 0.25f;
-        ImGui::SliderFloat("IsoValue", &is_1,0.02, 0.98, "%.3f");
-        iso_ubool = ImGui::IsItemActive();
-        ImguiApp::bound_isoVal = is_1;
-        ImGui::NewLine();
 
-        ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-        static float is_2 = 0.20f;
+        spatial_lattice_settings();
+     
+    }
     
-        ImGui::SliderFloat("IsoRange -  ", &is_2,0.01f,is_1 - 0.01,"%.3f");
-        iso1_ubool = ImGui::IsItemActive();
-        is_2 = std::max(std::min(is_2,is_1 - 0.01f),0.01f);
-        ImguiApp::bound_isoValone = is_2;
-
-        ImGui::NewLine();
-        ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-        static float is_3 = 0.30f;
-        ImGui::SliderFloat("IsoRange +  ", &is_3,is_1 + 0.01 ,0.99f,"%.3f");
-        iso2_ubool = ImGui::IsItemActive();
-        is_3 = std::max(std::min(is_3,0.99f),is_1 + 0.01f);
-        ImguiApp::bound_isoValtwo = is_3;
-
-        if(iso1_ubool || iso2_ubool )
-    {
-            if( ImguiApp::show_unit_lattice_data)
-            {
-                ImguiApp::update_unit_isorange = true;
-            }
-
-    }
-
-
-        if(ImGui::Button("View Unit Lattice") && !ImguiApp::view_unit_lattice_data )
-        {
-            if(ImguiApp::lattice_buffer_created)
-            {
-                ImguiApp::view_unit_lattice_data = true;
-            }
-            else
-            {
-                ImguiApp::debug_window = true;
-            }
-        }
-    }
     ImGui::End();
 }
 

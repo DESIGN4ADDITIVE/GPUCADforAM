@@ -31,12 +31,12 @@ __global__ void create_lattice_kernel(float *d_latticevol,uint NX, uint NY, uint
 
 		if(lattice_index_type == 0)
 		{
-			aa = cosf(3.28 * xx)*sinf(3.28 * yy) + cosf(3.28 * yy) * sinf(3.28 * zz) + cosf(3.28 * zz) * sinf(3.28 * xx);
+			aa = cosf(3.14 * xx)*sinf(3.14 * yy) + cosf(3.14 * yy) * sinf(3.14 * zz) + cosf(3.14 * zz) * sinf(3.14 * xx);
 
 		}
 		else if(lattice_index_type == 1)
 		{
-			aa = cosf(3.28  * xx) + cosf(3.28  * yy) + cosf(3.28  * zz) ;
+			aa = cosf(3.14  * xx) + cosf(3.14  * yy) + cosf(3.14  * zz) ;
 		}
 		else if (lattice_index_type == 2)
 		{

@@ -2886,8 +2886,6 @@ class Multitopo : public VulkanBaseApp, Modelling
     {
 
         fftlattice.create_lattice(d_volumeone,Nxu,Nyu,Nzu,sizeone,lattice_index_type);
-
-        lattice.GPU_buffer_normalise_buffer(d_volumeone,d_volumeone,Nxu*Nyu*Nzu);
         
         checkCudaErrors(cudaMemcpy2D(fft_data,(Nxu+1)*sizeof(float), d_volumeone,(Nxu*sizeof(float)), (Nxu*sizeof(float)),Nyu*Nzu, cudaMemcpyDeviceToDevice));
         

@@ -152,6 +152,8 @@ protected:
     virtual void erase_lattice_data();
     virtual void erase_primitive_data();
 
+    void erase_previous_data();
+
 
     void updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t image_index, uint32_t currentFrame);
     GLFWwindow *window;

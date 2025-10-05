@@ -1990,40 +1990,19 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
 
                 else if(ImGui::BeginMenu("PHYSICS"))
                 {
-                    if(show_model || show_primitive_lattice)
-                    {
-                        show_model = false;
-                        show_primitive_lattice =false;
-                        erase_primitive_data();
-                       
-                    }
                     
-                    if(show_unit_lattice_data || show_lattice_data)
-                    {
-                        show_lattice_data = false;
-                        show_unit_lattice_data = false;
-                        erase_lattice_data();
-                      
-
-                    }
-
-                    if((show_topo_lattice || topo_done_lattice_do ))
-                    {
-                    
-                        show_topo_lattice = false;
-                        topo_done_lattice_do = false;
-                        erase_topo_data();
-                       
-                    }
-
 
                     if(ImGui::MenuItem("STRUCTURAL",NULL,&ImguiApp::structural))
                     {
+                        VulkanBaseApp::erase_previous_data();
+
                         ImguiApp::make_inactive(physics_bools,&ImguiApp::structural);
                     }
             
                     else if(ImGui::MenuItem("THERMAL",NULL,&ImguiApp::thermal))
                     {
+                        VulkanBaseApp::erase_previous_data();
+                        
                         ImguiApp::make_inactive(physics_bools,&ImguiApp::thermal);
                         
                     }
@@ -2547,6 +2526,36 @@ void VulkanBaseApp::updateUniformBuffer(uint32_t imageIndex, bool shift)
 
 void VulkanBaseApp::update_inputevents()
 {
+
+}
+
+void VulkanBaseApp::erase_previous_data()
+{
+    if(show_model || show_primitive_lattice)
+    {
+        show_model = false;
+        show_primitive_lattice =false;
+        erase_primitive_data();
+        
+    }
+    
+    if(show_unit_lattice_data || show_lattice_data)
+    {
+        show_lattice_data = false;
+        show_unit_lattice_data = false;
+        erase_lattice_data();
+        
+
+    }
+
+    if((show_topo_lattice || topo_done_lattice_do ))
+    {
+    
+        show_topo_lattice = false;
+        topo_done_lattice_do = false;
+        erase_topo_data();
+        
+    }
 
 }
 

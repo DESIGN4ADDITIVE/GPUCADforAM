@@ -50,3 +50,7 @@ For more details please check DEPENDENCIES.md file.
 ## Demo - Unit Lattice generation
 
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/_DCmOFsKEww/0.jpg)](http://www.youtube.com/watch?v=_DCmOFsKEww "GPUCADforAM")
+
+## Demo - Spatial Lattice generation
+
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/Lea2-YQPNkc/0.jpg)](http://www.youtube.com/watch?v=Lea2-YQPNkc "GPUCADforAM")

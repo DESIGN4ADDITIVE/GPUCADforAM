@@ -185,7 +185,8 @@ void Selection::vertex_selection(float* d_storagebuffer, float* d_volume, int Nx
 }
 
 
-__global__ void vertex_selection_two_kernel(float* d_storagebuffer_1, float* d_storagebuffer_2, int Nx, int Ny, int Nz)
+__global__ void vertex_selection_two_kernel(float* d_storagebuffer_1, float* d_storagebuffer_2, int Nx, int Ny, int Nz, bool load_selection,
+bool boundary_selection, bool delete_selection)
 {
 	int idx = (blockDim.x * blockIdx.x) + threadIdx.x;
 	int size = Nx*Ny*Nz;
@@ -196,28 +197,42 @@ __global__ void vertex_selection_two_kernel(float* d_storagebuffer_1, float* d_s
 		val1 = d_storagebuffer_1[idx];
 		val2 = d_storagebuffer_2[idx];
 		
-		
-		if ((val1 == -1.0) && (val2 != -1.0))
+		if(boundary_selection )
 		{
-		
-			d_storagebuffer_2[idx] = -1.0;
+			if ((val1 == -1.0) && (val2 != -1.0))
+			{
+			
+				d_storagebuffer_2[idx] = -1.0;
+			}
 		}
-
-		else if ((val1 == 1.0) && (val2 != 1.0))
+		else if (load_selection)
 		{
+			if ((val1 == 1.0) && (val2 != 1.0))
+			{
+			
+				d_storagebuffer_2[idx] = 1.0;
+			}
+		}
 		
-			d_storagebuffer_2[idx] = 1.0;
+		else if(delete_selection)
+		{
+			if (((val2 != 0.0) && (val1 == 0.0)))
+			{
+				d_storagebuffer_2[idx] = 0.0;
+			}
 		}
 	
 	}
 }
 
-void Selection::vertex_selection_two(float* d_storagebuffer_1, float* d_storagebuffer_2, int Nx, int Ny, int Nz)
+void Selection::vertex_selection_two(float* d_storagebuffer_1, float* d_storagebuffer_2, int Nx, int Ny, int Nz, bool load_selection,
+bool boundary_selection, bool delete_selection)
 {
     dim3 grids(ceil((Nx*Ny*Nz)/float(1024)),1,1);
 	dim3 tids(1024,1,1);
 	
-	vertex_selection_two_kernel<<<grids,tids>>>(d_storagebuffer_1,d_storagebuffer_2,Nx,Ny,Nz);
+	vertex_selection_two_kernel<<<grids,tids>>>(d_storagebuffer_1,d_storagebuffer_2,Nx,Ny,Nz, load_selection,
+	boundary_selection, delete_selection);
 
 	cudaDeviceSynchronize();
 }

@@ -2516,7 +2516,7 @@ VkDeviceSize VulkanBaseApp::getUniformSize() const
     return VkDeviceSize(0);
 }
 
-void VulkanBaseApp::updateStorageBuffer(uint32_t imageIndex)
+void VulkanBaseApp::updateStorageBuffer(uint32_t imageIndex, bool load_selection, bool boundary_selection, bool delete_selection)
 {
 }
 

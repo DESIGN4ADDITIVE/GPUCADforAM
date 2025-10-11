@@ -273,6 +273,12 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     float FinalRes_l;
 
+    bool load_selection;
+
+    bool boundary_selection;
+
+    bool delete_selection;
+
     public:
     
 
@@ -562,10 +568,15 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         iso2(0.0),
 
-
         FinalIter_l(-1),
 
-        FinalRes_l(-1.0)
+        FinalRes_l(-1.0),
+
+        load_selection(false),
+
+        boundary_selection(false),
+
+        delete_selection(false)
 
         //////////////////////////////////////////////////////////////// 
     {
@@ -1281,18 +1292,18 @@ class Multitopo : public VulkanBaseApp, Modelling
         return sizeof(UniformBufferObject);
     }
 
-    void updateStorageBuffer(uint32_t imageIndex)
+    void updateStorageBuffer(uint32_t imageIndex, bool load_selection, bool boundary_selection, bool delete_selection)
     {
         
         if(imageIndex == 0)
         {
             
-            selectt.vertex_selection_two(d_cudastorageBuffers[0],d_cudastorageBuffers[1],NumX,NumY,NumZ);
+            selectt.vertex_selection_two(d_cudastorageBuffers[0],d_cudastorageBuffers[1],NumX,NumY,NumZ, load_selection, boundary_selection, delete_selection);
         }
         else if(imageIndex == 1)
         {
           
-            selectt.vertex_selection_two(d_cudastorageBuffers[1],d_cudastorageBuffers[0],NumX,NumY,NumZ);
+            selectt.vertex_selection_two(d_cudastorageBuffers[1],d_cudastorageBuffers[0],NumX,NumY,NumZ, load_selection, boundary_selection, delete_selection);
         }
         getLastCudaError("Failed in updating storage buffer in cuda \n");
        
@@ -1331,6 +1342,8 @@ class Multitopo : public VulkanBaseApp, Modelling
             VulkanBaseApp::push_constants.support = 0 ;
 
             VulkanBaseApp::push_constants.mouse_click = 0 ;
+
+            load_selection = false;
         }
         
         if (ImGui::IsKeyReleased(ImGuiKey_W) || ImGui::IsMouseReleased(ImGuiMouseButton_Left))
@@ -1338,6 +1351,8 @@ class Multitopo : public VulkanBaseApp, Modelling
             VulkanBaseApp::push_constants.support = 0 ;
 
             VulkanBaseApp::push_constants.mouse_click = 0 ;
+
+            boundary_selection = false;
         }
 
         if (ImGui::IsKeyReleased(ImGuiKey_D))
@@ -1345,6 +1360,10 @@ class Multitopo : public VulkanBaseApp, Modelling
             VulkanBaseApp::push_constants.support = 0 ;
 
             VulkanBaseApp::push_constants.mouse_click = 0 ;
+
+            delete_selection = false;
+
+
         }
 
 
@@ -1353,6 +1372,8 @@ class Multitopo : public VulkanBaseApp, Modelling
             VulkanBaseApp::push_constants.support = -1 ;
 
             VulkanBaseApp::push_constants.mouse_click = 2 ;
+
+            boundary_selection = true;
         }
         else if(ImGui::IsKeyDown(ImGuiKey_Q) && ImGui::IsMouseDown(ImGuiMouseButton_Right) && ImguiApp::select_load_node)
         
@@ -1360,6 +1381,10 @@ class Multitopo : public VulkanBaseApp, Modelling
             VulkanBaseApp::push_constants.support = 1 ;
 
             VulkanBaseApp::push_constants.mouse_click = 1 ;
+
+            load_selection = true;
+
+
         }
 
         if (ImGui::IsKeyDown(ImGuiKey_D))
@@ -1367,6 +1392,9 @@ class Multitopo : public VulkanBaseApp, Modelling
             VulkanBaseApp::push_constants.support = -1 ;
 
             VulkanBaseApp::push_constants.mouse_click = -1 ;
+
+            delete_selection = true;
+
         }
 
     }
@@ -3503,12 +3531,12 @@ class Multitopo : public VulkanBaseApp, Modelling
                
             }
 
-            if((vulkan_buffer_created) && ((VulkanBaseApp::push_constants.mouse_click == 1) || (VulkanBaseApp::push_constants.mouse_click == 2)))
+            if((vulkan_buffer_created) && ((VulkanBaseApp::push_constants.mouse_click == 1) || (VulkanBaseApp::push_constants.mouse_click == 2) || (VulkanBaseApp::push_constants.mouse_click == -1)))
             {
                 
                 uint32_t currentFrmIdx = (currentFrame - 1) % ( swapChainImages.size());
 
-                updateStorageBuffer(currentFrmIdx);
+                updateStorageBuffer(currentFrmIdx, load_selection, boundary_selection, delete_selection);
 
             }
             

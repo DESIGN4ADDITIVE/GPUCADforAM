@@ -14,7 +14,6 @@ Finding the optimal material layout based the physics of the process.
 Distributing lattice structure in 3D space by changing it shape and size while maintaining the topology.
 
 
-
 This software had complied and ran in Ubuntu 22.04.4 LTS (jammy). 
 
 Users should have a GPU device with atleast 8 gb memory. It may run on lower end GPU's for low grid resolution but have not tested.
@@ -24,7 +23,6 @@ Users should have a GPU device with atleast 8 gb memory. It may run on lower end
 1. Install CUDA Toolkit (Cuda - GPU programming)
 2. Install GLFW (Window Manager)
 3. Install Vulkan (New generation Cross platform API for 3D graphics)
-
 
 For more details please check DEPENDENCIES.md file.
 
@@ -38,6 +36,8 @@ For more details please check DEPENDENCIES.md file.
 7. Next type ' make all '
 8. Check for an output you get in the terminal  message is ' Compilation Completed! ' for a successful compilation.
 9. Got to 'GPUCADforAM/bin' folder. Open a command terminal within the folder and type './GPUCADforAM' or double click on the executable 'GPUCADforAM'.
+## Support DESIGN4ADDTIVE
+[![Donate](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/DESIGN4ADDITIVE/donate)
 
 ## Demo - Installation 
 

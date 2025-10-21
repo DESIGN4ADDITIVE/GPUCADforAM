@@ -36,7 +36,7 @@ For more details please check DEPENDENCIES.md file.
 7. Next type ' make all '
 8. Check for an output you get in the terminal  message is ' Compilation Completed! ' for a successful compilation.
 9. Got to 'GPUCADforAM/bin' folder. Open a command terminal within the folder and type './GPUCADforAM' or double click on the executable 'GPUCADforAM'.
-## Support DESIGN4ADDTIVE
+## Support DESIGN4ADDITIVE
 [![Donate](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/DESIGN4ADDITIVE/donate)
 
 ## Demo - Installation 

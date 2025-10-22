@@ -2697,11 +2697,11 @@ class Multitopo : public VulkanBaseApp, Modelling
         {
 
             isosurf.copy_parameter(d_voxelVertstwo,d_voxelVertsScantwo,0.0,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,numVoxelstwo,&activeVoxelstwo,d_compVoxelArraytwo,vol_one,d_boundary,
-            &totalVertstwo);
+            &totalVertstwo, obj_union, obj_diff, obj_intersect);
             
             isosurf.computeIsosurface(d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
             d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
-            &activeVoxelstwo,&totalVertstwo,totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,0.0,0.0,ImguiApp::retain);
+            &activeVoxelstwo,&totalVertstwo,totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,0.0,0.0, obj_union, obj_diff, obj_intersect);
             
 
             ImguiApp::retain = false;
@@ -2759,7 +2759,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             {
                 isosurf.computeIsosurface(d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
                 d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
-                &activeVoxelstwo,&totalVertstwo,totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,0.0,0.0,ImguiApp::retain);
+                &activeVoxelstwo,&totalVertstwo,totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,0.0,0.0, obj_union, obj_diff, obj_intersect);
                 
             }
 

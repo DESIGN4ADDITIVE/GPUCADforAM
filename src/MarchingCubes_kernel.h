@@ -25,11 +25,11 @@ class MarchingCubeCuda
 
         void classify_copy_Voxel_lattice(dim3 grid, dim3 threads, uint *voxel_verts, float *volume_two, grid_points *vol_one,
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
-                     float3 voxelSize, float isoValue);
+                     float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect);
 
         void classifyVoxel_lattice(dim3 grid, dim3 threads, uint *voxelVerts, uint *voxelOccupied,float *volume_two,
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
-                     float3 voxelSize, float isoValue, grid_points *volume_one);
+                     float3 voxelSize, float isoValue, grid_points *volume_one, bool obj_union, bool obj_diff, bool obj_intersect);
 
         void classifyVoxel_lattice_2(dim3 grid, dim3 threads, uint *voxelVerts, uint *voxelOccupied, float *volume_one,
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
@@ -49,7 +49,7 @@ class MarchingCubeCuda
         void generateTriangles_lattice(dim3 grid, dim3 threads,float4 *pos, float4 *norm, uint *compactVoxelArray,
                     uint *numVertsScanned,uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask,
                     float3 voxelSize,float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts, uint totalverts_1,
-                    grid_points *volume_one,float *volume_two,float isovalue1,float iso1, bool retain, uint *voxel_verts);
+                    grid_points *volume_one,float *volume_two,float isovalue1,float iso1, uint *voxel_verts, bool obj_union, bool obj_diff, bool obj_intersect);
 
         
         void generateTriangles_lattice_2(dim3 grid, dim3 threads,float4 *pos, float4 *norm, 

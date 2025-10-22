@@ -14,7 +14,7 @@ Isosurface::~Isosurface()
 
 void Isosurface::copy_parameter(uint *voxel_verts, uint * voxel_vertsscan, float isoValue,
     uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,uint numVoxels,
-    uint *activeVoxels,uint *d_compVoxelArray, grid_points *vol_one,float* vol_two, uint *totalverts_1)
+    uint *activeVoxels,uint *d_compVoxelArray, grid_points *vol_one,float* vol_two, uint *totalverts_1, bool obj_union, bool obj_diff, bool obj_intersect)
     
     {
           
@@ -23,7 +23,7 @@ void Isosurface::copy_parameter(uint *voxel_verts, uint * voxel_vertsscan, float
 
         classify_copy_Voxel_lattice(grid,threads,voxel_verts,vol_two,vol_one,
                             gridSize, gridSizeShift, gridSizeMask, 
-                            numVoxels,voxelSize,isoValue);
+                            numVoxels,voxelSize,isoValue,obj_union, obj_diff, obj_intersect);
         
     }
 
@@ -31,9 +31,9 @@ void Isosurface::computeIsosurface(float4* pos , float4* norm, float isoValue,
     uint numVoxels, uint *d_voxelVerts,uint *d_voxelVertsScan, uint *d_voxelOccupied,uint *d_voxelOccupiedScan,
     uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,
     uint *activeVoxels, uint *totalVerts,uint totalVerts_1, uint *d_compVoxelArray, uint maxVerts, grid_points  *vol_one,float* vol_two,
-    float isovalue1,float iso1, bool retain)
+    float isovalue1,float iso1, bool obj_union, bool obj_diff, bool obj_intersect )
     
-         {
+    {
         
         dim3 grid(ceil(numVoxels/float(1024)), 1, 1);
         dim3 threads(1024,1,1);
@@ -47,7 +47,7 @@ void Isosurface::computeIsosurface(float4* pos , float4* norm, float isoValue,
         classifyVoxel_lattice(grid,threads,
                             d_voxelVerts,d_voxelOccupied,vol_two,
                             gridSize, gridSizeShift, gridSizeMask,
-                            numVoxels, voxelSize, isoValue,vol_one);
+                            numVoxels, voxelSize, isoValue,vol_one, obj_union, obj_diff, obj_intersect);
  
         ////// Numbering active voxels ///////
         
@@ -112,7 +112,7 @@ void Isosurface::computeIsosurface(float4* pos , float4* norm, float isoValue,
                                 d_voxelVertsScan,
                                 gridSize, gridSizeShift, gridSizeMask,
                                 voxelSize,gridcenter, isoValue,*activeVoxels,
-                                maxVerts,*totalVerts,vol_one,vol_two,isovalue1,iso1,retain,d_voxelVerts);
+                                maxVerts,*totalVerts,vol_one,vol_two,isovalue1,iso1,d_voxelVerts,obj_union, obj_diff, obj_intersect);
 
     }
 

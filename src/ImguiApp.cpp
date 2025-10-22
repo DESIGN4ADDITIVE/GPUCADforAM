@@ -78,6 +78,10 @@ bool ImguiApp::sphere_shell_selected = false;
 bool ImguiApp::torus_selected = false;
 bool ImguiApp::cone_selected = false;
 //////////////////////////////////////////////
+bool ImguiApp::obj_union = true;
+bool ImguiApp::obj_diff = false;
+bool ImguiApp::obj_intersect = false;
+//////////////////////////////////////////////
 
 bool ImguiApp::view_settings = false;
 bool ImguiApp::grid_settings = false;
@@ -1375,6 +1379,36 @@ void ImguiApp::show_selected_primitive()
         
             if(ImguiApp::boundary_buffers)
             {
+                
+                ImGui::NewLine();
+
+                static int obj_op = 0;
+                ImGui::RadioButton("UNION", &obj_op, 0); 
+                ImGui::RadioButton("DIFFERENCE ", &obj_op, 1);
+                ImGui::RadioButton("INTERSECT ", &obj_op, 2);
+                if(obj_op == 0)
+                {
+                    obj_union = true;
+                    obj_diff = false;
+                    obj_intersect = false;   
+                }
+
+                else if(obj_op == 1)
+                {
+                    obj_union = false;
+                    obj_diff = true;
+                    obj_intersect = false;
+                }
+
+                else if(obj_op == 2)
+                {
+                    obj_union = false;
+                    obj_diff = false;
+                    obj_intersect = true;
+                }
+
+                
+                
                 ImGui::NewLine();
                 if (ImGui::Button("RETAIN"))
                 {

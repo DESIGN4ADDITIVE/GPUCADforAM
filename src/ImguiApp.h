@@ -158,6 +158,10 @@ class ImguiApp
     static bool torus_selected ;
     static bool cone_selected ;
 
+    static bool obj_union;
+    static bool obj_diff;
+    static bool obj_intersect;
+
     static float radius;
     static float thickness_radial;
     static float thickness_axial;

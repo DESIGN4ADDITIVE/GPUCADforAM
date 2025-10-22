@@ -147,7 +147,7 @@ uint3 calcGridPos_one(uint i, uint3 gridSize)
 __global__ void
 classify_copy_Voxel(uint *voxel_verts, float *volume_two, grid_points *vol_one,
               uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
-              float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex)
+              float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex, bool obj_union, bool obj_diff, bool obj_intersect)
 {
     uint blockId = __mul24(blockIdx.y, gridDim.x) + blockIdx.x;
 
@@ -165,15 +165,40 @@ classify_copy_Voxel(uint *voxel_verts, float *volume_two, grid_points *vol_one,
 
         v = sampleVolume(volume_two, gridPos, gridSize);
 
-      
-        if(uint(v < (isoVal)) | uint(vox_points.val < (isoVal)))
+        if(obj_union)
         {
-            vox_points.val = -1;
+            if(uint(v < (isoVal)) | uint(vox_points.val < (isoVal)))
+            {
+                vox_points.val = -1;
+            }
+            else
+            {
+                vox_points.val = 1;
+            }
         }
-        else
+        else if (obj_diff)
         {
-            vox_points.val = 1;
+            if(uint(v >= (isoVal)) & uint(vox_points.val < (isoVal)))
+            {
+                vox_points.val = -1;
+            }
+            else
+            {
+                vox_points.val = 1;
+            }
         }
+        else if (obj_intersect)
+        {
+            if(uint(v < (isoVal)) & uint(vox_points.val < (isoVal)))
+            {
+                vox_points.val = -1;
+            }
+            else
+            {
+                vox_points.val = 1;
+            }
+        }
+        
         
 
         if(gridPos.x < (gridSize.x - 1) )
@@ -251,13 +276,13 @@ classify_copy_Voxel(uint *voxel_verts, float *volume_two, grid_points *vol_one,
 
 void MarchingCubeCuda::classify_copy_Voxel_lattice(dim3 grid, dim3 threads, uint *voxel_verts, float *volume_two, grid_points *vol_one,
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
-                     float3 voxelSize, float isoValue)
+                     float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect)
 {
 
  
     classify_copy_Voxel<<<grid, threads>>>(voxel_verts,volume_two, vol_one,
                                      gridSize, gridSizeShift, gridSizeMask,
-                                     numVoxels, voxelSize, isoValue, numVertsTex_s);
+                                     numVoxels, voxelSize, isoValue, numVertsTex_s, obj_union, obj_diff, obj_intersect);
     cudaDeviceSynchronize();
 
     getLastCudaError("classifyVoxel failed");
@@ -270,7 +295,7 @@ void MarchingCubeCuda::classify_copy_Voxel_lattice(dim3 grid, dim3 threads, uint
 __global__ void
 classifyVoxel(uint *voxelVerts, uint *voxelOccupied, float *volume_two,
               uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
-              float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex ,grid_points *volume_one)
+              float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex ,grid_points *volume_one, bool obj_union, bool obj_diff, bool obj_intersect)
 {
     uint blockId = __mul24(blockIdx.y, gridDim.x) + blockIdx.x;
 
@@ -280,16 +305,16 @@ classifyVoxel(uint *voxelVerts, uint *voxelOccupied, float *volume_two,
     {
         uint3 gridPos = calcGridPos(i, gridSizeShift, gridSizeMask);
     
-        float field[8];
+        float field_1[8];
 
-        field[0] = sampleVolume(volume_two, gridPos, gridSize);
-        field[1] = sampleVolume(volume_two, gridPos + make_uint3(1, 0, 0), gridSize);
-        field[2] = sampleVolume(volume_two, gridPos + make_uint3(1, 1, 0), gridSize);
-        field[3] = sampleVolume(volume_two, gridPos + make_uint3(0, 1, 0), gridSize);
-        field[4] = sampleVolume(volume_two, gridPos + make_uint3(0, 0, 1), gridSize);
-        field[5] = sampleVolume(volume_two, gridPos + make_uint3(1, 0, 1), gridSize);
-        field[6] = sampleVolume(volume_two, gridPos + make_uint3(1, 1, 1), gridSize);
-        field[7] = sampleVolume(volume_two, gridPos + make_uint3(0, 1, 1), gridSize);
+        field_1[0] = sampleVolume(volume_two, gridPos, gridSize);
+        field_1[1] = sampleVolume(volume_two, gridPos + make_uint3(1, 0, 0), gridSize);
+        field_1[2] = sampleVolume(volume_two, gridPos + make_uint3(1, 1, 0), gridSize);
+        field_1[3] = sampleVolume(volume_two, gridPos + make_uint3(0, 1, 0), gridSize);
+        field_1[4] = sampleVolume(volume_two, gridPos + make_uint3(0, 0, 1), gridSize);
+        field_1[5] = sampleVolume(volume_two, gridPos + make_uint3(1, 0, 1), gridSize);
+        field_1[6] = sampleVolume(volume_two, gridPos + make_uint3(1, 1, 1), gridSize);
+        field_1[7] = sampleVolume(volume_two, gridPos + make_uint3(0, 1, 1), gridSize);
 
         int j = i;
 
@@ -309,14 +334,39 @@ classifyVoxel(uint *voxelVerts, uint *voxelOccupied, float *volume_two,
      
         uint cubeindex;
 
-        cubeindex =  (uint(field[0] < (isoVal)) | uint(field_2[0] < isoVal)) ;
-        cubeindex += (uint(field[1] < (isoVal)) | uint(field_2[1] < isoVal)) *2;
-        cubeindex += (uint(field[2] < (isoVal)) | uint(field_2[2] < isoVal)) *4;
-        cubeindex += (uint(field[3] < (isoVal)) | uint(field_2[3] < isoVal)) *8;
-        cubeindex += (uint(field[4] < (isoVal)) | uint(field_2[4] < isoVal)) *16;
-        cubeindex += (uint(field[5] < (isoVal)) | uint(field_2[5] < isoVal)) *32;
-        cubeindex += (uint(field[6] < (isoVal)) | uint(field_2[6] < isoVal)) *64;
-        cubeindex += (uint(field[7] < (isoVal)) | uint(field_2[7] < isoVal)) *128;
+        if(obj_union)
+        {
+            cubeindex =  (uint(field_1[0] < isoVal) | uint(field_2[0] < isoVal));
+            cubeindex += (uint(field_1[1] < isoVal) | uint(field_2[1] < isoVal)) *2;
+            cubeindex += (uint(field_1[2] < isoVal) | uint(field_2[2] < isoVal)) *4;
+            cubeindex += (uint(field_1[3] < isoVal) | uint(field_2[3] < isoVal)) *8;
+            cubeindex += (uint(field_1[4] < isoVal) | uint(field_2[4] < isoVal)) *16;
+            cubeindex += (uint(field_1[5] < isoVal) | uint(field_2[5] < isoVal)) *32;
+            cubeindex += (uint(field_1[6] < isoVal) | uint(field_2[6] < isoVal)) *64;
+            cubeindex += (uint(field_1[7] < isoVal) | uint(field_2[7] < isoVal)) *128;
+        }
+        else if(obj_diff)
+        {
+            cubeindex =  (uint(field_1[0] >= isoVal) & uint(field_2[0] < isoVal));
+            cubeindex += (uint(field_1[1] >= isoVal) & uint(field_2[1] < isoVal)) *2;
+            cubeindex += (uint(field_1[2] >= isoVal) & uint(field_2[2] < isoVal)) *4;
+            cubeindex += (uint(field_1[3] >= isoVal) & uint(field_2[3] < isoVal)) *8;
+            cubeindex += (uint(field_1[4] >= isoVal) & uint(field_2[4] < isoVal)) *16;
+            cubeindex += (uint(field_1[5] >= isoVal) & uint(field_2[5] < isoVal)) *32;
+            cubeindex += (uint(field_1[6] >= isoVal) & uint(field_2[6] < isoVal)) *64;
+            cubeindex += (uint(field_1[7] >= isoVal) & uint(field_2[7] < isoVal)) *128;
+        }
+        else if(obj_intersect)
+        {
+            cubeindex =  (uint(field_1[0] < isoVal) & uint(field_2[0] < isoVal));
+            cubeindex += (uint(field_1[1] < isoVal) & uint(field_2[1] < isoVal)) *2;
+            cubeindex += (uint(field_1[2] < isoVal) & uint(field_2[2] < isoVal)) *4;
+            cubeindex += (uint(field_1[3] < isoVal) & uint(field_2[3] < isoVal)) *8;
+            cubeindex += (uint(field_1[4] < isoVal) & uint(field_2[4] < isoVal)) *16;
+            cubeindex += (uint(field_1[5] < isoVal) & uint(field_2[5] < isoVal)) *32;
+            cubeindex += (uint(field_1[6] < isoVal) & uint(field_2[6] < isoVal)) *64;
+            cubeindex += (uint(field_1[7] < isoVal) & uint(field_2[7] < isoVal)) *128;
+        }
 
         uint numVerts = tex1Dfetch<uint>(numVertsTex, cubeindex);
      
@@ -332,13 +382,13 @@ classifyVoxel(uint *voxelVerts, uint *voxelOccupied, float *volume_two,
 
 void MarchingCubeCuda::classifyVoxel_lattice(dim3 grid, dim3 threads, uint *voxelVerts, uint *voxelOccupied,float *volume_two,
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
-                     float3 voxelSize, float isoValue, grid_points *volume_one)
+                     float3 voxelSize, float isoValue, grid_points *volume_one, bool obj_union, bool obj_diff, bool obj_intersect)
 {
 
  
     classifyVoxel<<<grid, threads>>>(voxelVerts, voxelOccupied,volume_two,
                                      gridSize, gridSizeShift, gridSizeMask,
-                                     numVoxels, voxelSize, isoValue, numVertsTex_s,volume_one);
+                                     numVoxels, voxelSize, isoValue, numVertsTex_s,volume_one, obj_union, obj_diff, obj_intersect);
     cudaDeviceSynchronize();
 
     getLastCudaError("classifyVoxel failed");
@@ -578,8 +628,8 @@ __global__ void
 generateTriangles_lattice_kernel(float4 *pos, float4 *norm, uint *compactVoxelArray,uint *numVertsScanned,
                    uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask,
                    float3 voxelSize, float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts,
-                   cudaTextureObject_t triTex, cudaTextureObject_t numVertsTex,uint totalverts_1, grid_points *volume_one,float *volume_two,float isoValue1, float iso1, bool retain,
-                   uint *voxerl_verts)
+                   cudaTextureObject_t triTex, cudaTextureObject_t numVertsTex,uint totalverts_1, grid_points *volume_one,float *volume_two,float isoValue1, float iso1,
+                   uint *voxerl_verts, bool obj_union, bool obj_diff, bool obj_intersect)
 {
     
     
@@ -634,16 +684,43 @@ generateTriangles_lattice_kernel(float4 *pos, float4 *norm, uint *compactVoxelAr
 
 
         float isoVal = isoValue; 
-
+     
         uint cubeindex;
-        cubeindex =  (uint(field_1[0] < isoVal) | uint(field_2[0].val < isoVal));
-        cubeindex += (uint(field_1[1] < isoVal) | uint(field_2[1].val < isoVal)) *2;
-        cubeindex += (uint(field_1[2] < isoVal) | uint(field_2[2].val < isoVal)) *4;
-        cubeindex += (uint(field_1[3] < isoVal) | uint(field_2[3].val < isoVal)) *8;
-        cubeindex += (uint(field_1[4] < isoVal) | uint(field_2[4].val < isoVal)) *16;
-        cubeindex += (uint(field_1[5] < isoVal) | uint(field_2[5].val < isoVal)) *32;
-        cubeindex += (uint(field_1[6] < isoVal) | uint(field_2[6].val < isoVal)) *64;
-        cubeindex += (uint(field_1[7] < isoVal) | uint(field_2[7].val < isoVal)) *128;
+
+        if(obj_union)
+        {
+            cubeindex =  (uint(field_1[0] < isoVal) | uint(field_2[0].val < isoVal));
+            cubeindex += (uint(field_1[1] < isoVal) | uint(field_2[1].val < isoVal)) *2;
+            cubeindex += (uint(field_1[2] < isoVal) | uint(field_2[2].val < isoVal)) *4;
+            cubeindex += (uint(field_1[3] < isoVal) | uint(field_2[3].val < isoVal)) *8;
+            cubeindex += (uint(field_1[4] < isoVal) | uint(field_2[4].val < isoVal)) *16;
+            cubeindex += (uint(field_1[5] < isoVal) | uint(field_2[5].val < isoVal)) *32;
+            cubeindex += (uint(field_1[6] < isoVal) | uint(field_2[6].val < isoVal)) *64;
+            cubeindex += (uint(field_1[7] < isoVal) | uint(field_2[7].val < isoVal)) *128;
+        }
+        else if(obj_diff)
+        {
+            cubeindex =  (uint(field_1[0] >= isoVal) & uint(field_2[0].val < isoVal));
+            cubeindex += (uint(field_1[1] >= isoVal) & uint(field_2[1].val < isoVal)) *2;
+            cubeindex += (uint(field_1[2] >= isoVal) & uint(field_2[2].val < isoVal)) *4;
+            cubeindex += (uint(field_1[3] >= isoVal) & uint(field_2[3].val < isoVal)) *8;
+            cubeindex += (uint(field_1[4] >= isoVal) & uint(field_2[4].val < isoVal)) *16;
+            cubeindex += (uint(field_1[5] >= isoVal) & uint(field_2[5].val < isoVal)) *32;
+            cubeindex += (uint(field_1[6] >= isoVal) & uint(field_2[6].val < isoVal)) *64;
+            cubeindex += (uint(field_1[7] >= isoVal) & uint(field_2[7].val < isoVal)) *128;
+        
+        }
+        else if(obj_intersect)
+        {
+            cubeindex =  (uint(field_1[0] < isoVal) & uint(field_2[0].val < isoVal));
+            cubeindex += (uint(field_1[1] < isoVal) & uint(field_2[1].val < isoVal)) *2;
+            cubeindex += (uint(field_1[2] < isoVal) & uint(field_2[2].val < isoVal)) *4;
+            cubeindex += (uint(field_1[3] < isoVal) & uint(field_2[3].val < isoVal)) *8;
+            cubeindex += (uint(field_1[4] < isoVal) & uint(field_2[4].val < isoVal)) *16;
+            cubeindex += (uint(field_1[5] < isoVal) & uint(field_2[5].val < isoVal)) *32;
+            cubeindex += (uint(field_1[6] < isoVal) & uint(field_2[6].val < isoVal)) *64;
+            cubeindex += (uint(field_1[7] < isoVal) & uint(field_2[7].val < isoVal)) *128;
+        }
 
         uint numVerts = tex1Dfetch<uint>(numVertsTex, cubeindex);
     
@@ -717,15 +794,15 @@ generateTriangles_lattice_kernel(float4 *pos, float4 *norm, uint *compactVoxelAr
 
 void MarchingCubeCuda::generateTriangles_lattice(dim3 grid, dim3 threads,float4 *pos, float4 *norm,uint *compactVoxelArray,
                            uint *numVertsScanned,uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask,
-                          float3 voxelSize, float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts, uint totalverts_1,grid_points *volume_one,float *volume_two,float isovalue1,float iso1, bool retain,
-                          uint *voxel_verts)
+                          float3 voxelSize, float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts, uint totalverts_1,grid_points *volume_one,float *volume_two,float isovalue1,float iso1,
+                          uint *voxel_verts, bool obj_union, bool obj_diff, bool obj_intersect)
 {
     
     generateTriangles_lattice_kernel<<<grid, threads>>>(pos, norm,compactVoxelArray,
                                            numVertsScanned,
                                            gridSize, gridSizeShift, gridSizeMask,
                                            voxelSize,gridcenter, isoValue, activeVoxels,
-                                           maxVerts, triTex_s, numVertsTex_s, totalverts_1, volume_one,volume_two,isovalue1,iso1,retain,voxel_verts);
+                                           maxVerts, triTex_s, numVertsTex_s, totalverts_1, volume_one,volume_two,isovalue1,iso1,voxel_verts, obj_union, obj_diff, obj_intersect);
     cudaDeviceSynchronize();
     getLastCudaError("generateTriangles failed");
     cudaError_t err = cudaGetLastError();
@@ -1672,7 +1749,7 @@ void MarchingCubeCuda::generateTriangles_lattice_newone(dim3 grid, dim3 threads,
                           float3 voxelSize, float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts, uint totalverts,float *volume_one,float isovalue1,float isovalue2)
 {
     
-    generateTriangles_lattice_kernel_newone<<<grid, threads>>>(pos, norm,
+    generateTriangles_lattice_kernel_newone<<< grid, threads>>>(pos, norm,
                                            compactedVoxelArray,
                                            numVertsScanned, volume,
                                            gridSize, gridSizeShift, gridSizeMask,

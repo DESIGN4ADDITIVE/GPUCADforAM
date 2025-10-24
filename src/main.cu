@@ -4224,7 +4224,7 @@ int main(int argc, char** argv)
     }
     else if (argc == 1 && (validate_data ==""))
     {
-        validation = true;
+        validation = false;
         
     }
 

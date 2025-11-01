@@ -3785,7 +3785,7 @@ class Multitopo : public VulkanBaseApp, Modelling
                         filenameshape = "../Results_Modelling/Shape_Lattice.obj";
                     }
 
-                    output_file.file_write(d_postwo,totalVertstwo,filenameshape);
+                    output_file.file_write(d_postwo,totalVertstwo,filenameshape, true);
 
                 
                 }
@@ -3816,7 +3816,7 @@ class Multitopo : public VulkanBaseApp, Modelling
                         filenameoptimise = "../Results_Optimise/Optimise_Lattice_shape.obj";
                     }
 
-                    output_file.file_write(d_postwo,totalVertstwo,filenameoptimise);
+                    output_file.file_write(d_postwo,totalVertstwo,filenameoptimise, false);
 
                 }
 
@@ -3837,11 +3837,11 @@ class Multitopo : public VulkanBaseApp, Modelling
                 
                     const char *filenameone = "../Results_Lattice/Unit_Lattice.obj";
 
-                    output_file.file_write(d_posone,totalVertsone,filenameone);
+                    output_file.file_write(d_posone,totalVertsone,filenameone, false);
 
                     const char *filenametwo = "../Results_Lattice/Spatial_Lattice.obj";
 
-                    output_file.file_write(d_postwo,totalVertstwo,filenametwo);
+                    output_file.file_write(d_postwo,totalVertstwo,filenametwo, false);
 
                 }
 

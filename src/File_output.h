@@ -6,7 +6,7 @@ class File_output
 {
     public:
 
-    void file_write(float4 *d_pos,uint totalVerts, const char* filename);
+    void file_write(float4 *d_pos,uint totalVerts, const char* filename, bool flip);
 
 };
 

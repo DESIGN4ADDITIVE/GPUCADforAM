@@ -6,7 +6,7 @@
 
 using namespace std;
 
-void File_output::file_write(float4 *d_pos, uint totalVerts, const char *filename)
+void File_output::file_write(float4 *d_pos, uint totalVerts, const char *filename, bool flip)
 {
      
     
@@ -73,7 +73,14 @@ void File_output::file_write(float4 *d_pos, uint totalVerts, const char *filenam
             if(face_check.count(face_flot) == 0)
             {
                 face_check[face_flot] = 1;
-                mfile_latttice<<" f  "<<faces[i+2]<<" "<<faces[i+1]<<" "<<faces[i]<<"\n";
+                if(flip)
+                {
+                    mfile_latttice<<" f  "<<faces[i + 1]<<" "<<faces[i]<<" "<<faces[i + 2]<<"\n";
+                }
+                else
+                {
+                    mfile_latttice<<" f  "<<faces[i]<<" "<<faces[i + 1]<<" "<<faces[i + 2]<<"\n";
+                }
                     
             }
         }

@@ -89,9 +89,12 @@ class ImguiApp
     static bool topo_done_lattice_do;
     static bool generate_topo_lattice;
     static bool show_topo_lattice;
+    static bool lattice_fixed;
+    static bool lattice_dynamic;
 
     static bool primitive_done_lattice_do;
     static bool show_primitive_lattice;
+    static bool primitive_lattice_options;
     static bool show_lattice_data;
 
     static bool view_lattice;
@@ -148,6 +151,8 @@ class ImguiApp
 
     static float lcon;
     static float lcon_1;
+
+    static bool cad_bool;
 
     static bool cylind_selected;
     static bool cylind_disc_selected;

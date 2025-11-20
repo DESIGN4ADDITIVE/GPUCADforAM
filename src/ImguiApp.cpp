@@ -15,6 +15,9 @@ bool ImguiApp::retain = false;
 bool ImguiApp::calculate = true;
 bool ImguiApp::undoo = false;
 
+
+bool ImguiApp::cad_bool = false;
+
 uint ImguiApp::lattice_type_index = 0;
 uint ImguiApp::lattice_size_index = 0;
 
@@ -60,6 +63,7 @@ bool ImguiApp::initialise_grid = false;
 bool ImguiApp::execute_signal;
 bool ImguiApp::execute_done = false;
 bool ImguiApp::execute_primitive_lattice = false;
+bool ImguiApp::primitive_lattice_options = false;
 bool ImguiApp::execute_lattice_data = false;
 
 bool ImguiApp::view_lattice = false;
@@ -141,6 +145,8 @@ bool ImguiApp::show_primitive_lattice = false;
 bool ImguiApp::topo_done_lattice_do = false;
 bool ImguiApp::generate_topo_lattice = false;
 bool ImguiApp::show_topo_lattice = false;
+bool ImguiApp::lattice_fixed = false;
+bool ImguiApp::lattice_dynamic = false;
 
 bool ImguiApp::show_lattice_data = false;
 
@@ -471,15 +477,15 @@ ImguiApp::ImguiApp()
           
             static float x_1 = 5.0f;
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("x_width", &x_1,1, 50, "%.1f");
+            ImGui::SliderFloat("x_width", &x_1,1, 150, "%.1f");
             x_wid = ImGui::IsItemActive();
             static float y_1 = 2.0f;
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("y_width ", &y_1,1, 50, "%.1f");
+            ImGui::SliderFloat("y_width ", &y_1,1, 150, "%.1f");
             y_wid = ImGui::IsItemActive();  
             static float z_1 = 4.0f;
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("z_width ", &z_1,1, 50, "%.1f");
+            ImGui::SliderFloat("z_width ", &z_1,1, 150, "%.1f");
             z_wid = ImGui::IsItemActive(); 
             if(x_wid || y_wid || z_wid )
             {
@@ -495,7 +501,7 @@ ImguiApp::ImguiApp()
                 static bool cu_thick = false;
                 static float c_t = 2.0f;
                 ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-                ImGui::SliderFloat("thickness", &c_t,1, 10, "%.1f");
+                ImGui::SliderFloat("thickness", &c_t,1, 50, "%.1f");
                 cu_thick = ImGui::IsItemActive();
                 if(cu_thick)
                 {
@@ -1383,9 +1389,22 @@ void ImguiApp::show_selected_primitive()
                 ImGui::NewLine();
 
                 static int obj_op = 0;
-                ImGui::RadioButton("UNION", &obj_op, 0); 
+                ImGui::RadioButton("UNION", &obj_op, 0);
+                if(ImGui::IsItemActive())
+                {
+                    ImguiApp::cad_bool = true;
+                }
                 ImGui::RadioButton("DIFFERENCE ", &obj_op, 1);
+                if(ImGui::IsItemActive())
+                {
+                    ImguiApp::cad_bool = true;
+                }
                 ImGui::RadioButton("INTERSECT ", &obj_op, 2);
+                if(ImGui::IsItemActive())
+                {
+                    ImguiApp::cad_bool = true;
+                }
+      
                 if(obj_op == 0)
                 {
                     obj_union = true;
@@ -1416,6 +1435,10 @@ void ImguiApp::show_selected_primitive()
                     ImguiApp::retain = true;
                     ImguiApp::calculate = false;
                     ImguiApp::undoo = false;
+
+                    ImguiApp::show_model = true;
+                    ImguiApp::show_primitive_lattice = false;
+                  
                 }
 
                 ImGui::SameLine();
@@ -1434,25 +1457,64 @@ void ImguiApp::show_selected_primitive()
                     ImguiApp::calculate = true;
                     ImguiApp::retain = false;
                     ImguiApp::undoo = false;
+
                     ImguiApp::show_model = true;
                     ImguiApp::show_primitive_lattice = false;
+                    
+                    ImguiApp::primitive_lattice_options = false;
+  
                 }
                 ImGui::NewLine();
                 ImGui::NewLine();
-                if(!show_primitive_lattice)
+                ImGui::SeparatorText("GENERATE LATTICE");
+             
+                if(ImGui::Button("FIXED"))
                 {
-                    if(ImGui::Button("GENERATE LATTICE"))
-                    {
-                        if(!ImguiApp::retain)
-                        {
-                            ImguiApp::retain = true;
-                            ImguiApp::calculate = false;
-                            ImguiApp::undoo = false;
-                        }
-                        ImguiApp::primitive_done_lattice_do = true;
-                        
-                    }
+                    
+                    ImguiApp::primitive_lattice_options = true;
+                    ImguiApp::lattice_fixed = true;
+                    ImguiApp::lattice_dynamic = false;
+
+                    ImguiApp::retain = false;
+                    ImguiApp::calculate = false;
+                    ImguiApp::undoo = false;
+
+                    ImguiApp::show_model = true;
+                    ImguiApp::primitive_done_lattice_do = true;
                 }
+
+                if(ImGui::Button("DYNAMIC"))
+                {
+                    
+                    ImguiApp::primitive_lattice_options = true;
+                    ImguiApp::lattice_fixed = false;
+                    ImguiApp::lattice_dynamic = true;
+
+                    ImguiApp::calculate = false;
+                    ImguiApp::retain = false;
+                    ImguiApp::undoo = false;
+
+                    ImguiApp::show_model = true;
+                    ImguiApp::primitive_done_lattice_do = true;
+                }
+
+                if(ImGui::Button("NONE"))
+                {
+                    ImguiApp::primitive_lattice_options = false;
+                    ImguiApp::lattice_fixed = false;
+                    ImguiApp::lattice_dynamic = false;
+
+                    ImguiApp::calculate = true;
+                    ImguiApp::retain = false;
+                    ImguiApp::undoo = false;
+                    
+                    ImguiApp::show_model = true;
+                    ImguiApp::show_primitive_lattice = false;
+                    
+                    ImguiApp::primitive_done_lattice_do = false;
+                }
+                    
+                
             }
             else
             {
@@ -1812,7 +1874,7 @@ void ImguiApp::spatial_lattice_settings()
 
     if(iso1_bool || iso2_bool )
     {
-            if( ImguiApp::show_lattice_data)
+            if( ImguiApp::show_lattice_data || show_primitive_lattice)
             {
                 ImguiApp::update_isorange = true;
             }
@@ -1827,35 +1889,37 @@ void ImguiApp::spatial_lattice_settings()
 
     ImGui::NewLine();
     
-  
-    if(ImguiApp::unit_lattice_settings)
+    if(!primitive_lattice_options)
     {
-        if(ImGui::Button("View Unit Lattice") )
+        if(ImguiApp::unit_lattice_settings)
         {
-        
-            if(!ImguiApp::view_unit_lattice_data && ImguiApp::lattice_buffer_created)
+            if(ImGui::Button("View Unit Lattice") )
             {
-                ImguiApp::view_unit_lattice_data = true;
-            }
-            else
-            {
-                ImguiApp::debug_window = true;
+            
+                if(!ImguiApp::view_unit_lattice_data && ImguiApp::lattice_buffer_created)
+                {
+                    ImguiApp::view_unit_lattice_data = true;
+                }
+                else
+                {
+                    ImguiApp::debug_window = true;
+                }
             }
         }
-    }
-    else if(ImguiApp::spatial_angle_window || ImguiApp::spatial_period_window)
-    {
-        
-        if(ImGui::Button("View Spatial Lattice") )
+        else if(ImguiApp::spatial_angle_window || ImguiApp::spatial_period_window)
         {
             
-            if(!ImguiApp::view_lattice && ImguiApp::lattice_buffer_created)
+            if(ImGui::Button("View Spatial Lattice") )
             {
-                ImguiApp::view_lattice = true;
-            }
-            else
-            {
-                ImguiApp::debug_window = true;
+                
+                if(!ImguiApp::view_lattice && ImguiApp::lattice_buffer_created)
+                {
+                    ImguiApp::view_lattice = true;
+                }
+                else
+                {
+                    ImguiApp::debug_window = true;
+                }
             }
         }
     }

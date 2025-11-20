@@ -14,24 +14,23 @@ Isosurface::~Isosurface()
 
 void Isosurface::copy_parameter(uint *voxel_verts, uint * voxel_vertsscan, float isoValue,
     uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,uint numVoxels,
-    uint *activeVoxels,uint *d_compVoxelArray, grid_points *vol_one,float* vol_two, uint *totalverts_1, bool obj_union, bool obj_diff, bool obj_intersect)
+    uint *activeVoxels,uint *d_compVoxelArray, grid_points *vol_one,float* vol_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2, uint *totalverts_1, bool obj_union, bool obj_diff, bool obj_intersect)
     
     {
           
         dim3 grid(ceil(numVoxels/float(1024)), 1, 1);
         dim3 threads(1024,1,1);
 
-        classify_copy_Voxel_lattice(grid,threads,voxel_verts,vol_two,vol_one,
-                            gridSize, gridSizeShift, gridSizeMask, 
-                            numVoxels,voxelSize,isoValue,obj_union, obj_diff, obj_intersect);
+        classify_copy_Voxel_lattice(grid,threads,voxel_verts,vol_one,vol_two, vol_lattice, fixed, dynamic, iso1, iso2,
+                            gridSize, gridSizeShift, gridSizeMask,numVoxels,voxelSize,isoValue,obj_union, obj_diff, obj_intersect);
         
     }
 
 void Isosurface::computeIsosurface(float4* pos , float4* norm, float isoValue,
     uint numVoxels, uint *d_voxelVerts,uint *d_voxelVertsScan, uint *d_voxelOccupied,uint *d_voxelOccupiedScan,
     uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,
-    uint *activeVoxels, uint *totalVerts,uint totalVerts_1, uint *d_compVoxelArray, uint maxVerts, grid_points  *vol_one,float* vol_two,
-    float isovalue1,float iso1, bool obj_union, bool obj_diff, bool obj_intersect )
+    uint *activeVoxels, uint *totalVerts, uint *d_compVoxelArray, uint maxVerts, grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
+    float iso1,float iso2, bool obj_union, bool obj_diff, bool obj_intersect , bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic)
     
     {
         
@@ -45,9 +44,8 @@ void Isosurface::computeIsosurface(float4* pos , float4* norm, float isoValue,
         }
     
         classifyVoxel_lattice(grid,threads,
-                            d_voxelVerts,d_voxelOccupied,vol_two,
-                            gridSize, gridSizeShift, gridSizeMask,
-                            numVoxels, voxelSize, isoValue,vol_one, obj_union, obj_diff, obj_intersect);
+                            d_voxelVerts,d_voxelOccupied,primitive_fixed,primitive_dynamic,topo_field,lattice_field,
+                            gridSize, gridSizeShift, gridSizeMask,numVoxels, iso1, iso2, voxelSize, isoValue, obj_union, obj_diff, obj_intersect, primitive, topo, compute_lattice,fixed,dynamic);
  
         ////// Numbering active voxels ///////
         
@@ -112,7 +110,8 @@ void Isosurface::computeIsosurface(float4* pos , float4* norm, float isoValue,
                                 d_voxelVertsScan,
                                 gridSize, gridSizeShift, gridSizeMask,
                                 voxelSize,gridcenter, isoValue,*activeVoxels,
-                                maxVerts,*totalVerts,vol_one,vol_two,isovalue1,iso1,d_voxelVerts,obj_union, obj_diff, obj_intersect);
+                                maxVerts,*totalVerts,primitive_fixed,primitive_dynamic,topo_field,lattice_field,iso1,iso2,d_voxelVerts,obj_union, obj_diff, obj_intersect,
+                                primitive, topo, compute_lattice,fixed,dynamic);
 
     }
 

@@ -2695,13 +2695,12 @@ class Multitopo : public VulkanBaseApp, Modelling
           
         if(ImguiApp::retain)
         {
-
-            isosurf.copy_parameter(d_voxelVertstwo,d_voxelVertsScantwo,0.0,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,numVoxelstwo,&activeVoxelstwo,d_compVoxelArraytwo,vol_one,d_boundary,
+            isosurf.copy_parameter(d_voxelVertstwo,d_voxelVertsScantwo,0.0,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,numVoxelstwo,&activeVoxelstwo,d_compVoxelArraytwo,vol_one,d_boundary,d_volumethree,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,
             &totalVertstwo, obj_union, obj_diff, obj_intersect);
             
             isosurf.computeIsosurface(d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
             d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
-            &activeVoxelstwo,&totalVertstwo,totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,0.0,0.0, obj_union, obj_diff, obj_intersect);
+            &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic);
             
 
             ImguiApp::retain = false;
@@ -2759,7 +2758,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             {
                 isosurf.computeIsosurface(d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
                 d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
-                &activeVoxelstwo,&totalVertstwo,totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,0.0,0.0, obj_union, obj_diff, obj_intersect);
+                &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic);
                 
             }
 
@@ -3310,7 +3309,8 @@ class Multitopo : public VulkanBaseApp, Modelling
 
                         if(ImguiApp::primitives)
                         {
-                            lattice.primitive_field(vol_one,d_volumethree_one,0.0,NumX2,NumY2,NumZ2);
+                            lattice.primitive_field(vol_one,d_boundary,d_volumethree,0.0,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX2,NumY2,NumZ2);
+                       
                         }
                         else if(ImguiApp::structural || ImguiApp::thermal)
                         {
@@ -3321,11 +3321,24 @@ class Multitopo : public VulkanBaseApp, Modelling
 
                         iso2 = 0.0;
 
-                        isosurf.computeIsosurface_lattice(d_volumethree_one,d_postwo,d_normaltwo,ImguiApp::bound_isoVal,
-                        numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo, d_voxelOccupiedtwo,d_voxelOccupiedScantwo,
-                        gridSizetwo,gridSizeShifttwo,gridSizeMasktwo, voxelSizetwo,gridcentertwo,
-                        &activeVoxelstwo, &totalVertstwo, d_compVoxelArraytwo,maxmemvertstwo,
-                        d_volumethree,d_volumethree_two,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,iso1,iso2);
+                        if(ImguiApp::primitives)
+                        {
+                          
+                            isosurf.computeIsosurface(d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                            d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                            &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,
+                            ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic);
+                        
+            
+                        }
+                        else
+                        {
+                            isosurf.computeIsosurface_lattice(d_volumethree_one,d_postwo,d_normaltwo,ImguiApp::bound_isoVal,
+                            numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo, d_voxelOccupiedtwo,d_voxelOccupiedScantwo,
+                            gridSizetwo,gridSizeShifttwo,gridSizeMasktwo, voxelSizetwo,gridcentertwo,
+                            &activeVoxelstwo, &totalVertstwo, d_compVoxelArraytwo,maxmemvertstwo,
+                            d_volumethree,d_volumethree_two,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,iso1,iso2);
+                        }
                      
                         cudaExternalSemaphoreWaitParams waitParams = {};
                         waitParams.flags = 0;
@@ -3387,8 +3400,10 @@ class Multitopo : public VulkanBaseApp, Modelling
         unit_lattice();
 
         ImguiApp::show_unit_lattice_data = false;
-
-        ImguiApp::show_lattice_data = true;
+        if(!ImguiApp::primitive_lattice_options)
+        {
+            ImguiApp::show_lattice_data = true;
+        }
     }
 
     void check_unit_lattice()
@@ -3626,7 +3641,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             }
 
-            if(ImguiApp::show_lattice_data && ImguiApp::update_isorange)
+            if(ImguiApp::show_lattice_data && ImguiApp::update_isorange  && ImguiApp::lattice)
             {
                 lattice.GPU_buffer_normalise_four(d_svl,d_volumethree_one,d_volumethree,NumX2*NumY2*NumZ2,NumX2,NumY2,NumZ2,VulkanBaseApp::bound_isoValone,VulkanBaseApp::bound_isoValtwo);
             
@@ -3638,6 +3653,33 @@ class Multitopo : public VulkanBaseApp, Modelling
 
                 ImguiApp::update_isorange = false;
 
+            }
+
+
+            if(ImguiApp::primitive_lattice_options && ImguiApp::update_isorange  && ImguiApp::primitives)
+            {
+                     
+                lattice.primitive_field(vol_one,d_boundary,d_volumethree,0.0,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX2,NumY2,NumZ2);
+                       
+                iso1 = 0.0;
+
+                iso2 = 0.0;
+
+                isosurf.computeIsosurface(d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,
+                ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic);
+            
+                ImguiApp::update_isorange = false;
+
+            }
+
+            if(ImguiApp::cad_bool  && ImguiApp::primitives)
+            {
+                isosurf.computeIsosurface(d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,
+                ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic);
             }
 
             if(ImguiApp::show_unit_lattice_data && ImguiApp::update_unit_isorange)
@@ -3665,13 +3707,12 @@ class Multitopo : public VulkanBaseApp, Modelling
                         check_lattice();
 
                         spatial_lattice_run();
-                  
+
                         printf("Lattice generated  \n");
 
                         ImguiApp::primitive_done_lattice_do = false;
 
                         ImguiApp::show_model = false;
-                        
 
                 }
             }

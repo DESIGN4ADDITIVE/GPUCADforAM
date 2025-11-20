@@ -2205,7 +2205,7 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
 
 
             
-            if((lattice || show_topo_lattice) && lattice_buffer_created)
+            if((lattice || show_topo_lattice || primitive_lattice_options) && lattice_buffer_created)
             {
                 if (ImGui::BeginMenu("Lattice  "))
                 {

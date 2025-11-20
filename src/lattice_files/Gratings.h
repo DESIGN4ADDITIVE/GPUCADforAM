@@ -81,7 +81,7 @@ class  Gratings
 
     void topo_field(float *topo_field,float *isosurf,float volfrac, int NX ,int NY, int NZ);
 
-    void primitive_field(grid_points *primitive_field,float *isosurf,float isoval, int NX ,int NY, int NZ);
+    void primitive_field(grid_points *primitive_field,float *primitive_active, float *isosurf,float isoval,bool fixed, bool active, int NX ,int NY, int NZ);
 
 };
 

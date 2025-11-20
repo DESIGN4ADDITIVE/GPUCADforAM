@@ -1828,17 +1828,31 @@ void Gratings::topo_field(float *topo_field,float *isosurf,float volfrac, int NX
 }
 
 
-__global__ void primitive_field_kernel(grid_points *primitive_field, float *isourf, float isoval, uint size)
+__global__ void primitive_field_kernel(grid_points *primitive_field,float *primitive_active, float *isourf, float isoval, uint size, bool fixed, bool dynamic)
 {
 	int tx = threadIdx.x;
 	int ind = blockIdx.x*blockDim.x+tx;
 	float a = 0.0;
+	float b = 0.0;
+	
 	if(ind < size )
-	{
-		a = primitive_field[ind].val;
-		if(a > -1)
+	{	
+		if(fixed)
 		{
-			isourf[ind] = 0.0;
+			a = primitive_field[ind].val;
+			if(a > -1)
+			{
+				isourf[ind] = 1;
+			}
+		}
+
+		else if(dynamic)
+		{
+			b = primitive_active[ind];
+			if(b >= 0)
+			{
+				isourf[ind] = 1;
+			}
 			
 		}
 
@@ -1846,12 +1860,12 @@ __global__ void primitive_field_kernel(grid_points *primitive_field, float *isou
 
 }
 
-void Gratings::primitive_field(grid_points *primitive_field,float *isosurf,float isoval, int NX ,int NY, int NZ)
+void Gratings::primitive_field(grid_points *primitive_field,float *primitive_active, float *isosurf,float isoval,bool fixed, bool active, int NX ,int NY, int NZ)
 {
 	uint sizee = NX*NY*NZ;
 	dim3 grids(ceil((sizee)/float(1024)),1,1);
 	dim3 tids(1024,1,1);
-	primitive_field_kernel<<<grids,tids>>>(primitive_field,isosurf,isoval,sizee);
+	primitive_field_kernel<<<grids,tids>>>(primitive_field,primitive_active,isosurf,isoval,sizee,fixed, active);
 	cudaDeviceSynchronize();
 }
 

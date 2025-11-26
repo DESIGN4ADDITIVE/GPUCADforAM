@@ -108,13 +108,21 @@ msg24 := "Compilation Completed !"
 ################################################################################
 
 
-
 DIRS := build bin
 
+GLSLC_PATH := $(shell which glslc)
+msg0 := ""glslc found at: $(GLSLC_PATH)""
+
 # Target rules
-compile_shader: 
+
+shader:
+ifeq ($(GLSLC_PATH),)
+	$(error "Error: glslc executable PATH not found.")
+else
+	@echo $(msg0)
 	@echo $(msg1)
-	./src/compile_shaders.sh
+	@$(shell ./src/compile_shaders.sh)
+endif
 
 
 all: build

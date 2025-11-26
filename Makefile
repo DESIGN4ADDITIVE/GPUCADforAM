@@ -129,11 +129,6 @@ all: build
 
 build: $(shell mkdir -p $(DIRS)) shader $(BINDIR)/GPUCADforAM
 
-shader:
-	@echo $(msg1)
-	@$(shell ./src/compile_shaders.sh)
-
-
 $(BUILDDIR)/imgui_widgets.o:src/imgui_folder/imgui_widgets.cpp
 	@echo $(msg2)
 	@$(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<

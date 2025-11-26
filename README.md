@@ -23,6 +23,8 @@ Users should have a GPU device with atleast 8 gb memory. It may run on lower end
 1. Install CUDA Toolkit (Cuda - GPU programming)
 2. Install GLFW (Window Manager)
 3. Install Vulkan (New generation Cross platform API for 3D graphics)
+   
+   Please follow the steps here for Ubuntu 22.04 (Jammy Jellyfish) Vulkan SDK installation - https://vulkan.lunarg.com/doc/view/1.3.268.0/linux/getting_started_ubuntu.html
 
 For more details please check DEPENDENCIES.md file.
 

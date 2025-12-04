@@ -1842,7 +1842,7 @@ __global__ void primitive_field_kernel(grid_points *primitive_field,float *primi
 			a = primitive_field[ind].val;
 			if(a > -1)
 			{
-				isourf[ind] = 1;
+				isourf[ind] = __FLT_MAX__ ;
 			}
 		}
 
@@ -1851,7 +1851,7 @@ __global__ void primitive_field_kernel(grid_points *primitive_field,float *primi
 			b = primitive_active[ind];
 			if(b >= 0)
 			{
-				isourf[ind] = 1;
+				isourf[ind] = __FLT_MAX__ ;
 			}
 			
 		}

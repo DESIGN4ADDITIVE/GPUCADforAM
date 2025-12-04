@@ -7,16 +7,18 @@
 
 layout(location = 0) in float height;
 layout(location = 1) in vec3 xyzPos;
-
+layout(location = 2) in float raster;
 
 layout(location = 0) out float hei;
 layout(location = 1) out vec4 pos;
+layout(location = 2) out float rasterr;
 
 
 
 void main() {
     
     hei = height;
+    rasterr = raster;
     pos = vec4(xyzPos.xyz,1.0);  
 
 }

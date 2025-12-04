@@ -145,7 +145,7 @@ uint3 calcGridPos_one(uint i, uint3 gridSize)
 
 
 __global__ void
-classify_copy_Voxel(uint *voxel_verts,  grid_points *vol_one, float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
+classify_copy_Voxel(uint3 raster_grid, uint *voxel_verts,  grid_points *vol_one, float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
               uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
               float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex, bool obj_union, bool obj_diff, bool obj_intersect)
 {
@@ -268,6 +268,7 @@ classify_copy_Voxel(uint *voxel_verts,  grid_points *vol_one, float *volume_two,
                     }
                     else
                     {
+                   
                         vox_points.t_x = t;
                     }
                 }
@@ -434,13 +435,13 @@ classify_copy_Voxel(uint *voxel_verts,  grid_points *vol_one, float *volume_two,
  
 }
 
-void MarchingCubeCuda::classify_copy_Voxel_lattice(dim3 grid, dim3 threads, uint *voxel_verts, grid_points *vol_one,float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
+void MarchingCubeCuda::classify_copy_Voxel_lattice(dim3 grid, dim3 threads, uint3 raster_grid,  uint *voxel_verts, grid_points *vol_one,float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
                      float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect)
 {
 
  
-    classify_copy_Voxel<<<grid, threads>>>(voxel_verts, vol_one, volume_two,vol_lattice,fixed, dynamic,iso1, iso2,
+    classify_copy_Voxel<<<grid, threads>>>(raster_grid, voxel_verts, vol_one, volume_two,vol_lattice,fixed, dynamic,iso1, iso2,
                                      gridSize, gridSizeShift, gridSizeMask,
                                      numVoxels, voxelSize, isoValue, numVertsTex_s, obj_union, obj_diff, obj_intersect);
     cudaDeviceSynchronize();
@@ -453,14 +454,14 @@ void MarchingCubeCuda::classify_copy_Voxel_lattice(dim3 grid, dim3 threads, uint
 
 
 __global__ void
-classifyVoxel(uint *voxelVerts, uint *voxelOccupied, grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
+classifyVoxel(float *vol,uint3 raster_grid, uint *voxelVerts, uint *voxelOccupied, grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
               uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,float iso1, float iso2,
               float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex , bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic)
 {
     uint blockId = __mul24(blockIdx.y, gridDim.x) + blockIdx.x;
 
     uint i = __mul24(blockId, blockDim.x) + threadIdx.x;
-
+  
     if (i < numVoxels)
     {
         uint3 gridPos = calcGridPos(i, gridSizeShift, gridSizeMask);
@@ -626,20 +627,20 @@ classifyVoxel(uint *voxelVerts, uint *voxelOccupied, grid_points  *primitive_fix
         voxelVerts[i] = numVerts;
 
         voxelOccupied[i] =  numVerts > 0;
-        
 
+ 
     }
   
  
 }
 
-void MarchingCubeCuda::classifyVoxel_lattice(dim3 grid, dim3 threads, uint *voxelVerts, uint *voxelOccupied,grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
+void MarchingCubeCuda::classifyVoxel_lattice(dim3 grid, dim3 threads, float *vol,uint3 raster_grid,uint *voxelVerts, uint *voxelOccupied,grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels, float iso1, float iso2,
                      float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic)
 {
 
  
-    classifyVoxel<<<grid, threads>>>(voxelVerts, voxelOccupied, primitive_fixed, primitive_dynamic, topo_field, lattice_field, 
+    classifyVoxel<<<grid, threads>>>(vol,raster_grid,voxelVerts, voxelOccupied, primitive_fixed, primitive_dynamic, topo_field, lattice_field, 
                                      gridSize, gridSizeShift, gridSizeMask,numVoxels,iso1, iso2, voxelSize, isoValue, numVertsTex_s, obj_union, obj_diff, obj_intersect,primitive, topo, compute_lattice, fixed, dynamic);
     cudaDeviceSynchronize();
 

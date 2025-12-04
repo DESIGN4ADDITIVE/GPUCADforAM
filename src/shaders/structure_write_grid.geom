@@ -42,10 +42,11 @@ layout( push_constant, std430) uniform push_constants
 
 layout(location = 0) in float hei[];
 layout(location = 1) in vec4 pos[];
-
+layout(location = 2) in float raster[];
 
 layout (location = 0) out vec4 fragColor;
 layout (location = 1) out int  frag_id;
+layout (location = 2) out float r_val;
 
 
 
@@ -91,9 +92,9 @@ void main(void)
 		if (gl_InvocationID == 0)
 		{
 			frag_id = gl_PrimitiveIDIn;
-		
-			fragColor = vec4(spectral_jet(hei[i]),1.0);
-		
+			fragColor = vec4(1.0,0.0,1.0,0.0);
+			fragColor.w = raster[i];
+			
 			if(hei[i] > 0.5)
 			{
 				gl_PointSize = p_size_1;
@@ -101,29 +102,29 @@ void main(void)
 			else if(hei[i] > 0.25)
 			{
 				gl_PointSize = p_size_2;
+				
 			}
 			else if(hei[i] > 0.0)
 			{
 				gl_PointSize = p_size_3;
 			}
-
-			else 
+			else
 			{
 				gl_PointSize = p_size_4;
 			}
-
-			
 
 			if(val[frag_id] == -1.0)
 			{
 				gl_PointSize = point_size;
 				fragColor = vec4(1.0,0.0,0.0,1.0);
+				fragColor.w = 1.0;
 				
 			}
 			if(val[frag_id] == 1.0)
 			{
 				gl_PointSize = point_size;
 				fragColor = vec4(1.0,1.0,0.0,1.0);
+				fragColor.w = 1.0;
 
 				
 				

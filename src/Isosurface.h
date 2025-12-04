@@ -16,11 +16,11 @@ class Isosurface : public MarchingCubeCuda
     ~Isosurface();
 
 
-    void copy_parameter(uint *voxel_verts, uint * voxel_vertsscan, float isoValue,
+    void copy_parameter(uint3 raster_grid, uint *voxel_verts, uint * voxel_vertsscan, float isoValue,
     uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,uint numVoxels,
     uint *activeVoxels,uint *d_compVoxelArray, grid_points *vol_one,float* vol_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2, uint *totalverts_1, bool obj_union, bool obj_diff, bool obj_intersect);
 
-    void computeIsosurface(float4* pos , float4* norm, float isoValue,
+    void computeIsosurface(float *vol,uint3 raster_grid, float4* pos , float4* norm, float isoValue,
     uint numVoxels, uint *d_voxelVerts,uint *d_voxelVertsScan, uint *d_voxelOccupied,uint *d_voxelOccupiedScan,
     uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,
     uint *activeVoxels, uint *totalVerts, uint *d_compVoxelArray, uint maxVerts, grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 

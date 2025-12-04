@@ -11,6 +11,7 @@ layout(location = 1) flat in int frag_id ;
 
 
 
+
 layout (input_attachment_index = 0, binding = 2) uniform subpassInput inputColor;
 layout (input_attachment_index = 1, binding = 3) uniform subpassInput inputDepth;
 
@@ -55,11 +56,32 @@ void main() {
 
 
 
-        if(gl_FragCoord.z == ch_depth)
+        if((gl_FragCoord.z == ch_depth) && (fragColorout.w >= 0.7))
         {
-
                 
+                if(fragColorout.w == 0.7)
+                {
+                        outColor = vec4(0.0,0.8,1.0,1.0);
+                }
+                
+                else if(fragColorout.w == 0.8)
+                {
+                        outColor = vec4(0.5,1.0,0.5,1.0);
+                }
 
+
+                else if(fragColorout.w == 0.9)
+                {
+                        outColor = vec4(1.0,0.0,0.5,1.0);
+                }
+
+
+                else if(fragColorout.w == 1.0)
+                {
+                        outColor = vec4(1.0,0.0,1.0,1.0);
+                }
+                
+          
                 if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
                 {
                
@@ -82,7 +104,7 @@ void main() {
  
 
               
-                outColor = fragColorout;
+                
                 
                 
         }

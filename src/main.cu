@@ -1161,8 +1161,9 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     void fillRenderingCommandBufferone(VkCommandBuffer& commandBuffer) {
    
-        if((!show_topo_lattice) )
+        if((!show_topo_lattice) && (totalVerts > 0))
         {
+            
             VkBuffer vertexBuffers[] = {v_pos_s, v_norm_s};
 
             VkDeviceSize offsets[] = { 0, 0 };
@@ -1174,8 +1175,9 @@ class Multitopo : public VulkanBaseApp, Modelling
             vkCmdDraw(commandBuffer, (uint32_t)(totalVerts), 1, 0, 0);
 
         }
-        if(show_topo_lattice )
+        else if (show_topo_lattice || (totalVertstwo > 0))
         {
+          
             VkBuffer vertexBuffers[] = {vpos_two, vnorm_two};
 
             VkDeviceSize offsets[] = { 0, 0 };
@@ -1242,7 +1244,7 @@ class Multitopo : public VulkanBaseApp, Modelling
     void fillRenderingCommandBufferone_subpass1(VkCommandBuffer& commandBuffer) 
     {
 
-        if((!show_topo_lattice))
+        if((!show_topo_lattice) && (totalVerts > 0))
         {
             VkBuffer vertexBuffers[] = {v_pos_s, v_norm_s};
             
@@ -1255,7 +1257,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             vkCmdDraw(commandBuffer, (uint32_t)(totalVerts), 1, 0, 0);
         }
 
-        if(show_topo_lattice )
+        if(show_topo_lattice || (totalVertstwo > 0))
         {
             VkBuffer vertexBuffers[] = {vpos_two, vnorm_two};
             
@@ -1352,6 +1354,8 @@ class Multitopo : public VulkanBaseApp, Modelling
         VulkanBaseApp::push_constants.mouse_x = mouse_pos.x;
 
         VulkanBaseApp::push_constants.mouse_y = mouse_pos.y;
+
+        VulkanBaseApp::push_constants.boundary = int(ImguiApp::boundary);
 
 
         if((VulkanBaseApp::push_constants.pix_delta <= 100.0)  &&  (VulkanBaseApp::push_constants.pix_delta >= 1.0))
@@ -2428,7 +2432,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         checkCudaErrors(cudaMalloc((void **)&d_grads, sizeof(REAL)*NumX * NumY*NumZ));
 
-        
         pitch_bytes = sizeof(REAL3)* NumX;
 
         grad_pitch_bytes = sizeof(REAL)* NumX;
@@ -2450,7 +2453,6 @@ class Multitopo : public VulkanBaseApp, Modelling
         tottime = (1000000.0*(t2.tv_sec-t1.tv_sec) + t2.tv_usec-t1.tv_usec)/1000.0;
 
         printf("Time to generate GPUCG:  %3.1f ms \n\n", tottime);
-
  
         cout << "CG-Residual_s: " << FinalRes_s << " Final iter "<<FinalIter_s<<" \n\n"<< endl;
 
@@ -2546,6 +2548,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             cout<<"OptIter "<<OptIter<<endl;
         
             gettimeofday(&t1, 0);
+            
             const int grad_pitchX = grad_pitch_bytes/sizeof(REAL);
             
             opt_kernel.GPUMeshFilter(d_us,d_den,Topopt_val::FilterRadius,d_grads,grad_pitchX,NumX,NumY,NumZ);

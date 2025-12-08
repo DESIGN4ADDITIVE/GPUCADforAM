@@ -2535,7 +2535,7 @@ void VulkanBaseApp::erase_previous_data()
     {
         show_model = false;
         show_primitive_lattice =false;
-        erase_primitive_data();
+        
         
     }
     

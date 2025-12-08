@@ -32,6 +32,7 @@ struct LightPushConstants
     float pix_delta;
     int support;
     float point_size;
+    int boundary;
 
 } ;
 
@@ -58,6 +59,8 @@ class ImguiApp
     static bool view_settings;
     static bool grid_settings;
     static bool background_color;
+
+    static bool boundary;
 
     static bool execute_optimize;
 

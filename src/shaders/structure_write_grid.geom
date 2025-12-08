@@ -36,6 +36,7 @@ layout( push_constant, std430) uniform push_constants
 		float pix_delta;
 		int support;
 		float point_size;
+		int boundary;
 
 } ;
 
@@ -92,7 +93,17 @@ void main(void)
 		if (gl_InvocationID == 0)
 		{
 			frag_id = gl_PrimitiveIDIn;
-			fragColor = vec4(1.0,0.0,1.0,0.0);
+			
+			if(boundary > 0)
+			{
+				fragColor = vec4(0.0,0.0,1.0,0.5);
+			}
+			else
+			{
+				fragColor = vec4(0.0,0.0,1.0,0.0);
+			}
+
+			
 			fragColor.w = raster[i];
 			
 			if(hei[i] > 0.5)

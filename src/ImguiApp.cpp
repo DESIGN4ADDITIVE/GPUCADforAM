@@ -15,6 +15,7 @@ bool ImguiApp::retain = false;
 bool ImguiApp::calculate = true;
 bool ImguiApp::undoo = false;
 
+bool ImguiApp::boundary = false;
 
 bool ImguiApp::cad_bool = false;
 
@@ -1118,6 +1119,13 @@ void ImguiApp::show_view_settings(bool *view_setting, bool *shift, bool *reset, 
     ImGui::NewLine();
 
     ImGui::Checkbox("Show 3D Grid", show_grid); 
+
+    ImGui::NewLine();
+    ImGui::NewLine();
+
+    ImGui::Checkbox("Boundary ",&ImguiApp::boundary);
+    
+    ImGui::NewLine();
 
     static float f1_1 = 0.0f;
     ImGui::SliderFloat("Point Size1", &f1_1, 0.0f, 10.0f, "%.1f");

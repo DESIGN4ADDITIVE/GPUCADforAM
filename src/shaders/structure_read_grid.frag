@@ -37,6 +37,7 @@ layout( push_constant, std430) uniform push_constants
         float pix_delta;
         int support;
         float point_size;
+        int boundary;
 
 } ;
 
@@ -55,66 +56,116 @@ void main() {
         float ch_depth = subpassLoad(inputDepth).r;
 
 
-
-        if((gl_FragCoord.z == ch_depth) && (fragColorout.w >= 0.7))
+        if(boundary > 0)
         {
-                
-                if(fragColorout.w == 0.7)
+                if((gl_FragCoord.z == ch_depth) && (fragColorout.w >= 0.7))
                 {
-                        outColor = vec4(0.0,0.8,1.0,1.0);
-                }
+                        
+                        if(fragColorout.w == 0.7)
+                        {
+                                outColor = vec4(0.0,0.8,1.0,1.0);
+                        }
+                        
+                        else if(fragColorout.w == 0.8)
+                        {
+                                outColor = vec4(0.5,1.0,0.5,1.0);
+                        }
+
+
+                        else if(fragColorout.w == 0.9)
+                        {
+                                outColor = vec4(1.0,0.0,0.5,1.0);
+                        }
+
+
+                        else if(fragColorout.w == 0.925)
+                        {
+                                outColor = fragColorout;
+                        }
+
+
+                        else if(fragColorout.w == 1.0)
+                        {
+                                outColor = vec4(1.0,0.0,1.0,1.0);
+                        }
+
+                        else
+                        {
+                                outColor = vec4(0.0,0.0,1.0,1.0);
+                        }
+                        
                 
-                else if(fragColorout.w == 0.8)
-                {
-                        outColor = vec4(0.5,1.0,0.5,1.0);
-                }
-
-
-                else if(fragColorout.w == 0.9)
-                {
-                        outColor = vec4(1.0,0.0,0.5,1.0);
-                }
-
-
-                else if(fragColorout.w == 1.0)
-                {
-                        outColor = vec4(1.0,0.0,1.0,1.0);
-                }
+                        if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
+                        {
                 
-          
-                if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
-                {
-               
-                        val[frag_id] = -1.0;
-                    
+                                val[frag_id] = -1.0;
+                        
+                        }
+
+                        else if ((mouse_click == 1) && (support == 1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
+                        {
+                                val[frag_id] = 1.0;
+                        }
+
+                        
+                        else if ((mouse_click == -1) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
+                        {
+                                val[frag_id] = 0.0;
+                        }
+                      
+                        
                 }
 
-                else if ((mouse_click == 1) && (support == 1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
+                else
                 {
-                        val[frag_id] = 1.0;
+                        
+                        discard;
                 }
-
-                
-                else if ((mouse_click == -1) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
-                {
-                        val[frag_id] = 0.0;
-                }
-              
-
- 
-
-              
-                
-                
-                
         }
 
         else
         {
+
+                if((gl_FragCoord.z == ch_depth))
+                {
+                 
+                        outColor = vec4(0.0,0.0,1.0,1.0);
+                  
+                        
+                        if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
+                        {
                 
-                discard;
+                                val[frag_id] = -1.0;
+                        
+                        }
+
+                        else if ((mouse_click == 1) && (support == 1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
+                        {
+                                val[frag_id] = 1.0;
+                        }
+
+                        
+                        else if ((mouse_click == -1) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
+                        {
+                                val[frag_id] = 0.0;
+                        }
+                
+
+        
+
+                
+                        
+                        
+                        
+                }
+
+                else
+                {
+                        
+                        discard;
+                }
+
         }
-          
    
 }
     

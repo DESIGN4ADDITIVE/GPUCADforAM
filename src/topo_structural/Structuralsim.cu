@@ -693,9 +693,9 @@ __global__ void GPUEvalGrad(const int NX, const int NY, const int NZ, const int 
 			MyU = s_u[INDEX(i+1, j+1, blockDim.x+1) + 1*((blockDim.x+1)*(blockDim.y+1))];
 			Grad_e += MyU.x*te7.x + MyU.y*te7.y + MyU.z*te7.z;
 
-			const REAL ObjValue = Dens*Grad_e;
+			const REAL ObjValue = (0.001 + (0.999 * Dens))*Grad_e;
 
-			Grad_e *= -1.0*dDens;
+			Grad_e *= -1.0 *(0.999*dDens);
 
 			i = INDEX(i, blockIdx.x, blockDim.x);
 			j = INDEX(j, blockIdx.y, blockDim.y);

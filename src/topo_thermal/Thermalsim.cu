@@ -642,9 +642,9 @@ __global__ void GPUEvalGradone_t(const int NX, const int NY, const int NZ, const
 			Grad_e += MyU.x*te7.x ;
 		
 
-			const REAL ObjValue = Dens*Grad_e;
+			const REAL ObjValue = (0.001 + (0.999 * Dens))*Grad_e;
 
-			Grad_e *= -0.999*dDens;
+			Grad_e *= -1 * 0.999 * dDens;
 
 			i = INDEX(i, blockIdx.x, BLOCKGX);
 			j = INDEX(j, blockIdx.y, BLOCKGY);

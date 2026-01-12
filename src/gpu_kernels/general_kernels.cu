@@ -273,7 +273,7 @@ void General_Kernels::GPUVolume(REAL *d_result, REAL *d_den, const size_t pitch_
 	dim3 threads(32,32,1);
     dim3 grids(ceil((NX)/ float(threads.x)), ceil((NY)/ float(threads.y)), 1);
 
-	const int pitch = pitch_bytes/sizeof(REAL3);
+	const int pitch = pitch_bytes/sizeof(REAL);
 	cudaMemset(d_result, (REAL)0.0, p2*sizeof(REAL));
 	cudaDeviceSynchronize();
 	SumVolumeKernel<<<grids, threads>>>(d_result, d_den, pitch,  NX,  NY,  NZ);

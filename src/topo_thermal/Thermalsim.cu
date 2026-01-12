@@ -800,7 +800,7 @@ void Thermalsim::GPUCG(REAL3 *d_u, REAL *d_den, REAL *d_selection, const int ite
 }
 
 
-void Thermalsim::GPUCompGrad(REAL3 *d_u, REAL *d_den, REAL *d_grad, REAL &Obj, REAL &Vol, const size_t u_pitch_bytes, size_t &grad_pitch_bytes, REAL pexp )
+void Thermalsim::GPUCompGrad(REAL3 *d_u, REAL *d_den, REAL *d_grad, REAL &Obj, REAL &Vol, const size_t u_pitch_bytes, size_t grad_pitch_bytes, REAL pexp )
 {
 	dim3 threads(BLOCKGX,BLOCKGY,1);
 	dim3 grids(ceil((NX)/ float(threads.x)), ceil((NY)/ float(threads.y)), 1);
@@ -822,7 +822,7 @@ void Thermalsim::GPUCompGrad(REAL3 *d_u, REAL *d_den, REAL *d_grad, REAL &Obj, R
 	cudaMemcpy(&Obj, d_ResReduction_t, sizeof(REAL), cudaMemcpyDeviceToHost);
 
 	
-	General_Kernels::GPUVolume(d_ResReduction_t, d_den, u_pitch_bytes, NX, NY, NZ);
+	General_Kernels::GPUVolume(d_ResReduction_t, d_den, grad_pitch_bytes, NX, NY, NZ);
 	cudaDeviceSynchronize();
 	
 	cudaMemcpy(&Vol, d_ResReduction_t, sizeof(REAL), cudaMemcpyDeviceToHost);

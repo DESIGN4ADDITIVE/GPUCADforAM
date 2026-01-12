@@ -854,7 +854,7 @@ void Structuralsim::GPUCG(REAL3 *d_u,REAL *d_den, REAL *d_selection, const int i
 
 }
 
-void Structuralsim::GPUCompGrad(REAL3 *d_u,REAL *d_den, REAL *d_grad, REAL &Obj, REAL &Vol, const size_t u_pitch_bytes, size_t &grad_pitch_bytes, const REAL pexp)
+void Structuralsim::GPUCompGrad(REAL3 *d_u,REAL *d_den, REAL *d_grad, REAL &Obj, REAL &Vol, const size_t u_pitch_bytes, size_t grad_pitch_bytes, const REAL pexp)
 {
 
 
@@ -879,7 +879,7 @@ void Structuralsim::GPUCompGrad(REAL3 *d_u,REAL *d_den, REAL *d_grad, REAL &Obj,
 	cudaDeviceSynchronize();
 	cudaMemcpy(&Obj, d_ResReduction, sizeof(REAL), cudaMemcpyDeviceToHost);
 
-	General_Kernels::GPUVolume(d_ResReduction,d_den, u_pitch_bytes, NX, NY, NZ);
+	General_Kernels::GPUVolume(d_ResReduction,d_den, grad_pitch_bytes, NX, NY, NZ);
 	cudaDeviceSynchronize();
 
 	cudaMemcpy(&Vol, d_ResReduction, sizeof(REAL), cudaMemcpyDeviceToHost);

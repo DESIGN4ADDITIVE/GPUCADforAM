@@ -36,7 +36,7 @@ class  Structuralsim
 
     void GPUCG (REAL3 *d_u,REAL *d_den, REAL *d_selection, const int iter, const int OptIter, const REAL EndRes, int &FinalIter, REAL &FinalRes, const REAL pexp);
 
-    void GPUCompGrad (REAL3 *d_u,REAL *d_den, REAL *d_grad, REAL &Obj, REAL &Vol, const size_t u_pitch_bytes, size_t &grad_pitch_bytes, const REAL pexp);
+    void GPUCompGrad (REAL3 *d_u,REAL *d_den, REAL *d_grad, REAL &Obj, REAL &Vol, const size_t u_pitch_bytes, size_t grad_pitch_bytes, const REAL pexp);
 
 
     void GPUCleanUp ();

@@ -530,7 +530,7 @@ void Optimisation_kernels::GPUMeshFilter(REAL3 *d_u,REAL *d_den, REAL rmin, REAL
   cudaMemset(d_gradone, 0.0, sizeof(REAL)*pitchX* NY* NZ);
   
   dim3 tids(BLOCKFX,BLOCKFY,1);
-  dim3 grids(ceil((NX-1)/(BLOCKFX*1.0)),ceil((NY-1)/(BLOCKFY*1.0)),1);
+  dim3 grids(ceil((NX)/(BLOCKFX*1.0)),ceil((NY)/(BLOCKFY*1.0)),1);
   GPUMeshFilter_kernel<<<grids,tids>>>(d_u,d_den,rmin,d_grad,pitchX,NX,NY,NZ,d_gradone);
   cudaDeviceSynchronize();
   cudaMemcpy(d_grad, d_gradone, (pitchX*NY*NZ) * sizeof(REAL), cudaMemcpyDeviceToDevice);

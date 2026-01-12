@@ -491,7 +491,7 @@ __global__ void GPUMeshFilter_kernel(REAL3 *d_u,REAL *d_den, REAL rmin, REAL *d_
       
 
 
-      new_grad = (new_grad/sh_den[ind].x)*sum;
+      new_grad = new_grad/(sh_den[ind].x*sum);
 
       d_gradone[indg_cur] = new_grad;
 

@@ -131,18 +131,6 @@ REAL *d_new_den,REAL *d_new_den_result)
 
 
 
-__global__ void copy_den_kernel(REAL *d_den, REAL *d_new_den, int NX, int NY, int NZ)
-{
-
-  int index = threadIdx.x + (blockDim.x*blockIdx.x);
-  float a;
-
-  if(index < (NX*NY*NZ))
-  {
-    a = d_new_den[index];
-    d_den[index] = a;
-  }
-}
 
 
 
@@ -613,13 +601,7 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL VolFrac,REA
 }
 
 
-void Optimisation_kernels::copy_den(REAL *d_den, REAL *d_new_den, int NX, int NY, int NZ)
-{
-  dim3 tids(1024,1,1);
-  dim3 grids(ceil((NX*NY*NZ)/float(1024)),1,1);
-  copy_den_kernel<<<grids,tids>>>(d_den,d_new_den,NX,NY,NZ);
-  cudaDeviceSynchronize();
-}
+
 
 
 

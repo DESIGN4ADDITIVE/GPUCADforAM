@@ -510,7 +510,7 @@ __global__ void GPUEvalGrad(const int NX, const int NY, const int NZ, const int 
 		s_d[ind_h] = d_den[indg_h];
 	}
 	
-	for(k=0;k<NZM1;k++)
+	for(k=0;k<NZ;k++)
 	{
 		
 		i = threadIdx.x;

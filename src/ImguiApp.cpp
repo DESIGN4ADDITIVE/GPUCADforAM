@@ -191,7 +191,7 @@ REAL Topopt_val::FilterRadius = 3.0;//2.8;//2.2;
 int Topopt_val::iter = 10;
 REAL Topopt_val::EndRes = 0.009;
 int Topopt_val::MaxOptIter = 10;
-REAL Topopt_val::MinDens = 0.2;
+REAL Topopt_val::MinDens = 0.001;
 
 bool ImguiApp::structural = false;
 bool ImguiApp::thermal = false;
@@ -284,7 +284,7 @@ ImguiApp::ImguiApp()
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_y = 3.0;
+            static float c_y = 0.0;
             ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
@@ -1652,7 +1652,7 @@ void ImguiApp::show_optimisation_settings()
     ImGui::NewLine();
 
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    static float op_3 = (ImguiApp::thermal) ? 0.001 : 0.01;
+    static float op_3 = (ImguiApp::thermal) ? 0.001 : 0.002;
     ImGui::InputFloat("Minimum Density  ", &op_3,0.001f,0.0f,"%.3f");
     Topopt_val::MinDens = op_3;
 

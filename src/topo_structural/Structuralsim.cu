@@ -177,7 +177,7 @@ __global__ void MatVecKernel(const int NX, const int NY, const int NZ, const int
 									const int EIDI = i-ei1;
 									if(EIDI >= 0 && EIDI < NX-1)
 									{
-										const REAL Dens = pow(s_d[ind-ei1*IOFF-ej1*(BLOCKSX + 2)-ek1*(blockDim.x + 2) * (blockDim.y  + 2)], gpupexp);
+										const REAL Dens = (pow(s_d[ind-ei1*IOFF-ej1*(BLOCKSX + 2)-ek1*(blockDim.x + 2) * (blockDim.y  + 2)], gpupexp));
 										const int LID1 = ei1+ej1*2+ek1*4;
 										for(int ek2=0;ek2<2;ek2++)
 										{
@@ -190,10 +190,19 @@ __global__ void MatVecKernel(const int NX, const int NY, const int NZ, const int
 													const int jdiff = ej2-ej1;
 													const int kdiff = ek2-ek1;
 													const REAL3 MyU = s_u[ind+idiff*IOFF+jdiff*(BLOCKSX + 2)+kdiff*(blockDim.x + 2) * (blockDim.y  + 2)];
-													MyRes.x += Dens*(GPU_EleStiff[LID1][LID2]*MyU.x + GPU_EleStiff[LID1][LID2+8]*MyU.y + GPU_EleStiff[LID1][LID2+16]*MyU.z);
-													MyRes.y += Dens*(GPU_EleStiff[LID1+8][LID2]*MyU.x + GPU_EleStiff[LID1+8][LID2+8]*MyU.y + GPU_EleStiff[LID1+8][LID2+16]*MyU.z);
-													MyRes.z += Dens*(GPU_EleStiff[LID1+16][LID2]*MyU.x + GPU_EleStiff[LID1+16][LID2+8]*MyU.y + GPU_EleStiff[LID1+16][LID2+16]*MyU.z);
-										
+
+													if(Dens > 0)
+													{
+														MyRes.x += Dens*(GPU_EleStiff[LID1][LID2]*MyU.x + GPU_EleStiff[LID1][LID2+8]*MyU.y + GPU_EleStiff[LID1][LID2+16]*MyU.z);
+														MyRes.y += Dens*(GPU_EleStiff[LID1+8][LID2]*MyU.x + GPU_EleStiff[LID1+8][LID2+8]*MyU.y + GPU_EleStiff[LID1+8][LID2+16]*MyU.z);
+														MyRes.z += Dens*(GPU_EleStiff[LID1+16][LID2]*MyU.x + GPU_EleStiff[LID1+16][LID2+8]*MyU.y + GPU_EleStiff[LID1+16][LID2+16]*MyU.z);
+													}
+													else
+													{
+														MyRes.x += 0.001*(GPU_EleStiff[LID1][LID2]*MyU.x + GPU_EleStiff[LID1][LID2+8]*MyU.y + GPU_EleStiff[LID1][LID2+16]*MyU.z);
+														MyRes.y += 0.001*(GPU_EleStiff[LID1+8][LID2]*MyU.x + GPU_EleStiff[LID1+8][LID2+8]*MyU.y + GPU_EleStiff[LID1+8][LID2+16]*MyU.z);
+														MyRes.z += 0.001*(GPU_EleStiff[LID1+16][LID2]*MyU.x + GPU_EleStiff[LID1+16][LID2+8]*MyU.y + GPU_EleStiff[LID1+16][LID2+16]*MyU.z);
+													}
 										
 												}
 											}
@@ -367,18 +376,6 @@ __global__ void ResidualKernel(const int NX, const int NY, const int NZ, const i
 				MyRes.z = 0.0f;
 			}
 
-			// if(k == 0 && j == 0)
-			// {
-			// 	MyRes.y = -1.0;
-			// }
-
-			// if(k==NZM1)
-			// {
-			// 	MyRes.x = 0.0;
-			// 	MyRes.y = 0.0;
-			// 	MyRes.z = 0.0;
-				
-			// }
 		
 			else
 			{
@@ -410,9 +407,19 @@ __global__ void ResidualKernel(const int NX, const int NY, const int NZ, const i
 													const int jdiff = ej2-ej1;
 													const int kdiff = ek2-ek1;
 													const REAL3 MyU = s_u[ind+idiff*IOFF+jdiff*(BLOCKSX + 2)+kdiff*(blockDim.x + 2) * (blockDim.y  + 2)];
-													MyRes.x -= Dens*(GPU_EleStiff[LID1][LID2]*MyU.x + GPU_EleStiff[LID1][LID2+8]*MyU.y + GPU_EleStiff[LID1][LID2+16]*MyU.z);
-													MyRes.y -= Dens*(GPU_EleStiff[LID1+8][LID2]*MyU.x + GPU_EleStiff[LID1+8][LID2+8]*MyU.y + GPU_EleStiff[LID1+8][LID2+16]*MyU.z);
-													MyRes.z -= Dens*(GPU_EleStiff[LID1+16][LID2]*MyU.x + GPU_EleStiff[LID1+16][LID2+8]*MyU.y + GPU_EleStiff[LID1+16][LID2+16]*MyU.z);
+													if(Dens > 0)
+													{
+														MyRes.x -= Dens*(GPU_EleStiff[LID1][LID2]*MyU.x + GPU_EleStiff[LID1][LID2+8]*MyU.y + GPU_EleStiff[LID1][LID2+16]*MyU.z);
+														MyRes.y -= Dens*(GPU_EleStiff[LID1+8][LID2]*MyU.x + GPU_EleStiff[LID1+8][LID2+8]*MyU.y + GPU_EleStiff[LID1+8][LID2+16]*MyU.z);
+														MyRes.z -= Dens*(GPU_EleStiff[LID1+16][LID2]*MyU.x + GPU_EleStiff[LID1+16][LID2+8]*MyU.y + GPU_EleStiff[LID1+16][LID2+16]*MyU.z);
+													}
+													else
+													{
+														MyRes.x -= 0.001*(GPU_EleStiff[LID1][LID2]*MyU.x + GPU_EleStiff[LID1][LID2+8]*MyU.y + GPU_EleStiff[LID1][LID2+16]*MyU.z);
+														MyRes.y -= 0.001*(GPU_EleStiff[LID1+8][LID2]*MyU.x + GPU_EleStiff[LID1+8][LID2+8]*MyU.y + GPU_EleStiff[LID1+8][LID2+16]*MyU.z);
+														MyRes.z -= 0.001*(GPU_EleStiff[LID1+16][LID2]*MyU.x + GPU_EleStiff[LID1+16][LID2+8]*MyU.y + GPU_EleStiff[LID1+16][LID2+16]*MyU.z);
+													
+													}
 												}
 											}
 										}//end e2 loops
@@ -454,7 +461,7 @@ __global__ void GPUEvalGrad(const int NX, const int NY, const int NZ, const int 
 	if(halo)
 	{
 
-		if(threadIdx.y==0)
+		if(threadIdx.y == 0)
 		{
 			i = threadIdx.x;
 			j = blockDim.y;

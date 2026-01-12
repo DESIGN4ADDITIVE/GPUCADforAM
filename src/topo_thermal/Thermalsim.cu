@@ -196,7 +196,7 @@ __global__ void MatVecKernel_t(const int NX, const int NY, const int NZ, const i
 													const int kdiff = ek2-ek1;
 													const REAL3 MyU = s_u[ind+idiff*IOFF+jdiff*(BLOCKSX + 2)+kdiff*(BLOCKSX + 2) * (BLOCKSY + 2)];
 													
-													MyRes.x += (0.001+0.999*Dens)*(GPU_EleStiffone_t[LID1][LID2]*MyU.x); //+ GPU_EleStiffone_t[LID1][LID2+8]*MyU.y + GPU_EleStiffone_t[LID1][LID2+16]*MyU.z);
+													MyRes.x += (0.001+0.999*Dens)*(GPU_EleStiffone_t[LID1][LID2]*MyU.x);
 													
 												}
 											}
@@ -403,7 +403,7 @@ __global__ void ResidualKernel_t(const int NX, const int NY, const int NZ, const
 													const int kdiff = ek2-ek1;
 													const REAL3 MyU = s_u[ind + idiff * IOFF + jdiff * 34 + kdiff * (BLOCKSX + 2) * (BLOCKSY + 2)];
 													//B-AX
-													MyRes.x -= Dens*(GPU_EleStiffone_t[LID1][LID2]*MyU.x) ;
+													MyRes.x -= (0.001+0.999*Dens)*(GPU_EleStiffone_t[LID1][LID2]*MyU.x) ;
 													
 												}
 											}

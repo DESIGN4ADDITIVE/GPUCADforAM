@@ -563,7 +563,7 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL VolFrac,REA
 {
 
   double l1 = 0.0;
-  double l2 = 1e5;
+  double l2 = 1e6;
   int counter = 0;
   const REAL move = 0.2;
 

@@ -575,7 +575,7 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL VolFrac,REA
   cudaMemset(d_new_den_result, 0.0, sizeof(REAL)*block_num);
   cudaMemset(d_new_den, 0.0, sizeof(REAL)*(NX*NY*NZ));
 
-  while(l2-l1 > 1e-4 && counter < 1e3)
+  while(((l2-l1) > 1e-4) && (counter < 1e3))
   {
 
     counter++;
@@ -586,7 +586,6 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL VolFrac,REA
 
     float sum;
     cudaMemcpy(&sum, d_new_den_result, sizeof(float), cudaMemcpyDeviceToHost);
-    cudaMemset(d_new_den_result, 0.0, sizeof(float)* (block_num));
 
 
     if((sum - (VolFrac*(NX )*(NY)*(NZ))) > 0)
@@ -602,7 +601,7 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL VolFrac,REA
   }
 
   
-  copy_den(d_den,d_new_den,NX,NY,NZ);
+  cudaMemcpy(d_den,d_new_den,sizeof(REAL)*(NX*NY*NZ),cudaMemcpyDeviceToDevice);
 
   cudaMemcpy(d_volume,d_new_den,sizeof(REAL)*(NX*NY*NZ),cudaMemcpyDeviceToDevice);
 

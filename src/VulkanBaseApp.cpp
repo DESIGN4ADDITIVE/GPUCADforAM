@@ -61,6 +61,7 @@ struct {
  
     VkPipeline graphicsPipeline;
     VkPipeline graphicsPipelineread;
+    VkPipeline graphicsPipelineread_region;
     VkPipeline graphicsPipelineone;
     VkPipeline graphicsPipelineoneread;
     
@@ -764,7 +765,7 @@ void VulkanBaseApp::createSwapChain()
     createInfo.imageExtent = extent;
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT ;
-
+  
     uint32_t queueFamilyIndices[2];
     findGraphicsQueueIndicies(physicalDevice, surface, queueFamilyIndices[0], queueFamilyIndices[1]);
 
@@ -1217,23 +1218,33 @@ void VulkanBaseApp::createGraphicsPipeline()
     depthStencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 
 
-    VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-    colorBlendAttachment.colorWriteMask = 0xf;
+    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_FALSE;
 
-
-    VkPipelineColorBlendStateCreateInfo colorBlending = {};
+    VkPipelineColorBlendStateCreateInfo colorBlending{};
     colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
- 
+    colorBlending.logicOpEnable = VK_FALSE;
+    colorBlending.logicOp = VK_LOGIC_OP_COPY;
+    colorBlending.attachmentCount = 1;
+    colorBlending.pAttachments = &colorBlendAttachment;
+    colorBlending.blendConstants[0] = 0.0f;
+    colorBlending.blendConstants[1] = 0.0f;
+    colorBlending.blendConstants[2] = 0.0f;
+    colorBlending.blendConstants[3] = 0.0f;
+
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments = &colorBlendAttachment;
 
+      
 
     ////////////////////////Push Constants//////////////////////////////////
     VkPushConstantRange push_constant;
     push_constant.offset = 0;
     push_constant.size = sizeof(push_constants);
-    push_constant.stageFlags = VK_SHADER_STAGE_GEOMETRY_BIT ;
+    push_constant.stageFlags = VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
+
 
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
@@ -1266,7 +1277,6 @@ void VulkanBaseApp::createGraphicsPipeline()
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = 0;
 
-
     if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipelines.graphicsPipeline) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline!");
     }
@@ -1284,6 +1294,26 @@ void VulkanBaseApp::createGraphicsPipeline()
 
     }
 
+
+
+
+    VkPipelineColorBlendAttachmentState colorBlendAttachmentone{};
+    colorBlendAttachmentone.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachmentone.blendEnable = VK_FALSE;
+
+    VkPipelineColorBlendStateCreateInfo colorBlendingone{};
+    colorBlendingone.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlendingone.logicOpEnable = VK_FALSE;
+    colorBlendingone.logicOp = VK_LOGIC_OP_COPY;
+    colorBlendingone.attachmentCount = 1;
+    colorBlendingone.pAttachments = &colorBlendAttachmentone;
+    colorBlendingone.blendConstants[0] = 0.0f;
+    colorBlendingone.blendConstants[1] = 0.0f;
+    colorBlendingone.blendConstants[2] = 0.0f;
+    colorBlendingone.blendConstants[3] = 0.0f;
+
+  
+    pipelineInfo.pColorBlendState = &colorBlendingone;
 
     std::vector<VkVertexInputBindingDescription> vertexBindingDescriptionsone;
     std::vector<VkVertexInputAttributeDescription> vertexAttributeDescriptionsone;
@@ -1322,7 +1352,6 @@ void VulkanBaseApp::createGraphicsPipeline()
         shaderStageInfosread[i].pName = "main";
 
     }
-    
 
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexBindingDescriptions.size());
@@ -1366,7 +1395,8 @@ void VulkanBaseApp::createGraphicsPipeline()
 
     depthStencil.depthWriteEnable = VK_FALSE;
     pipelineInforead.pDepthStencilState = &depthStencil; // Optional
-    colorBlending.attachmentCount = 1;
+
+    
     pipelineInforead.pColorBlendState = &colorBlending;
 
     pipelineInforead.layout = pipelineLayoutread;
@@ -1378,6 +1408,37 @@ void VulkanBaseApp::createGraphicsPipeline()
     if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInforead, nullptr, &pipelines.graphicsPipelineread) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline!");
     }
+
+    VkPipelineColorBlendAttachmentState colorBlendAttachmentregion{};
+    colorBlendAttachmentregion.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachmentregion.blendEnable = VK_TRUE;
+    colorBlendAttachmentregion.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    colorBlendAttachmentregion.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    colorBlendAttachmentregion.colorBlendOp = VK_BLEND_OP_ADD;
+    colorBlendAttachmentregion.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    colorBlendAttachmentregion.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    colorBlendAttachmentregion.alphaBlendOp = VK_BLEND_OP_ADD;
+
+    VkPipelineColorBlendStateCreateInfo colorBlendingregion{};
+    colorBlendingregion.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlendingregion.logicOpEnable = VK_FALSE;
+    colorBlendingregion.logicOp = VK_LOGIC_OP_COPY;
+    colorBlendingregion.attachmentCount = 1;
+    colorBlendingregion.pAttachments = &colorBlendAttachmentregion;
+    colorBlendingregion.blendConstants[0] = 0.0f;
+    colorBlendingregion.blendConstants[1] = 0.0f;
+    colorBlendingregion.blendConstants[2] = 0.0f;
+    colorBlendingregion.blendConstants[3] = 0.0f;
+    /////////////////////////////////////////////////////////////////
+
+
+    pipelineInforead.pColorBlendState = &colorBlendingregion;
+
+
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInforead, nullptr, &pipelines.graphicsPipelineread_region) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create graphics pipeline read region !");
+    }
+
 
     for (size_t i = 0; i < shaderStageInfosread.size(); i++) {
         vkDestroyShaderModule(device, shaderStageInfosread[i].module, nullptr);
@@ -1406,6 +1467,9 @@ void VulkanBaseApp::createGraphicsPipeline()
     viewportState.scissorCount = 1;
     viewportState.pViewports = &viewports[0];
     viewportState.pScissors = &scissors[0];
+
+    pipelineInforead.pColorBlendState = &colorBlendingone;
+
     if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInforead, nullptr, &pipelines.graphicsPipelineoneread) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline one!");
     }
@@ -1721,6 +1785,7 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
         clearColors[0].color = {clear_color.x, clear_color.y, clear_color.z, clear_color.w};
         clearColors[1].color = {  0.7f, 0.8f, 0.8f, 1.0f  };
         clearColors[2].depthStencil = {1.0f, 0 };
+
         renderPassInfo.clearValueCount = countof(clearColors);
         renderPassInfo.pClearValues = clearColors;
        
@@ -1794,32 +1859,7 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
  
         if(ImguiApp::vulkan_buffer_created)
         {
-            if(VulkanBaseApp::show_grid)
-            {
-          
-                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.graphicsPipelineread);
-                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayoutread, 0, 1, &descriptorSetsread[currentFrame], 0, nullptr);
-
-                if(ImguiApp::lattice )
-                {
-                    if(ImguiApp::show_unit_lattice_data)
-                    {
-                        fillRenderingCommandBuffer_unit_lattice_subpass1(commandBuffer);
-                    }
-                    else if( ImguiApp::show_lattice_data)
-                    {
-                        fillRenderingCommandBuffer_spatial_lattice_subpass1(commandBuffer);
-                    }
-                }
-                else
-                {
-                    fillRenderingCommandBuffer_subpass1(commandBuffer);
-                }
-           
-
-            }
-
-           
+            
             
             if(VulkanBaseApp::show_mesh)
             {
@@ -1853,6 +1893,43 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
                 }
                 
             }
+            
+            
+            if(VulkanBaseApp::show_grid)
+            {
+                if(ImguiApp::make_region)
+                {
+                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.graphicsPipelineread_region);
+                }
+                else
+                {
+                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.graphicsPipelineread);
+                }
+                
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayoutread, 0, 1, &descriptorSetsread[currentFrame], 0, nullptr);
+
+                if(ImguiApp::lattice )
+                {
+                    if(ImguiApp::show_unit_lattice_data)
+                    {
+                        fillRenderingCommandBuffer_unit_lattice_subpass1(commandBuffer);
+                    }
+                    else if( ImguiApp::show_lattice_data)
+                    {
+                        fillRenderingCommandBuffer_spatial_lattice_subpass1(commandBuffer);
+                    }
+                }
+                else
+                {
+                    fillRenderingCommandBuffer_subpass1(commandBuffer);
+                }
+           
+
+            }
+
+           
+            
+
         }
 
       
@@ -2882,6 +2959,11 @@ void VulkanBaseApp::cleanupSwapChain()
 
     if (pipelines.graphicsPipelineread != VK_NULL_HANDLE) {
         vkDestroyPipeline(device, pipelines.graphicsPipelineread, nullptr);
+    }
+
+
+    if (pipelines.graphicsPipelineread_region != VK_NULL_HANDLE) {
+        vkDestroyPipeline(device, pipelines.graphicsPipelineread_region, nullptr);
     }
 
     if (pipelines.graphicsPipelineone != VK_NULL_HANDLE) {

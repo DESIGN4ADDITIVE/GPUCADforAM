@@ -19,8 +19,7 @@ __global__ void Reduction(float *d_DataIn, float *d_DataOut, int block_num)
 {
 	__shared__ float sdata[1024];
 
-	for (int j=threadIdx.x; j<1024; j+=32*blockDim.x)  
-	
+	for (int j=threadIdx.x; j<1024; j+= 1024*blockDim.x)  	
 	sdata[j]=0;
 
 	unsigned int tid = threadIdx.x;
@@ -73,7 +72,7 @@ __global__ void Reduction(float *d_DataIn, float *d_DataOut, int block_num)
 
 
 
-__global__ void  Update_den_GPU_kernel(REAL3 *d_u, REAL *d_den,REAL VolFrac, REAL *d_grad, float *d_volume, int NX, int NY, int NZ,const REAL lmid,const REAL move,const REAL MinDens,
+__global__ void  Update_den_GPU_kernel(REAL3 *d_u, REAL *d_den, REAL *active_element , int *d_fixed_free ,REAL VolFrac, REAL *d_grad, float *d_volume, int NX, int NY, int NZ,const REAL lmid,const REAL move,const REAL MinDens,
 REAL *d_new_den,REAL *d_new_den_result)
 {
 
@@ -85,24 +84,52 @@ REAL *d_new_den,REAL *d_new_den_result)
   int index2 = xx + (yy * NX )+ zz * (NX*NY);
   __shared__ float cc[1024];
   REAL a1,a2,MyGrad;
-  REAL a3 = 0.0;
+  REAL a3,a4 = 0.0;
+
+  int a5 = 0;
+  
   a1 = d_grad[index2];
   a2 = d_den[index2];
-  if((xx < (NX ) )&& (yy < (NY )) && (zz < (NZ)))
+
+  a4 = active_element[index2];
+  a5 = d_fixed_free[index2];
+
+  if(a4 > 0)
   {
-    
-    
-    MyGrad = max((REAL)-1.0*a1, (REAL) 0.0);
-    a3 = max(MinDens, max(a2-move, min((REAL)1.0, min(a2+move, a2*sqrtf(MyGrad/lmid)))));
-    d_new_den[index2] = a3;
+    if((xx < (NX - 1 ) )&& (yy < (NY - 1 )) && (zz < (NZ - 1)) )
+    {
+      
+        if(a5 == -1)
+        {
+          d_new_den[index2] = 1.0;
+          cc[tx] = 0.0;
 
+        }
+        else
+        {
+          MyGrad = max((REAL)-1.0*a1, (REAL) 0.0);
+          a3 = max(MinDens, max(a2-move, min((REAL)1.0, min(a2+move, a2*sqrtf(MyGrad/lmid)))));
+          
+          d_new_den[index2] = a3;
+          cc[tx] = a3;
+    
+        }
 
+    }
+    else
+    {
+      d_new_den[index2] = 0.0;
+      cc[tx] = 0.0;
+    }
+
+    
   }
-
-
+  else
+  {
+    d_new_den[index2] = 0.0;
+    cc[tx] = 0.0;
+  }
   
-
-  cc[tx] = a3;
 	__syncthreads();
 
   for(int stride = blockDim.x/2; stride>0; stride/=2)
@@ -121,16 +148,10 @@ REAL *d_new_den,REAL *d_new_den_result)
 	if (tx == 0)
 	{
 		d_new_den_result[blockIdx.x] = cc[tx];
-		
+   
 	}
 
-	__syncthreads();
-
-
 }
-
-
-
 
 
 
@@ -453,7 +474,7 @@ __global__ void GPUMeshFilter_kernel(REAL3 *d_u,REAL *d_den, REAL rmin, REAL *d_
 
 
     ///voxel element values
-    const int active1 = (i<NX-1) && (j<NY-1) && (k < NZ-1);
+    const int active1 = (i < (NX-1)) && (j < (NY-1)) && (k < (NZ-1));
     if(active1 )
     {
       
@@ -497,14 +518,25 @@ __global__ void GPUMeshFilter_kernel(REAL3 *d_u,REAL *d_den, REAL rmin, REAL *d_
 
 
 
-__global__ void init_d_den_kernel(REAL *d_den, REAL volfrac, int size)
+__global__ void init_d_den_kernel(REAL *d_den, float *active_element, REAL volfrac,int size)
 {
   int index = threadIdx.x + (blockIdx.x)*(blockDim.x);
-  REAL x1;
+
+  float a = 0.0;
+  
   if(index < size)
   {
-    x1 =volfrac;
-    d_den[index] = x1;
+    
+      a = active_element[index];
+      if(a == 1)
+      {
+        d_den[index] = volfrac;
+      }
+      else
+      {
+        d_den[index] = 0.0;
+      }
+    
   }
 }
 
@@ -529,12 +561,12 @@ void Optimisation_kernels::GPUMeshFilter(REAL3 *d_u,REAL *d_den, REAL rmin, REAL
 
 
 
-void Optimisation_kernels::Update_den_GPU(REAL3 *d_u,REAL *d_den, REAL VolFrac, REAL *d_grad, float *d_volume,int NX, int NY, int NZ,const REAL lmid,const REAL move,const REAL MinDens, REAL *d_new_den, REAL *d_new_den_result,int block_num)
+void Optimisation_kernels::Update_den_GPU(REAL3 *d_u,REAL *d_den, REAL *active_element, int *d_fixed_free, REAL VolFrac, REAL *d_grad, float *d_volume,int NX, int NY, int NZ,const REAL lmid,const REAL move,const REAL MinDens, REAL *d_new_den, REAL *d_new_den_result,int block_num)
 {
   
   dim3 tids(1024,1,1);
   dim3 grids(ceil((NX*NY*NZ)/float(1024)),1,1);
-  Update_den_GPU_kernel<<<grids,tids>>>(d_u, d_den, VolFrac,d_grad,d_volume, NX, NY, NZ,lmid,move,MinDens,d_new_den,d_new_den_result);
+  Update_den_GPU_kernel<<<grids,tids>>>(d_u, d_den,active_element,d_fixed_free, VolFrac,d_grad,d_volume, NX, NY, NZ,lmid,move,MinDens,d_new_den,d_new_den_result);
   cudaDeviceSynchronize();
 
   unsigned int  x_grid = 1;
@@ -547,7 +579,7 @@ void Optimisation_kernels::Update_den_GPU(REAL3 *d_u,REAL *d_den, REAL VolFrac, 
 
 
 
-void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL VolFrac,REAL MinDens, REAL *d_grad, float *d_volume,int pitchX, int NX, int NY, int NZ)
+void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL *active_element, int *d_fixed_free,REAL VolFrac,REAL MinDens, REAL *d_grad, float *d_volume, uint *solid_voxels,int pitchX, int NX, int NY, int NZ)
 {
 
   double l1 = 0.0;
@@ -569,14 +601,15 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL VolFrac,REA
     counter++;
     
     const double lmid = 0.5*(l2+l1);
-    Update_den_GPU(d_u,d_den,VolFrac,d_grad,d_volume,NX,NY,NZ,lmid,move,MinDens,d_new_den,d_new_den_result,block_num);
+    Update_den_GPU(d_u,d_den,active_element,d_fixed_free,VolFrac,d_grad,d_volume,NX,NY,NZ,lmid,move,MinDens,d_new_den,d_new_den_result,block_num);
 
 
     float sum;
     cudaMemcpy(&sum, d_new_den_result, sizeof(float), cudaMemcpyDeviceToHost);
 
 
-    if((sum - (VolFrac*(NX )*(NY)*(NZ))) > 0)
+    if((sum - (VolFrac* (*solid_voxels))) > 0)
+    //if((sum - (VolFrac*(NX-1)*(NY-1)*(NZ -1 ))) > 0)
     {
       l1 = lmid;
     }
@@ -588,7 +621,6 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL VolFrac,REA
 
   }
 
-  
   cudaMemcpy(d_den,d_new_den,sizeof(REAL)*(NX*NY*NZ),cudaMemcpyDeviceToDevice);
 
   cudaMemcpy(d_volume,d_new_den,sizeof(REAL)*(NX*NY*NZ),cudaMemcpyDeviceToDevice);
@@ -604,12 +636,11 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL VolFrac,REA
 
 
 
-
-void Optimisation_kernels::init_d_den(REAL *d_den, REAL volfrac, int size)
+void Optimisation_kernels::init_d_den(REAL *d_den, float *active_element,REAL volfrac, int size)
 {
   dim3 tids(1024,1,1);
   dim3 grids(ceil(size/float(1024)),1,1);
-  init_d_den_kernel<<<grids,tids>>>(d_den,volfrac,size);
+  init_d_den_kernel<<<grids,tids>>>(d_den,active_element,volfrac,size);
   cudaDeviceSynchronize();
 }
 

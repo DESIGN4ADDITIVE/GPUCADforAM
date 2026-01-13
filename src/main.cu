@@ -3814,7 +3814,7 @@ class Multitopo : public VulkanBaseApp, Modelling
                     {
                         toprun_struct();
 
-                        isosurf.patch_grid(d_volume_s,NumX,NumY,NumZ, 0.31);
+                        isosurf.patch_grid(d_volume_s,NumX,NumY,NumZ, Topopt_val::VolumeFraction);
                         
                         lattice.copytotexture(d_volume_s,devPitchedPtr,NumX,NumY,NumZ);
 
@@ -3834,7 +3834,7 @@ class Multitopo : public VulkanBaseApp, Modelling
                     {
                         toprun_thermal();
 
-                        isosurf.patch_grid(d_volume_t,NumX,NumY,NumZ, 0.31);
+                        isosurf.patch_grid(d_volume_t,NumX,NumY,NumZ, Topopt_val::VolumeFraction);
 
                         lattice.copytotexture(d_volume_t,devPitchedPtr,NumX,NumY,NumZ);
 

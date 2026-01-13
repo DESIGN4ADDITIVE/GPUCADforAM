@@ -351,7 +351,7 @@ ImguiApp::ImguiApp()
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_y = 3.0;
+            static float c_y = 0.0;
             ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
@@ -430,7 +430,7 @@ ImguiApp::ImguiApp()
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_y = 3.0;
+            static float c_y = 0.0;
             ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {
@@ -532,7 +532,7 @@ ImguiApp::ImguiApp()
             }
             ImGui::SameLine();
             ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_y = 3.0;
+            static float c_y = 0.0;
             ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
             if(ImGui::IsItemActive())
             {

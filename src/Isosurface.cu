@@ -30,7 +30,8 @@ void Isosurface::computeIsosurface(float *vol, uint3 raster_grid, float4* pos , 
     uint numVoxels, uint *d_voxelVerts,uint *d_voxelVertsScan, uint *d_voxelOccupied,uint *d_voxelOccupiedScan,
     uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,
     uint *activeVoxels, uint *totalVerts, uint *d_compVoxelArray, uint maxVerts, grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
-    float iso1,float iso2, bool obj_union, bool obj_diff, bool obj_intersect , bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic)
+    float iso1,float iso2, bool obj_union, bool obj_diff, bool obj_intersect , bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic,
+    bool make_region)
     
     {
         
@@ -46,8 +47,8 @@ void Isosurface::computeIsosurface(float *vol, uint3 raster_grid, float4* pos , 
         
         classifyVoxel_lattice(grid,threads,vol,raster_grid,
                             d_voxelVerts,d_voxelOccupied,primitive_fixed,primitive_dynamic,topo_field,lattice_field,
-                            gridSize, gridSizeShift, gridSizeMask,numVoxels, iso1, iso2, voxelSize, isoValue, obj_union, obj_diff, obj_intersect, primitive, topo, compute_lattice,fixed,dynamic);
- 
+                            gridSize, gridSizeShift, gridSizeMask,numVoxels, iso1, iso2, voxelSize, isoValue, obj_union, obj_diff, obj_intersect, primitive, topo, compute_lattice,fixed,dynamic,
+                            make_region);
         ////// Numbering active voxels ///////
         
         ThrustScanWrapper_lattice(d_voxelOccupiedScan, d_voxelOccupied, numVoxels);
@@ -112,7 +113,7 @@ void Isosurface::computeIsosurface(float *vol, uint3 raster_grid, float4* pos , 
                                 gridSize, gridSizeShift, gridSizeMask,
                                 voxelSize,gridcenter, isoValue,*activeVoxels,
                                 maxVerts,*totalVerts,primitive_fixed,primitive_dynamic,topo_field,lattice_field,iso1,iso2,d_voxelVerts,obj_union, obj_diff, obj_intersect,
-                                primitive, topo, compute_lattice,fixed,dynamic);
+                                primitive, topo, compute_lattice,fixed,dynamic,make_region);
 
     }
 

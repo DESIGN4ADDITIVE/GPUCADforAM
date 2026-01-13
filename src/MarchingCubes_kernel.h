@@ -29,7 +29,7 @@ class MarchingCubeCuda
 
         void classifyVoxel_lattice(dim3 grid, dim3 threads,float *vol,uint3 raster_grid, uint *voxelVerts, uint *voxelOccupied,grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,float iso1, float iso2,
-                     float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic);
+                     float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic, bool make_region);
 
         void classifyVoxel_lattice_2(dim3 grid, dim3 threads, uint *voxelVerts, uint *voxelOccupied, float *volume_one,
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
@@ -50,7 +50,7 @@ class MarchingCubeCuda
                     uint *numVertsScanned,uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask,
                     float3 voxelSize,float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts, uint totalverts_1,
                     grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, float isovalue1,float iso1, uint *voxel_verts, bool obj_union, bool obj_diff, bool obj_intersect,
-                     bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic);
+                     bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic, bool make_region);
 
         
         void generateTriangles_lattice_2(dim3 grid, dim3 threads,float4 *pos, float4 *norm, 

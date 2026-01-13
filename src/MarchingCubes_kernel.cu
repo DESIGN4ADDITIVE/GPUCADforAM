@@ -456,9 +456,9 @@ void MarchingCubeCuda::classify_copy_Voxel_lattice(dim3 grid, dim3 threads, uint
 __global__ void
 classifyVoxel(float *vol,uint3 raster_grid, uint *voxelVerts, uint *voxelOccupied, grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
               uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,float iso1, float iso2,
-              float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex , bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic)
+              float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex , bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic, bool make_region)
 {
-    uint blockId = __mul24(blockIdx.y, gridDim.x) + blockIdx.x;
+   uint blockId = __mul24(blockIdx.y, gridDim.x) + blockIdx.x;
 
     uint i = __mul24(blockId, blockDim.x) + threadIdx.x;
   
@@ -505,9 +505,24 @@ classifyVoxel(float *vol,uint3 raster_grid, uint *voxelVerts, uint *voxelOccupie
      
         uint cubeindex;
 
-        if(obj_union)
+
+        if(make_region)
+        {
+            cubeindex =  (uint(field_1[0] < isoVal));
+            cubeindex += (uint(field_1[1] < isoVal)) *2;
+            cubeindex += (uint(field_1[2] < isoVal)) *4;
+            cubeindex += (uint(field_1[3] < isoVal)) *8;
+            cubeindex += (uint(field_1[4] < isoVal)) *16;
+            cubeindex += (uint(field_1[5] < isoVal)) *32;
+            cubeindex += (uint(field_1[6] < isoVal)) *64;
+            cubeindex += (uint(field_1[7] < isoVal)) *128;
+
+        }
+
+        else if(obj_union)
         {
             
+
             if(fixed)
             {
                 cubeindex =  (uint(field_2[0] < isoVal) | (uint(field_3[0] > iso1) & uint(field_3[0] < iso2)));
@@ -534,6 +549,7 @@ classifyVoxel(float *vol,uint3 raster_grid, uint *voxelVerts, uint *voxelOccupie
             
             else
             {
+                
                 cubeindex =  (uint(field_1[0] < isoVal) | uint(field_2[0] < isoVal));
                 cubeindex += (uint(field_1[1] < isoVal) | uint(field_2[1] < isoVal)) *2;
                 cubeindex += (uint(field_1[2] < isoVal) | uint(field_2[2] < isoVal)) *4;
@@ -628,20 +644,20 @@ classifyVoxel(float *vol,uint3 raster_grid, uint *voxelVerts, uint *voxelOccupie
 
         voxelOccupied[i] =  numVerts > 0;
 
- 
     }
   
  
 }
 
+
 void MarchingCubeCuda::classifyVoxel_lattice(dim3 grid, dim3 threads, float *vol,uint3 raster_grid,uint *voxelVerts, uint *voxelOccupied,grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels, float iso1, float iso2,
-                     float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic)
+                     float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic, bool make_region)
 {
 
  
     classifyVoxel<<<grid, threads>>>(vol,raster_grid,voxelVerts, voxelOccupied, primitive_fixed, primitive_dynamic, topo_field, lattice_field, 
-                                     gridSize, gridSizeShift, gridSizeMask,numVoxels,iso1, iso2, voxelSize, isoValue, numVertsTex_s, obj_union, obj_diff, obj_intersect,primitive, topo, compute_lattice, fixed, dynamic);
+                                     gridSize, gridSizeShift, gridSizeMask,numVoxels,iso1, iso2, voxelSize, isoValue, numVertsTex_s, obj_union, obj_diff, obj_intersect,primitive, topo, compute_lattice, fixed, dynamic,make_region);
     cudaDeviceSynchronize();
 
     getLastCudaError("classifyVoxel failed");
@@ -810,29 +826,12 @@ float3  vertexInterp4(float isolevelone,float3 p0, float3 p1, float f0, float f1
 {
     
     float t = 0.0;
-    
-
-    if (fabs(isolevelone-f0) < 0.0005)
-    {
-        return(p0);
-    }
-    if (fabs(isolevelone-f1) < 0.0005)
-    {
-        return(p1);
-    }
-    if (fabs(f1-f0) < 0.0005)
-    {
-        return(p0);
-    }
 
     t = (isolevelone - f0) / (f1 - f0);
-
- 
 
 
     return lerp(p0, p1, t);
 }
-
 
 __device__
 float3 calcNormal(float3 *v0, float3 *v1, float3 *v2)
@@ -994,7 +993,7 @@ generateTriangles_lattice_kernel(float4 *pos, float4 *norm, uint *compactVoxelAr
                    uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask,
                    float3 voxelSize, float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts,
                    cudaTextureObject_t triTex, cudaTextureObject_t numVertsTex,uint totalverts_1, grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, float iso1, float iso2,
-                   uint *voxerl_verts, bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic)
+                   uint *voxerl_verts, bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic, bool make_region)
 {
     
     
@@ -1067,7 +1066,23 @@ generateTriangles_lattice_kernel(float4 *pos, float4 *norm, uint *compactVoxelAr
      
         uint cubeindex;
 
-        if(obj_union)
+
+
+        if(make_region)
+        {
+            cubeindex =  (uint(field_2[0].val < isoVal));
+            cubeindex += (uint(field_2[1].val < isoVal)) *2;
+            cubeindex += (uint(field_2[2].val < isoVal)) *4;
+            cubeindex += (uint(field_2[3].val < isoVal)) *8;
+            cubeindex += (uint(field_2[4].val < isoVal)) *16;
+            cubeindex += (uint(field_2[5].val < isoVal)) *32;
+            cubeindex += (uint(field_2[6].val < isoVal)) *64;
+            cubeindex += (uint(field_2[7].val < isoVal)) *128;
+
+        }
+
+
+        else if(obj_union)
         {
             
             if(fixed)
@@ -1133,6 +1148,8 @@ generateTriangles_lattice_kernel(float4 *pos, float4 *norm, uint *compactVoxelAr
             
             else
             {
+                
+        
                 cubeindex =  (uint(field_1[0] >= isoVal) & uint(field_2[0].val < isoVal));
                 cubeindex += (uint(field_1[1] >= isoVal) & uint(field_2[1].val < isoVal)) *2;
                 cubeindex += (uint(field_1[2] >= isoVal) & uint(field_2[2].val < isoVal)) *4;
@@ -1141,6 +1158,7 @@ generateTriangles_lattice_kernel(float4 *pos, float4 *norm, uint *compactVoxelAr
                 cubeindex += (uint(field_1[5] >= isoVal) & uint(field_2[5].val < isoVal)) *32;
                 cubeindex += (uint(field_1[6] >= isoVal) & uint(field_2[6].val < isoVal)) *64;
                 cubeindex += (uint(field_1[7] >= isoVal) & uint(field_2[7].val < isoVal)) *128;
+                
             }
         
         }
@@ -1188,55 +1206,77 @@ generateTriangles_lattice_kernel(float4 *pos, float4 *norm, uint *compactVoxelAr
 
             __shared__ float3 vertlist[12*NTHREADS];
 
-            if(fixed)
+
+            if(make_region)
             {
-                vertlist[threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[0], v[1],field_1[0], field_1[1], field_3[0], field_3[1]);
-                vertlist[NTHREADS+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[1], v[2],field_1[1], field_1[2], field_3[1], field_3[2]);
-                vertlist[(NTHREADS*2)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[2], v[3],field_1[2], field_1[3], field_3[2], field_3[3]);
-                vertlist[(NTHREADS*3)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[3], v[0],field_1[3], field_1[0], field_3[3], field_3[0]);
-                vertlist[(NTHREADS*4)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[4], v[5],field_1[4], field_1[5], field_3[4], field_3[5]);
-                vertlist[(NTHREADS*5)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[5], v[6],field_1[5], field_1[6], field_3[5], field_3[6]);
-                vertlist[(NTHREADS*6)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[6], v[7],field_1[6], field_1[7], field_3[6], field_3[7]);
-                vertlist[(NTHREADS*7)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[7], v[4],field_1[7], field_1[4], field_3[7], field_3[4]);
-                vertlist[(NTHREADS*8)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[0], v[4],field_1[0], field_1[4], field_3[0], field_3[4]);
-                vertlist[(NTHREADS*9)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[1], v[5],field_1[1], field_1[5], field_3[1], field_3[5]);
-                vertlist[(NTHREADS*10)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[2], v[6],field_1[2], field_1[6], field_3[2], field_3[6]);
-                vertlist[(NTHREADS*11)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[3], v[7],field_1[3], field_1[7], field_3[3], field_3[7]);
-             
-                
-            }
-            else if(dynamic)
-            {
-                vertlist[threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[0], v[1], field_3[0], field_3[1],field_2[0].t_x);
-                vertlist[NTHREADS+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[1], v[2], field_3[1], field_3[2],field_2[1].t_y);
-                vertlist[(NTHREADS*2)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[3], v[2], field_3[3], field_3[2],field_2[3].t_x);
-                vertlist[(NTHREADS*3)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[0], v[3], field_3[0], field_3[3],field_2[0].t_y);
-                vertlist[(NTHREADS*4)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[4], v[5], field_3[4], field_3[5],field_2[4].t_x);
-                vertlist[(NTHREADS*5)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[5], v[6], field_3[5], field_3[6],field_2[5].t_y);
-                vertlist[(NTHREADS*6)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[7], v[6], field_3[7], field_3[6],field_2[7].t_x);
-                vertlist[(NTHREADS*7)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[4], v[7], field_3[4], field_3[7],field_2[4].t_y);
-                vertlist[(NTHREADS*8)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[0], v[4], field_3[0], field_3[4],field_2[0].t_z);
-                vertlist[(NTHREADS*9)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[1], v[5], field_3[1], field_3[5],field_2[1].t_z);
-                vertlist[(NTHREADS*10)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[2], v[6], field_3[2], field_3[6],field_2[2].t_z);
-                vertlist[(NTHREADS*11)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[3], v[7], field_3[3], field_3[7],field_2[3].t_z);
+                vertlist[threadIdx.x]               = lerp(v[0], v[1], field_2[0].t_x);
+                vertlist[NTHREADS+threadIdx.x]      = lerp(v[1], v[2], field_2[1].t_y);
+                vertlist[(NTHREADS*2)+threadIdx.x]  = lerp(v[3], v[2],field_2[3].t_x);
+                vertlist[(NTHREADS*3)+threadIdx.x]  = lerp(v[0], v[3],field_2[0].t_y);
+                vertlist[(NTHREADS*4)+threadIdx.x]  = lerp(v[4], v[5],field_2[4].t_x);
+                vertlist[(NTHREADS*5)+threadIdx.x]  = lerp(v[5], v[6],field_2[5].t_y);
+                vertlist[(NTHREADS*6)+threadIdx.x]  = lerp(v[7], v[6],field_2[7].t_x);
+                vertlist[(NTHREADS*7)+threadIdx.x]  = lerp(v[4], v[7],field_2[4].t_y);
+                vertlist[(NTHREADS*8)+threadIdx.x]  = lerp(v[0], v[4],field_2[0].t_z);
+                vertlist[(NTHREADS*9)+threadIdx.x]  = lerp(v[1], v[5],field_2[1].t_z);
+                vertlist[(NTHREADS*10)+threadIdx.x] = lerp(v[2], v[6],field_2[2].t_z);
+                vertlist[(NTHREADS*11)+threadIdx.x] = lerp(v[3], v[7],field_2[3].t_z);
+ 
+
             }
 
             else
             {
-                vertlist[threadIdx.x] = vertexInterp_primitive(isoVal, v[0], v[1], field_1[0], field_1[1],field_2[0].t_x);
-                vertlist[NTHREADS+threadIdx.x] = vertexInterp_primitive(isoVal, v[1], v[2], field_1[1], field_1[2],field_2[1].t_y);
-                vertlist[(NTHREADS*2)+threadIdx.x] = vertexInterp_primitive(isoVal, v[3], v[2], field_1[3], field_1[2],field_2[3].t_x);
-                vertlist[(NTHREADS*3)+threadIdx.x] = vertexInterp_primitive(isoVal, v[0], v[3], field_1[0], field_1[3],field_2[0].t_y);
-                vertlist[(NTHREADS*4)+threadIdx.x] = vertexInterp_primitive(isoVal, v[4], v[5], field_1[4], field_1[5],field_2[4].t_x);
-                vertlist[(NTHREADS*5)+threadIdx.x] = vertexInterp_primitive(isoVal, v[5], v[6], field_1[5], field_1[6],field_2[5].t_y);
-                vertlist[(NTHREADS*6)+threadIdx.x] = vertexInterp_primitive(isoVal, v[7], v[6], field_1[7], field_1[6],field_2[7].t_x);
-                vertlist[(NTHREADS*7)+threadIdx.x] = vertexInterp_primitive(isoVal, v[4], v[7], field_1[4], field_1[7],field_2[4].t_y);
-                vertlist[(NTHREADS*8)+threadIdx.x] = vertexInterp_primitive(isoVal, v[0], v[4], field_1[0], field_1[4],field_2[0].t_z);
-                vertlist[(NTHREADS*9)+threadIdx.x] = vertexInterp_primitive(isoVal, v[1], v[5], field_1[1], field_1[5],field_2[1].t_z);
-                vertlist[(NTHREADS*10)+threadIdx.x] = vertexInterp_primitive(isoVal, v[2], v[6], field_1[2], field_1[6],field_2[2].t_z);
-                vertlist[(NTHREADS*11)+threadIdx.x] = vertexInterp_primitive(isoVal, v[3], v[7], field_1[3], field_1[7],field_2[3].t_z);
-            }
 
+                if(fixed)
+                {
+                    vertlist[threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[0], v[1],field_1[0], field_1[1], field_3[0], field_3[1]);
+                    vertlist[NTHREADS+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[1], v[2],field_1[1], field_1[2], field_3[1], field_3[2]);
+                    vertlist[(NTHREADS*2)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[2], v[3],field_1[2], field_1[3], field_3[2], field_3[3]);
+                    vertlist[(NTHREADS*3)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[3], v[0],field_1[3], field_1[0], field_3[3], field_3[0]);
+                    vertlist[(NTHREADS*4)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[4], v[5],field_1[4], field_1[5], field_3[4], field_3[5]);
+                    vertlist[(NTHREADS*5)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[5], v[6],field_1[5], field_1[6], field_3[5], field_3[6]);
+                    vertlist[(NTHREADS*6)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[6], v[7],field_1[6], field_1[7], field_3[6], field_3[7]);
+                    vertlist[(NTHREADS*7)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[7], v[4],field_1[7], field_1[4], field_3[7], field_3[4]);
+                    vertlist[(NTHREADS*8)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[0], v[4],field_1[0], field_1[4], field_3[0], field_3[4]);
+                    vertlist[(NTHREADS*9)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[1], v[5],field_1[1], field_1[5], field_3[1], field_3[5]);
+                    vertlist[(NTHREADS*10)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[2], v[6],field_1[2], field_1[6], field_3[2], field_3[6]);
+                    vertlist[(NTHREADS*11)+threadIdx.x] = vertexInterp_new(isoVal, iso1, iso2, v[3], v[7],field_1[3], field_1[7], field_3[3], field_3[7]);
+                
+                    
+                }
+                else if(dynamic)
+                {
+                    vertlist[threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[0], v[1], field_3[0], field_3[1],field_2[0].t_x);
+                    vertlist[NTHREADS+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[1], v[2], field_3[1], field_3[2],field_2[1].t_y);
+                    vertlist[(NTHREADS*2)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[3], v[2], field_3[3], field_3[2],field_2[3].t_x);
+                    vertlist[(NTHREADS*3)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[0], v[3], field_3[0], field_3[3],field_2[0].t_y);
+                    vertlist[(NTHREADS*4)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[4], v[5], field_3[4], field_3[5],field_2[4].t_x);
+                    vertlist[(NTHREADS*5)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[5], v[6], field_3[5], field_3[6],field_2[5].t_y);
+                    vertlist[(NTHREADS*6)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[7], v[6], field_3[7], field_3[6],field_2[7].t_x);
+                    vertlist[(NTHREADS*7)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[4], v[7], field_3[4], field_3[7],field_2[4].t_y);
+                    vertlist[(NTHREADS*8)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[0], v[4], field_3[0], field_3[4],field_2[0].t_z);
+                    vertlist[(NTHREADS*9)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[1], v[5], field_3[1], field_3[5],field_2[1].t_z);
+                    vertlist[(NTHREADS*10)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[2], v[6], field_3[2], field_3[6],field_2[2].t_z);
+                    vertlist[(NTHREADS*11)+threadIdx.x] = vertexInterp_primitive_one(iso1,iso2, v[3], v[7], field_3[3], field_3[7],field_2[3].t_z);
+                }
+
+                else
+                {
+                    vertlist[threadIdx.x] = vertexInterp_primitive(isoVal, v[0], v[1], field_1[0], field_1[1],field_2[0].t_x);
+                    vertlist[NTHREADS+threadIdx.x] = vertexInterp_primitive(isoVal, v[1], v[2], field_1[1], field_1[2],field_2[1].t_y);
+                    vertlist[(NTHREADS*2)+threadIdx.x] = vertexInterp_primitive(isoVal, v[3], v[2], field_1[3], field_1[2],field_2[3].t_x);
+                    vertlist[(NTHREADS*3)+threadIdx.x] = vertexInterp_primitive(isoVal, v[0], v[3], field_1[0], field_1[3],field_2[0].t_y);
+                    vertlist[(NTHREADS*4)+threadIdx.x] = vertexInterp_primitive(isoVal, v[4], v[5], field_1[4], field_1[5],field_2[4].t_x);
+                    vertlist[(NTHREADS*5)+threadIdx.x] = vertexInterp_primitive(isoVal, v[5], v[6], field_1[5], field_1[6],field_2[5].t_y);
+                    vertlist[(NTHREADS*6)+threadIdx.x] = vertexInterp_primitive(isoVal, v[7], v[6], field_1[7], field_1[6],field_2[7].t_x);
+                    vertlist[(NTHREADS*7)+threadIdx.x] = vertexInterp_primitive(isoVal, v[4], v[7], field_1[4], field_1[7],field_2[4].t_y);
+                    vertlist[(NTHREADS*8)+threadIdx.x] = vertexInterp_primitive(isoVal, v[0], v[4], field_1[0], field_1[4],field_2[0].t_z);
+                    vertlist[(NTHREADS*9)+threadIdx.x] = vertexInterp_primitive(isoVal, v[1], v[5], field_1[1], field_1[5],field_2[1].t_z);
+                    vertlist[(NTHREADS*10)+threadIdx.x] = vertexInterp_primitive(isoVal, v[2], v[6], field_1[2], field_1[6],field_2[2].t_z);
+                    vertlist[(NTHREADS*11)+threadIdx.x] = vertexInterp_primitive(isoVal, v[3], v[7], field_1[3], field_1[7],field_2[3].t_z);
+                }
+            }
 
 
             for (int j = 0; j<numVerts; j += 3)
@@ -1291,7 +1331,7 @@ generateTriangles_lattice_kernel(float4 *pos, float4 *norm, uint *compactVoxelAr
 void MarchingCubeCuda::generateTriangles_lattice(dim3 grid, dim3 threads,float4 *pos, float4 *norm,uint *compactVoxelArray,
                            uint *numVertsScanned,uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask,
                           float3 voxelSize, float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts, uint totalverts_1,grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
-                          float iso1,float iso2,uint *voxel_verts, bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic)
+                          float iso1,float iso2,uint *voxel_verts, bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic, bool make_region)
 {
     
     generateTriangles_lattice_kernel<<<grid, threads>>>(pos, norm,compactVoxelArray,
@@ -1299,7 +1339,7 @@ void MarchingCubeCuda::generateTriangles_lattice(dim3 grid, dim3 threads,float4 
                                            gridSize, gridSizeShift, gridSizeMask,
                                            voxelSize,gridcenter, isoValue, activeVoxels,
                                            maxVerts, triTex_s, numVertsTex_s, totalverts_1, primitive_fixed, primitive_dynamic, topo_field, lattice_field, iso1,iso2,voxel_verts, obj_union, obj_diff, obj_intersect,
-                                            primitive, topo, compute_lattice, fixed, dynamic);
+                                            primitive, topo, compute_lattice, fixed, dynamic, make_region);
     cudaDeviceSynchronize();
     getLastCudaError("generateTriangles failed");
     cudaError_t err = cudaGetLastError();

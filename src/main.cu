@@ -1038,7 +1038,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             VkDeviceSize offsets[] = { 0, 0, 0};
 
-            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
+            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(ImguiApp::push_constants),&push_constants);
 
             vkCmdBindVertexBuffers(commandBuffer, 0, 3, vertexBuffers, offsets);
 
@@ -1052,7 +1052,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             
             VkDeviceSize offsets[] = { 0, 0, 0};
 
-            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
+            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
 
             vkCmdBindVertexBuffers(commandBuffer, 0, 3, vertexBuffers, offsets);
 
@@ -1103,7 +1103,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         VkDeviceSize offsets[] = { 0, 0};
 
-        vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
+        vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
 
         vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
 
@@ -1135,7 +1135,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         VkDeviceSize offsets[] = { 0, 0};
 
-        vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
+        vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
 
         vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
 
@@ -1168,7 +1168,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             VkDeviceSize offsets[] = { 0, 0 };
 
-            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
+            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(ImguiApp::push_constants),&push_constants);
             
             vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
             
@@ -1182,7 +1182,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             VkDeviceSize offsets[] = { 0, 0 };
 
-            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
+            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(ImguiApp::push_constants),&push_constants);
            
             vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
 
@@ -1199,7 +1199,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             VkDeviceSize offsets[] = { 0, 0 };
 
-            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
+            vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(ImguiApp::push_constants),&push_constants);
             
             vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
 
@@ -1214,7 +1214,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         VkDeviceSize offsets[] = { 0, 0 };
 
-        vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
+        vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
         
         vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
         
@@ -1232,7 +1232,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         VkDeviceSize offsets[] = { 0, 0 };
 
-        vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT ,0,sizeof(ImguiApp::push_constants),&push_constants);
+        vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(ImguiApp::push_constants),&push_constants);
         
         vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, offsets);
         

@@ -96,6 +96,8 @@ size_t slicepitch =0;
 cudaExtent extend;
 
 
+uint boundary_in_region = 0;
+
 static float2 *fft_data = NULL;
 
 static float2 *fft_data_compute = NULL;
@@ -161,7 +163,9 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     float *d_volume_s, *d_volume_t, *d_volumeone,*d_volumeone_one, *d_volumethree, 
 
-    *d_volumethree_one,*d_volumethree_two, *d_raster;
+    *d_volumethree_one,*d_volumethree_two, *d_raster, *d_solid;
+
+    int *d_fixed_free;
 
     std::vector<float*> d_cudastorageBuffers;
 
@@ -177,7 +181,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     float3 voxelSize, gridcenter;
 
-    uint numVoxels, activeVoxels, totalVerts;
+    uint numVoxels, activeVoxels, totalVerts, solid_voxels;
 
     float dx, dy, dz;
 
@@ -409,6 +413,10 @@ class Multitopo : public VulkanBaseApp, Modelling
         d_volume_t(nullptr),
 
         d_raster(nullptr),
+
+        d_solid(nullptr),
+
+        d_fixed_free(nullptr),
      
         d_pos(nullptr),
 
@@ -431,6 +439,8 @@ class Multitopo : public VulkanBaseApp, Modelling
         numVoxels(0),
 
         activeVoxels(0),
+
+        solid_voxels(0),
 
         totalVerts(0),
 
@@ -684,7 +694,15 @@ class Multitopo : public VulkanBaseApp, Modelling
             checkCudaErrors(cudaFree(d_raster));
         }
 
+        if(d_solid)
+        {
+            checkCudaErrors(cudaFree(d_solid));
+        }
 
+        if(d_fixed_free)
+        {
+            checkCudaErrors(cudaFree(d_fixed_free));
+        }
 
         if (d_pos) {
            
@@ -1357,6 +1375,10 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         VulkanBaseApp::push_constants.boundary = int(ImguiApp::boundary);
 
+        VulkanBaseApp::push_constants.alpha_val = ImguiApp::alpha_val;
+
+        VulkanBaseApp::push_constants.make_region = int(ImguiApp::make_region);
+
 
         if((VulkanBaseApp::push_constants.pix_delta <= 100.0)  &&  (VulkanBaseApp::push_constants.pix_delta >= 1.0))
         {
@@ -1947,6 +1969,10 @@ class Multitopo : public VulkanBaseApp, Modelling
         checkCudaErrors(cudaMemset(d_volume_t, 0.0, (NumX *NumY * NumZ) * sizeof(*d_volume_t)));
         checkCudaErrors(cudaMemset(d_raster, 0.0, (NumX *NumY * NumZ) * sizeof(*d_raster)));
 
+        checkCudaErrors(cudaMemset(d_solid, 0, (NumX *NumY * NumZ) * sizeof(*d_solid)));
+
+        checkCudaErrors(cudaMemset(d_fixed_free, 0, (NumX *NumY * NumZ) * sizeof(*d_fixed_free)));
+
         checkCudaErrors(cudaMemset(d_selection, 0.0, sizeof(*d_selection)*NumX * NumY * NumZ));
         checkCudaErrors(cudaMemset(d_cudastorageBuffers[0], 0.0, (NumX *NumY * NumZ) * sizeof(*d_cudastorageBuffers[0])));
         checkCudaErrors(cudaMemset(d_cudastorageBuffers[1], 0.0, (NumX *NumY * NumZ) * sizeof(*d_cudastorageBuffers[1])));
@@ -2179,7 +2205,15 @@ class Multitopo : public VulkanBaseApp, Modelling
         volsize = ((NumX)*(NumY)*(NumZ));
         maxmemverts = (NumX*NumY*(max_dim*4));
 
-   
+
+        checkCudaErrors(cudaMalloc((void **)&d_solid, sizeof(d_solid)*NumX * NumY*NumZ));
+        cudaMemset(d_solid, 0, sizeof(d_solid)*NumX * NumY * NumZ);
+
+
+
+        checkCudaErrors(cudaMalloc((void **)&d_fixed_free, sizeof(d_fixed_free)*NumX * NumY*NumZ));
+        cudaMemset(d_fixed_free, 0, sizeof(d_fixed_free)*NumX * NumY * NumZ);
+
 
         createExternalBuffer(nVerts * sizeof(REAL3),
                              VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -2442,12 +2476,15 @@ class Multitopo : public VulkanBaseApp, Modelling
         
         cudaMemset(d_us, 0.0, sizeof(REAL3)*NumX * NumY * NumZ);
         
-        opt_kernel.init_d_den(d_den,Topopt_val::VolumeFraction,NumX * NumY * NumZ);
+        opt_kernel.init_d_den(d_den,d_solid,Topopt_val::VolumeFraction, NumX * NumY * NumZ);
+
     
         gettimeofday(&t1, 0);
         
-        structure.GPUCG(d_us,d_den,d_selection, Topopt_val::iter, 0, Topopt_val::EndRes, FinalIter_s, FinalRes_s,Topopt_val::pexp);
+        structure.GPUCG(d_us,d_den,d_selection,  Topopt_val::iter, 0, Topopt_val::EndRes, FinalIter_s, FinalRes_s,Topopt_val::pexp);
         
+
+
         gettimeofday(&t2, 0);
 
         tottime = (1000000.0*(t2.tv_sec-t1.tv_sec) + t2.tv_usec-t1.tv_usec)/1000.0;
@@ -2458,7 +2495,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         gettimeofday(&t1, 0);
 
-        structure.GPUCompGrad(d_us,d_den, d_grads, Obj_s, Vol_s, pitch_bytes, grad_pitch_bytes, Topopt_val::pexp);
+        structure.GPUCompGrad(d_us,d_den, d_grads,Obj_s, Vol_s, pitch_bytes, grad_pitch_bytes, Topopt_val::pexp);
 
         cout << "After Iter "<<OptIter<<": Compliance = " << Obj_s  << " Vol = "<<Vol_s<<"\n"<< endl;
 
@@ -2467,6 +2504,8 @@ class Multitopo : public VulkanBaseApp, Modelling
         tottime = (1000000.0*(t2.tv_sec-t1.tv_sec) + t2.tv_usec-t1.tv_usec)/1000.0;
 
         printf("Time to generate GPUCompGrad:  %3.1f ms \n\n", tottime);
+
+        selectt.constrained_vol(d_solid,d_fixed_free,&solid_voxels,Topopt_val::VolumeFraction,NumX,NumY,NumZ);
 
         printf("Initialisation Completed Successfully \n");
        
@@ -2494,7 +2533,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         checkCudaErrors(cudaMalloc((void **)&d_grads, sizeof(REAL)*NumX * NumY*NumZ));
 
-        
         pitch_bytes = sizeof(REAL3)* NumX;
 
         grad_pitch_bytes = sizeof(REAL)* NumX;
@@ -2505,7 +2543,9 @@ class Multitopo : public VulkanBaseApp, Modelling
         
         cudaMemset(d_us, 0.0, sizeof(REAL3)*NumX * NumY * NumZ);
      
-        opt_kernel.init_d_den(d_den,Topopt_val::VolumeFraction,NumX * NumY * NumZ);
+        opt_kernel.init_d_den(d_den,d_solid,Topopt_val::VolumeFraction,NumX * NumY * NumZ);
+
+        
         
         getLastCudaError("Initialisation of density buffer failed ");
  
@@ -2541,7 +2581,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     int toprun_struct()
     {
-       
         while(OptIter < Topopt_val::MaxOptIter)
         {
             
@@ -2551,7 +2590,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             
             const int grad_pitchX = grad_pitch_bytes/sizeof(REAL);
             
-            opt_kernel.GPUMeshFilter(d_us,d_den,Topopt_val::FilterRadius,d_grads,grad_pitchX,NumX,NumY,NumZ);
+            opt_kernel.GPUMeshFilter(d_us,d_den, Topopt_val::FilterRadius,d_grads,grad_pitchX,NumX,NumY,NumZ);
 
             getLastCudaError("GPU MeshFilter  failed");
 
@@ -2563,7 +2602,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             gettimeofday(&t1, 0);
 
-            opt_kernel.Update_s_one(d_us,d_den,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_s,grad_pitchX,NumX,NumY,NumZ);
+            opt_kernel.Update_s_one(d_us,d_den,d_raster,d_fixed_free,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_s,&solid_voxels,grad_pitchX,NumX,NumY,NumZ);
 
             gettimeofday(&t2, 0);
 
@@ -2660,7 +2699,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             ///////////////////////////////////////////////////////////////////////////////
             gettimeofday(&t1, 0);
 
-            opt_kernel.Update_s_one(d_us,d_den,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_t,grad_pitchX,NumX,NumY,NumZ);
+            opt_kernel.Update_s_one(d_us,d_den,d_raster,d_fixed_free,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_t,&solid_voxels,grad_pitchX,NumX,NumY,NumZ);
 
             gettimeofday(&t2, 0);
 
@@ -2670,9 +2709,9 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             gettimeofday(&t1, 0);
     
-            isosurf.computeIsosurface_2(d_pos,d_normal,Topopt_val::VolumeFraction,numVoxels,d_voxelVerts,d_voxelVertsScan,
+            isosurf.computeIsosurface_2(d_pos,d_normal,0.3,numVoxels,d_voxelVerts,d_voxelVertsScan,
             d_voxelOccupied,d_voxelOccupiedScan,gridSize,gridSizeShift,gridSizeMask,voxelSize,gridcenter,
-            &activeVoxels,&totalVerts,d_compVoxelArray,maxmemverts,d_volume_t,Topopt_val::VolumeFraction);
+            &activeVoxels,&totalVerts,d_compVoxelArray,maxmemverts,d_volume_t,0.3);
 
             gettimeofday(&t2, 0);
 
@@ -2750,19 +2789,23 @@ class Multitopo : public VulkanBaseApp, Modelling
     {
           
         if(ImguiApp::retain)
-        {
+        {          
             isosurf.copy_parameter(gridSize,d_voxelVertstwo,d_voxelVertsScantwo,0.0,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,numVoxelstwo,&activeVoxelstwo,d_compVoxelArraytwo,vol_one,d_boundary,d_volumethree,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,
             &totalVertstwo, obj_union, obj_diff, obj_intersect);
             
             checkCudaErrors(cudaMemset(d_raster, 0.0, (size) * sizeof(*d_raster)));
-            selectt.raster_update(0.0,0.0,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,d_raster,vol_one,d_boundary,d_volumethree,d_latt_field,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX,NumY,NumZ);
+            
+            selectt.raster_update(0.0,0.0,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,d_raster,d_solid,vol_one,d_boundary,d_volumethree,d_latt_field,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX,NumY,NumZ);
+            
+            
+
             isosurf.computeIsosurface(d_raster, gridSize,d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
             d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
-            &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic);
+            &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,
+            ImguiApp::make_region);
             
 
             ImguiApp::retain = false;
-            
         }
 
 
@@ -2823,12 +2866,56 @@ class Multitopo : public VulkanBaseApp, Modelling
                 }
                 
                 
-                checkCudaErrors(cudaMemset(d_raster, 0.0, (size) * sizeof(*d_raster)));
-                selectt.raster_update(0.0,0.0,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,d_raster,vol_one,d_boundary,d_volumethree,d_latt_field,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX,NumY,NumZ);
-                isosurf.computeIsosurface(d_raster, gridSize,d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
-                d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
-                &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic);
+             
+
+                if(!ImguiApp::make_region)
+                {
+                    
+                    
+                    checkCudaErrors(cudaMemset(d_raster, 0.0, (size) * sizeof(*d_raster)));
+        
+                    selectt.raster_update(0.0,0.0,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,d_raster,d_solid,vol_one,d_boundary,d_volumethree,d_latt_field,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX,NumY,NumZ);
                 
+                    
+                    isosurf.computeIsosurface(d_raster, gridSize,d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                    d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                    &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,
+                    ImguiApp::make_region);
+
+                    boundary_in_region = 1;
+                }
+                else if(ImguiApp::region_done)
+                {
+
+                    selectt.fixed_free(d_fixed_free,d_raster,NumX,NumY,NumZ);
+
+                    ImguiApp::region_done = false;
+                    ImguiApp::make_region = false;
+                    ImguiApp::calculate = false;
+                }
+                else
+                {
+                    
+                    
+    
+                    
+                    checkCudaErrors(cudaMemset(d_raster, 0.0, (size) * sizeof(*d_raster)));
+        
+                    selectt.raster_make_region(0.0,0.0,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,d_raster,d_solid,vol_one,d_boundary,d_volumethree,d_latt_field,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX,NumY,NumZ);
+                
+                    
+                    
+                    if(boundary_in_region)
+                    {
+                        
+                        isosurf.computeIsosurface(d_raster, gridSize,d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                        d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                        &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,
+                        ImguiApp::make_region);
+
+                        boundary_in_region = 0;
+                    }
+                }
             }
 
         }
@@ -3394,16 +3481,14 @@ class Multitopo : public VulkanBaseApp, Modelling
 
                         if(ImguiApp::primitives)
                         {
-                            
-
                             checkCudaErrors(cudaMemset(d_raster, 0.0, (size) * sizeof(*d_raster)));
-
-                            selectt.raster_update(0.0,0.0,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,d_raster,vol_one,d_boundary,d_volumethree,d_latt_field,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX,NumY,NumZ);
+                       
+                            selectt.raster_update(0.0,0.0,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,d_raster,d_solid,vol_one,d_boundary,d_volumethree,d_latt_field,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX,NumY,NumZ);
                            
                             isosurf.computeIsosurface(d_raster, gridSize,d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
                             d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
                             &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,
-                            ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic);
+                            ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic, ImguiApp::make_region);
                         
             
                         }
@@ -3651,8 +3736,6 @@ class Multitopo : public VulkanBaseApp, Modelling
                     ImguiApp::update_load = false;
 
                     ImguiApp::update_support = false;
-                   
-                    
                 }
                 else if(ImguiApp::thermal && ImguiApp::update_source && ImguiApp::update_sink && ImguiApp::checkpoint == 0 && ImguiApp::execute_topo_data)
                 {
@@ -3743,13 +3826,13 @@ class Multitopo : public VulkanBaseApp, Modelling
 
                 
                 checkCudaErrors(cudaMemset(d_raster, 0.0, (size) * sizeof(*d_raster)));
-
-                selectt.raster_update(0.0,0.0,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,d_raster,vol_one,d_boundary,d_volumethree,d_latt_field,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX,NumY,NumZ);
+      
+                selectt.raster_update(0.0,0.0,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,d_raster,d_solid,vol_one,d_boundary,d_volumethree,d_latt_field, ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX,NumY,NumZ);
 
                 isosurf.computeIsosurface(d_raster, gridSize,d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
                 d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
                 &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,
-                ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic);
+                ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic, ImguiApp::make_region);
             
                 ImguiApp::update_isorange = false;
 
@@ -3759,13 +3842,12 @@ class Multitopo : public VulkanBaseApp, Modelling
             {
                 
                 checkCudaErrors(cudaMemset(d_raster, 0.0, (size) * sizeof(*d_raster)));
-
-                selectt.raster_update(0.0,0.0,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,d_raster,vol_one,d_boundary,d_volumethree,d_latt_field,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX,NumY,NumZ);
+                selectt.raster_update(0.0,0.0,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,d_raster,d_solid,vol_one,d_boundary,d_volumethree,d_latt_field, ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,NumX,NumY,NumZ);
                 
                 isosurf.computeIsosurface(d_raster,gridSize,d_postwo,d_normaltwo,0.0,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
                 d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
                 &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_one,d_boundary,d_volume_twice,d_volumethree,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo, obj_union, obj_diff, obj_intersect,
-                ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic);
+                ImguiApp::primitives,ImguiApp::structural,ImguiApp::lattice,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic, ImguiApp::make_region);
             }
 
             if(ImguiApp::show_unit_lattice_data && ImguiApp::update_unit_isorange)

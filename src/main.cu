@@ -2573,9 +2573,9 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             gettimeofday(&t1, 0);
             
-            isosurf.computeIsosurface_2(d_pos,d_normal,0.31,numVoxels,d_voxelVerts,d_voxelVertsScan,
+            isosurf.computeIsosurface_2(d_pos,d_normal,Topopt_val::VolumeFraction,numVoxels,d_voxelVerts,d_voxelVertsScan,
             d_voxelOccupied,d_voxelOccupiedScan,gridSize,gridSizeShift,gridSizeMask,voxelSize,gridcenter,
-            &activeVoxels,&totalVerts,d_compVoxelArray,maxmemverts,d_volume_s,0.31);
+            &activeVoxels,&totalVerts,d_compVoxelArray,maxmemverts,d_volume_s,Topopt_val::VolumeFraction);
 
             gettimeofday(&t2, 0);
 
@@ -2670,9 +2670,9 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             gettimeofday(&t1, 0);
     
-            isosurf.computeIsosurface_2(d_pos,d_normal,0.3,numVoxels,d_voxelVerts,d_voxelVertsScan,
+            isosurf.computeIsosurface_2(d_pos,d_normal,Topopt_val::VolumeFraction,numVoxels,d_voxelVerts,d_voxelVertsScan,
             d_voxelOccupied,d_voxelOccupiedScan,gridSize,gridSizeShift,gridSizeMask,voxelSize,gridcenter,
-            &activeVoxels,&totalVerts,d_compVoxelArray,maxmemverts,d_volume_t,0.3);
+            &activeVoxels,&totalVerts,d_compVoxelArray,maxmemverts,d_volume_t,Topopt_val::VolumeFraction);
 
             gettimeofday(&t2, 0);
 
@@ -3822,9 +3822,9 @@ class Multitopo : public VulkanBaseApp, Modelling
 
                         lattice.refine(d_volume_twice,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
                          
-                        isosurf.computeIsosurface_2(d_postwo,d_normaltwo,0.31,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                        isosurf.computeIsosurface_2(d_postwo,d_normaltwo,Topopt_val::VolumeFraction,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
                         d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,
-                        gridcentertwo,&activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,d_volume_twice,0.31);
+                        gridcentertwo,&activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,d_volume_twice,Topopt_val::VolumeFraction);
 
                         ImguiApp::checkpoint = 3;
 
@@ -3842,9 +3842,9 @@ class Multitopo : public VulkanBaseApp, Modelling
 
                         lattice.refine(d_volume_twice,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
 
-                        isosurf.computeIsosurface_2(d_postwo,d_normaltwo,0.31,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                        isosurf.computeIsosurface_2(d_postwo,d_normaltwo,Topopt_val::VolumeFraction,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
                         d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,
-                        gridcentertwo,&activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,d_volume_twice,0.31);
+                        gridcentertwo,&activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,d_volume_twice,Topopt_val::VolumeFraction);
 
                         ImguiApp::checkpoint = 4;
                         

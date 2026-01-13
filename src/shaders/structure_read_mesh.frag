@@ -25,6 +25,9 @@ layout( push_constant, std430) uniform push_constants
         float pix_delta;
         int support;
         float point_size;
+        int boundary;
+        float alpha_val;
+        int make_region;
 
 } ;
 
@@ -38,14 +41,23 @@ void main()
         vec4 colorr = subpassLoad(inputColor).rgba;
         float ch_depth = subpassLoad(inputDepth).r;
 
-         if(gl_FragCoord.z == ch_depth)
-        {
 
+        if(make_region > 0)
+        {
                 outColor = vec4(fragColor, 1.0);
         }
+
         else
         {
-                discard;
+                if(gl_FragCoord.z == ch_depth)
+                {
+
+                        outColor = vec4(fragColor, 1.0);
+                }
+                else
+                {
+                        discard;
+                }
         }
 
 }

@@ -40,6 +40,8 @@ layout( push_constant, std430) uniform push_constants
 		int support;
 		float point_size;
 		int boundary;
+		float alpha_val;
+		int make_region;
 
 } ;
 
@@ -96,21 +98,17 @@ void main(void)
 		{
 			frag_id = gl_PrimitiveIDIn;
 
-			fragColorout = vec4(1.0,0.0,1.0,0.0);
 			
-			if(boundary > 0)
-			{
-				fragColorout = vec4(0.0,0.0,1.0,0.5);
-			}
-			else
-			{
-				fragColorout = vec4(0.0,0.0,1.0,0.0);
-			}
+			
+		
+			fragColorout.xyz = spectral_jet(hei[i]);
+			
 		
 			fragColorout.w = raster[i];
 
 			if(hei[i] > 0.5)
 			{
+				
 				gl_PointSize = p_size_1;
 			}
 			else if(hei[i] > 0.25)
@@ -126,6 +124,12 @@ void main(void)
 			{
 				gl_PointSize = p_size_4;
 			}
+
+
+			// if(fragColorout.w  == 0.625)
+			// {
+			// 	gl_PointSize = 15.0;
+			// }
 
 			if(val[frag_id] == 1.0)
 			{

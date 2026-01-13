@@ -25,6 +25,7 @@ layout( push_constant, std430) uniform push_constants
         int support;
         float point_size;
         int boundary;
+        float alpha_val;
 
 } ;
 
@@ -38,7 +39,7 @@ void main() {
         
         if(boundary > 0)
         {
-                if(fragColor.w >= 0.7)
+                if(fragColor.w >= 0.6)
                 {
                         outColor = vec4(0.0,0.0,1.0,1.0);
                 }
@@ -49,7 +50,7 @@ void main() {
         }
         else
         {
-                outColor = vec4(0.0,0.0,1.0,1.0);
+                outColor = vec4(0.0,0.0,1.0,alpha_val);
         }
         
         

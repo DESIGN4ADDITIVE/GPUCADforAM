@@ -34,6 +34,8 @@ layout( push_constant, std430) uniform push_constants
 		float pix_delta;
 		int support;
 		float point_size;
+        int boundary;
+        float alpha_val;
 
 } ;
 

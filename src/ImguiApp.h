@@ -33,6 +33,8 @@ struct LightPushConstants
     int support;
     float point_size;
     int boundary;
+    float alpha_val;
+    int make_region;
 
 } ;
 
@@ -151,6 +153,10 @@ class ImguiApp
     static bool undoo;
 
     public:
+
+    static bool make_region;
+    static bool region_done;
+    static float alpha_val;
 
     static float lcon;
     static float lcon_1;

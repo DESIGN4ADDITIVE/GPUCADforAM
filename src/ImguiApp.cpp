@@ -19,6 +19,9 @@ bool ImguiApp::boundary = false;
 
 bool ImguiApp::cad_bool = false;
 
+bool ImguiApp::make_region = false;
+bool ImguiApp::region_done = false;
+
 uint ImguiApp::lattice_type_index = 0;
 uint ImguiApp::lattice_size_index = 0;
 
@@ -159,6 +162,8 @@ bool ImguiApp::approx_unit_lattice = false;
 
 float ImguiApp::zoom_value = 1.0;
 
+float ImguiApp::alpha_val = 0.5;
+
 bool ImguiApp::export_settings = false;
 
 bool ImguiApp::debug_window = false;
@@ -176,7 +181,7 @@ ImVec2 ImguiApp::window_extent = {50,50};
 ImVec4 ImguiApp::clear_color = ImVec4(0.148f, 0.148f, 0.148f, 1.00f);
 
 
-LightPushConstants ImguiApp::push_constants = {{0.0f,0.0f,0.0f,0.0f},0.0f,0.0f,0.0f,1.0f,0.0f,0.0f,0,5.0,0,15};
+LightPushConstants ImguiApp::push_constants = {{0.0f,0.0f,0.0f,0.0f},0.0f,0.0f,0.0f,1.0f,0.0f,0.0f,0,5.0,0,15,0,1.0,0};
 
 
 /////////////////////Topopt_val//////////////////////////////
@@ -191,7 +196,7 @@ REAL Topopt_val::FilterRadius = 3.0;//2.8;//2.2;
 int Topopt_val::iter = 10;
 REAL Topopt_val::EndRes = 0.009;
 int Topopt_val::MaxOptIter = 10;
-REAL Topopt_val::MinDens = 0.001;
+REAL Topopt_val::MinDens = 0.07;
 
 bool ImguiApp::structural = false;
 bool ImguiApp::thermal = false;
@@ -1393,78 +1398,113 @@ void ImguiApp::show_selected_primitive()
         
             if(ImguiApp::boundary_buffers)
             {
-                
-                ImGui::NewLine();
+                if(!ImguiApp::make_region)
+                {
+                    ImGui::NewLine();
 
-                static int obj_op = 0;
-                ImGui::RadioButton("UNION", &obj_op, 0);
-                if(ImGui::IsItemActive())
-                {
-                    ImguiApp::cad_bool = true;
-                }
-                ImGui::RadioButton("DIFFERENCE ", &obj_op, 1);
-                if(ImGui::IsItemActive())
-                {
-                    ImguiApp::cad_bool = true;
-                }
-                ImGui::RadioButton("INTERSECT ", &obj_op, 2);
-                if(ImGui::IsItemActive())
-                {
-                    ImguiApp::cad_bool = true;
-                }
-      
-                if(obj_op == 0)
-                {
-                    obj_union = true;
-                    obj_diff = false;
-                    obj_intersect = false;   
-                }
-
-                else if(obj_op == 1)
-                {
-                    obj_union = false;
-                    obj_diff = true;
-                    obj_intersect = false;
-                }
-
-                else if(obj_op == 2)
-                {
-                    obj_union = false;
-                    obj_diff = false;
-                    obj_intersect = true;
-                }
-
-                
-                
-                ImGui::NewLine();
-                if (ImGui::Button("RETAIN"))
-                {
+                    static int obj_op = 0;
+                    ImGui::RadioButton("UNION", &obj_op, 0);
+                    if(ImGui::IsItemActive())
+                    {
+                        ImguiApp::cad_bool = true;
+                    }
+                    ImGui::RadioButton("DIFFERENCE ", &obj_op, 1);
+                    if(ImGui::IsItemActive())
+                    {
+                        ImguiApp::cad_bool = true;
+                    }
+                    ImGui::RadioButton("INTERSECT ", &obj_op, 2);
+                    if(ImGui::IsItemActive())
+                    {
+                        ImguiApp::cad_bool = true;
+                    }
         
-                    ImguiApp::retain = true;
-                    ImguiApp::calculate = false;
-                    ImguiApp::undoo = false;
+                    if(obj_op == 0)
+                    {
+                        obj_union = true;
+                        obj_diff = false;
+                        obj_intersect = false;
 
-                    ImguiApp::show_model = true;
-                    ImguiApp::show_primitive_lattice = false;
+                        
+                    }
+
+                    else if(obj_op == 1)
+                    {
+                        obj_union = false;
+                        obj_diff = true;
+                        obj_intersect = false;
+
+                        
+                    }
+
+                    else if(obj_op == 2)
+                    {
+                        obj_union = false;
+                        obj_diff = false;
+                        obj_intersect = true;
+
+                        
+                    }
+
+                    
+                    
+                    ImGui::NewLine();
+                    if (ImGui::Button("RETAIN"))
+                    {
+            
+                        ImguiApp::retain = true;
+                        ImguiApp::calculate = false;
+                        ImguiApp::undoo = false;
+
+                        ImguiApp::show_model = true;
+                        ImguiApp::show_primitive_lattice = false;
+
                   
-                }
+                    }
 
-                ImGui::SameLine();
-                ImGui::Text("  ");
-                ImGui::SameLine();
-                if(ImGui::Button("UNDO"))
-                {
-                    ImguiApp::undoo = true;
-                    ImguiApp::calculate = false;
-                    ImguiApp::retain = false;
-                }
+                    ImGui::SameLine();
+                    ImGui::Text("  ");
+                    ImGui::SameLine();
+                    if(ImGui::Button("UNDO"))
+                    {
+                        ImguiApp::undoo = true;
+                        ImguiApp::calculate = false;
+                        ImguiApp::retain = false;
 
-                ImGui::NewLine();
-                if(ImGui::Button("CONTINUE"))
-                {
+                  
+                    }
+
+                    ImGui::NewLine();
+                    if(ImGui::Button("CONTINUE"))
+                    {
+                        ImguiApp::calculate = true;
+                        ImguiApp::retain = false;
+                        ImguiApp::undoo = false;
+
+                   
+
+                        ImguiApp::show_model = true;
+                        ImguiApp::show_primitive_lattice = false;
+                        
+                        ImguiApp::primitive_lattice_options = false;
+    
+                    }
+
+                    ImGui::NewLine();
+                   
+                }
+                if(ImGui::Button("MAKE_REGION"))
+                {   
+                    ImGui::NewLine();
+
                     ImguiApp::calculate = true;
+                    ImguiApp::make_region = true;
+                    ImguiApp::region_done = false;
                     ImguiApp::retain = false;
                     ImguiApp::undoo = false;
+
+
+                    ImguiApp::boundary = true;
 
                     ImguiApp::show_model = true;
                     ImguiApp::show_primitive_lattice = false;
@@ -1472,6 +1512,28 @@ void ImguiApp::show_selected_primitive()
                     ImguiApp::primitive_lattice_options = false;
   
                 }
+                if(ImguiApp::make_region)
+                {
+                    ImGui::SameLine();
+                    ImGui::Text("  ");
+                    ImGui::SameLine();
+
+                    if(ImGui::Button("REGION DONE"))
+                    {
+                    
+                        ImguiApp::region_done = true;
+                    }
+
+                    ImGui::NewLine();
+                    ImGui::NewLine();
+
+                    static float alpha_v = 0.5f;
+                    ImGui::SliderFloat("Alpha Val ", &alpha_v,0.0, 1.0, "%.2f");
+                    ImguiApp::alpha_val = alpha_v;
+
+                }
+
+             
                 ImGui::NewLine();
                 ImGui::NewLine();
                 ImGui::SeparatorText("GENERATE LATTICE");
@@ -1652,7 +1714,7 @@ void ImguiApp::show_optimisation_settings()
     ImGui::NewLine();
 
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    static float op_3 = (ImguiApp::thermal) ? 0.001 : 0.002;
+    static float op_3 = (ImguiApp::thermal) ? 0.001 : 0.07;
     ImGui::InputFloat("Minimum Density  ", &op_3,0.001f,0.0f,"%.3f");
     Topopt_val::MinDens = op_3;
 

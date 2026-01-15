@@ -57,6 +57,4 @@ For more details please check DEPENDENCIES.md file.
 
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/Lea2-YQPNkc/0.jpg)](http://www.youtube.com/watch?v=Lea2-YQPNkc "GPUCADforAM")
 
-## Demo - Structural Topology Optimisation 
 
-[![IMAGE ALT TEXT](http://img.youtube.com/vi/olmosEfKZRU/0.jpg)](http://www.youtube.com/watch?v=olmosEfKZRU "GPUCADforAM")

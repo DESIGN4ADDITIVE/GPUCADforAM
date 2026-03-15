@@ -72,7 +72,7 @@ __global__ void Reduction(float *d_DataIn, float *d_DataOut, int block_num)
 
 
 
-__global__ void  Update_den_GPU_kernel(REAL3 *d_u, REAL *d_den, REAL *active_element , int *d_fixed_free ,REAL VolFrac, REAL *d_grad, float *d_volume, int NX, int NY, int NZ,const REAL lmid,const REAL move,const REAL MinDens,
+__global__ void  Update_den_GPU_kernel(REAL3 *d_u, REAL *d_den, REAL *active_element , grid_points *vol_topo ,REAL VolFrac, REAL *d_grad, float *d_volume, int NX, int NY, int NZ,const REAL lmid,const REAL move,const REAL MinDens,
 REAL *d_new_den,REAL *d_new_den_result)
 {
 
@@ -82,6 +82,7 @@ REAL *d_new_den,REAL *d_new_den_result)
   int yy = ((index%(NY*NX))/NY);
   int xx = ((index%(NY*NX))%NY);
   int index2 = xx + (yy * NX )+ zz * (NX*NY);
+  uint index3 = (2*xx) + ((2*yy) * (2*NX)) + ((2*zz)*((2*NX)*(2*NY)));
   __shared__ float cc[1024];
   REAL a1,a2,MyGrad;
   REAL a3,a4 = 0.0;
@@ -92,25 +93,26 @@ REAL *d_new_den,REAL *d_new_den_result)
   a2 = d_den[index2];
 
   a4 = active_element[index2];
-  a5 = d_fixed_free[index2];
+  a5 = vol_topo[index3].val;
 
   if(a4 > 0)
   {
     if((xx < (NX - 1 ) )&& (yy < (NY - 1 )) && (zz < (NZ - 1)) )
     {
       
+        
+        MyGrad = max((REAL)-1.0*a1, (REAL) 0.0);
+        a3 = max(MinDens, max(a2-move, min((REAL)1.0, min(a2+move, a2*sqrtf(MyGrad/lmid)))));
+        d_new_den[index2] = a3;
+
         if(a5 == -1)
         {
-          d_new_den[index2] = 1.0;
+           
           cc[tx] = 0.0;
 
         }
         else
         {
-          MyGrad = max((REAL)-1.0*a1, (REAL) 0.0);
-          a3 = max(MinDens, max(a2-move, min((REAL)1.0, min(a2+move, a2*sqrtf(MyGrad/lmid)))));
-          
-          d_new_den[index2] = a3;
           cc[tx] = a3;
     
         }
@@ -528,7 +530,7 @@ __global__ void init_d_den_kernel(REAL *d_den, float *active_element, REAL volfr
   {
     
       a = active_element[index];
-      if(a == 1)
+      if((a == 1) || (a == 0.5))
       {
         d_den[index] = volfrac;
       }
@@ -561,12 +563,12 @@ void Optimisation_kernels::GPUMeshFilter(REAL3 *d_u,REAL *d_den, REAL rmin, REAL
 
 
 
-void Optimisation_kernels::Update_den_GPU(REAL3 *d_u,REAL *d_den, REAL *active_element, int *d_fixed_free, REAL VolFrac, REAL *d_grad, float *d_volume,int NX, int NY, int NZ,const REAL lmid,const REAL move,const REAL MinDens, REAL *d_new_den, REAL *d_new_den_result,int block_num)
+void Optimisation_kernels::Update_den_GPU(REAL3 *d_u,REAL *d_den, REAL *active_element, grid_points *vol_topo, REAL VolFrac, REAL *d_grad, float *d_volume,int NX, int NY, int NZ,const REAL lmid,const REAL move,const REAL MinDens, REAL *d_new_den, REAL *d_new_den_result,int block_num)
 {
   
   dim3 tids(1024,1,1);
   dim3 grids(ceil((NX*NY*NZ)/float(1024)),1,1);
-  Update_den_GPU_kernel<<<grids,tids>>>(d_u, d_den,active_element,d_fixed_free, VolFrac,d_grad,d_volume, NX, NY, NZ,lmid,move,MinDens,d_new_den,d_new_den_result);
+  Update_den_GPU_kernel<<<grids,tids>>>(d_u, d_den,active_element,vol_topo, VolFrac,d_grad,d_volume, NX, NY, NZ,lmid,move,MinDens,d_new_den,d_new_den_result);
   cudaDeviceSynchronize();
 
   unsigned int  x_grid = 1;
@@ -579,7 +581,7 @@ void Optimisation_kernels::Update_den_GPU(REAL3 *d_u,REAL *d_den, REAL *active_e
 
 
 
-void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL *active_element, int *d_fixed_free,REAL VolFrac,REAL MinDens, REAL *d_grad, float *d_volume, uint *solid_voxels,int pitchX, int NX, int NY, int NZ)
+void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL *active_element, grid_points *vol_topo,REAL VolFrac,REAL MinDens, REAL *d_grad, float *d_volume, uint *solid_voxels,int pitchX, int NX, int NY, int NZ)
 {
 
   double l1 = 0.0;
@@ -601,7 +603,7 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL *active_ele
     counter++;
     
     const double lmid = 0.5*(l2+l1);
-    Update_den_GPU(d_u,d_den,active_element,d_fixed_free,VolFrac,d_grad,d_volume,NX,NY,NZ,lmid,move,MinDens,d_new_den,d_new_den_result,block_num);
+    Update_den_GPU(d_u,d_den,active_element,vol_topo,VolFrac,d_grad,d_volume,NX,NY,NZ,lmid,move,MinDens,d_new_den,d_new_den_result,block_num);
 
 
     float sum;

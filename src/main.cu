@@ -165,8 +165,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     *d_volumethree_one,*d_volumethree_two, *d_raster, *d_solid;
 
-    int *d_fixed_free;
-
     std::vector<float*> d_cudastorageBuffers;
 
     std::vector<cudaExternalMemory_t> d_cudastorageMemory;
@@ -224,6 +222,8 @@ class Multitopo : public VulkanBaseApp, Modelling
     float *d_latt_field = NULL;
 
     grid_points *vol_one = NULL;
+
+    grid_points *vol_topo = NULL;
 
     REAL3 *d_us;
 
@@ -415,8 +415,6 @@ class Multitopo : public VulkanBaseApp, Modelling
         d_raster(nullptr),
 
         d_solid(nullptr),
-
-        d_fixed_free(nullptr),
      
         d_pos(nullptr),
 
@@ -533,6 +531,8 @@ class Multitopo : public VulkanBaseApp, Modelling
         d_latt_field(nullptr),
 
         vol_one(nullptr),
+
+        vol_topo(nullptr),
 
         OptIter(0),
     
@@ -697,11 +697,6 @@ class Multitopo : public VulkanBaseApp, Modelling
         if(d_solid)
         {
             checkCudaErrors(cudaFree(d_solid));
-        }
-
-        if(d_fixed_free)
-        {
-            checkCudaErrors(cudaFree(d_fixed_free));
         }
 
         if (d_pos) {
@@ -1963,6 +1958,9 @@ class Multitopo : public VulkanBaseApp, Modelling
         checkCudaErrors(cudaMemset(d_normaltwo, 0.0, maxmemvertstwo * sizeof(*d_postwo)));
         checkCudaErrors(cudaMemset(d_volume_twice,0.0,sizeof(float)*NumX2 * NumY2*NumZ2));
 
+
+        checkCudaErrors(cudaMemset(vol_topo, 0.0, (NumX2 *NumY2 * NumZ2) * sizeof(*vol_topo)));
+
         checkCudaErrors(cudaMemset(d_pos, 0.0, (maxmemverts) * sizeof(*d_pos)));
         checkCudaErrors(cudaMemset(d_normal, 0.0, (maxmemverts) * sizeof(*d_normal)));
         checkCudaErrors(cudaMemset(d_volume_s, 0.0, (NumX *NumY * NumZ) * sizeof(*d_volume_s)));
@@ -1971,7 +1969,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         checkCudaErrors(cudaMemset(d_solid, 0, (NumX *NumY * NumZ) * sizeof(*d_solid)));
 
-        checkCudaErrors(cudaMemset(d_fixed_free, 0, (NumX *NumY * NumZ) * sizeof(*d_fixed_free)));
 
         checkCudaErrors(cudaMemset(d_selection, 0.0, sizeof(*d_selection)*NumX * NumY * NumZ));
         checkCudaErrors(cudaMemset(d_cudastorageBuffers[0], 0.0, (NumX *NumY * NumZ) * sizeof(*d_cudastorageBuffers[0])));
@@ -2208,11 +2205,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         checkCudaErrors(cudaMalloc((void **)&d_solid, sizeof(d_solid)*NumX * NumY*NumZ));
         cudaMemset(d_solid, 0, sizeof(d_solid)*NumX * NumY * NumZ);
-
-
-
-        checkCudaErrors(cudaMalloc((void **)&d_fixed_free, sizeof(d_fixed_free)*NumX * NumY*NumZ));
-        cudaMemset(d_fixed_free, 0, sizeof(d_fixed_free)*NumX * NumY * NumZ);
 
 
         createExternalBuffer(nVerts * sizeof(REAL3),
@@ -2505,7 +2497,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         printf("Time to generate GPUCompGrad:  %3.1f ms \n\n", tottime);
 
-        selectt.constrained_vol(d_solid,d_fixed_free,&solid_voxels,Topopt_val::VolumeFraction,NumX,NumY,NumZ);
+        /// to update with vol_topo ///
 
         printf("Initialisation Completed Successfully \n");
        
@@ -2602,7 +2594,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             gettimeofday(&t1, 0);
 
-            opt_kernel.Update_s_one(d_us,d_den,d_raster,d_fixed_free,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_s,&solid_voxels,grad_pitchX,NumX,NumY,NumZ);
+            opt_kernel.Update_s_one(d_us,d_den,d_solid,vol_topo,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_s,&solid_voxels,grad_pitchX,NumX,NumY,NumZ);
 
             gettimeofday(&t2, 0);
 
@@ -2699,7 +2691,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             ///////////////////////////////////////////////////////////////////////////////
             gettimeofday(&t1, 0);
 
-            opt_kernel.Update_s_one(d_us,d_den,d_raster,d_fixed_free,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_t,&solid_voxels,grad_pitchX,NumX,NumY,NumZ);
+            opt_kernel.Update_s_one(d_us,d_den,d_solid,vol_topo,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_t,&solid_voxels,grad_pitchX,NumX,NumY,NumZ);
 
             gettimeofday(&t2, 0);
 
@@ -2772,11 +2764,15 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         checkCudaErrors(cudaMalloc((void **)&vol_one, sizeof(*vol_one) * (NumX2*NumY2*NumZ2)));
 
+        checkCudaErrors(cudaMalloc((void **)&vol_topo, sizeof(*vol_topo) * (NumX2*NumY2*NumZ2)));
+
         cudaMemset(d_latt_field,0,sizeof(float) * size2);
 
         cudaMemset(d_boundary,0,sizeof(float) * size2);
 
         cudaMemset(vol_one,0,sizeof(*vol_one) *size2 );
+
+        cudaMemset(vol_topo,0,sizeof(*vol_topo) *size2 );
 
         ImguiApp::boundary_buffers = true;
 
@@ -2887,11 +2883,7 @@ class Multitopo : public VulkanBaseApp, Modelling
                 else if(ImguiApp::region_done)
                 {
 
-                    selectt.fixed_free(d_fixed_free,d_raster,NumX,NumY,NumZ);
-
-                    ImguiApp::region_done = false;
-                    ImguiApp::make_region = false;
-                    ImguiApp::calculate = false;
+                    /// to update vol_topo ///
                 }
                 else
                 {
@@ -4224,6 +4216,11 @@ class Multitopo : public VulkanBaseApp, Modelling
         if(vol_one)
         {
             checkCudaErrors(cudaFree(vol_one));
+        }
+
+        if(vol_topo)
+        {
+            checkCudaErrors(cudaFree(vol_topo));
         }
 
     }

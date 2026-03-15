@@ -2497,7 +2497,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         printf("Time to generate GPUCompGrad:  %3.1f ms \n\n", tottime);
 
-        /// to update with vol_topo ///
+        selectt.constrained_vol(d_solid,vol_topo,&solid_voxels,Topopt_val::VolumeFraction,NumX,NumY,NumZ);
 
         printf("Initialisation Completed Successfully \n");
        

@@ -20,7 +20,7 @@ class Selection
 
     void raster_make_region(float isoval_fixed, float iso_dynamic, float iso1, float iso2, float *raster, float *d_solid, grid_points *vol_one, float *boundary, float *lattice_field, float *fix_lat_field,  bool fixed, bool dynamic,int Nx,int Ny, int Nz);
 
-    void constrained_vol(REAL *raster, int *fixed_free, uint *solid_voxels, float volfrac, int Nx, int Ny, int Nz);
+    void constrained_vol(REAL *raster, grid_points *vol_topo, uint *solid_voxels, float volfrac, int Nx, int Ny, int Nz);
 
     void fixed_free(int *fixed_free, REAL *raster, int Nx, int Ny, int Nz);
 

@@ -1078,7 +1078,7 @@ void Selection::raster_make_region(float isoval_fixed, float iso_dynamic, float 
 
 
 
-__global__ void constrained_vol_kernel(REAL *solid, int *fixed_free, uint *d_sum_solid, float volfrac, int Nx , int Ny, int Nz)
+__global__ void constrained_vol_kernel(REAL *solid, grid_points *vol_topo, uint *d_sum_solid, float volfrac, int Nx , int Ny, int Nz)
 {
 	int index = threadIdx.x + (blockDim.x*blockIdx.x);
 	int tx  = threadIdx.x;
@@ -1089,13 +1089,14 @@ __global__ void constrained_vol_kernel(REAL *solid, int *fixed_free, uint *d_sum
     uint z_rem = index % ((Nx) * (Ny));
     uint y = (z_rem)/ ((Nx));
     uint x = (z_rem) % ((Nx));
+	uint index2 = (2*x) + ((2*y) * (2*Nx)) + ((2*z)*((2*Nx)*(2*Ny)));
 	float a = 0;
 	int b = 0;
 	if((x < (Nx - 1)) && (y < (Ny - 1)) && (z < (Nz -1 )))
 	{
 		a = solid[index];
-		b = fixed_free[index];
-		if(a == 1)
+		b = int(vol_topo[index2].val);
+		if((a == 1) || (a == 0.5))
 		{
 			if(b == -1)
 			{
@@ -1141,7 +1142,7 @@ __global__ void constrained_vol_kernel(REAL *solid, int *fixed_free, uint *d_sum
 }
 
 
-void Selection::constrained_vol(REAL *solid, int *fixed_free, uint *solid_voxels, float volfrac, int Nx, int Ny, int Nz)
+void Selection::constrained_vol(REAL *solid, grid_points *vol_topo, uint *solid_voxels, float volfrac, int Nx, int Ny, int Nz)
 {
 	
 	dim3 grids(ceil((Nx*Ny*Nz)/float(1024)),1,1);
@@ -1151,7 +1152,7 @@ void Selection::constrained_vol(REAL *solid, int *fixed_free, uint *solid_voxels
 	checkCudaErrors(cudaMalloc((void **)&d_sum_solid, sizeof(uint)*(grids.x)));
   	cudaMemset(d_sum_solid, 0.0, sizeof(uint)*grids.x);
 
-	constrained_vol_kernel<<<grids,tids>>>(solid,fixed_free, d_sum_solid,volfrac, Nx , Ny, Nz);
+	constrained_vol_kernel<<<grids,tids>>>(solid,vol_topo, d_sum_solid,volfrac, Nx , Ny, Nz);
 
 	unsigned int  x_grid = 1;
 	unsigned int  x_thread = 1024;

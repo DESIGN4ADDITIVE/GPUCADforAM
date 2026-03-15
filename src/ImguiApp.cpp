@@ -21,6 +21,7 @@ bool ImguiApp::cad_bool = false;
 
 bool ImguiApp::make_region = false;
 bool ImguiApp::region_done = false;
+bool ImguiApp::show_region = false;
 
 uint ImguiApp::lattice_type_index = 0;
 uint ImguiApp::lattice_size_index = 0;

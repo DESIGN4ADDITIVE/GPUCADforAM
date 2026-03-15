@@ -454,6 +454,411 @@ void MarchingCubeCuda::classify_copy_Voxel_lattice(dim3 grid, dim3 threads, uint
 
 
 __global__ void
+classify_copy_region_kernel( uint *voxel_verts,  grid_points *vol_topo,grid_points *vol_one, float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
+              uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
+              float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex, bool obj_union, bool obj_diff, bool obj_intersect)
+{
+    uint blockId = __mul24(blockIdx.y, gridDim.x) + blockIdx.x;
+
+    uint i = __mul24(blockId, blockDim.x) + threadIdx.x;
+
+    float isoVal = isoValue;
+
+    if (i < ((gridSize.x * gridSize.y * gridSize.z) - 1))
+    {
+        uint3 gridPos = calcGridPos_one(i, gridSize);
+
+        grid_points vox_topo = vol_topo[i];
+
+        grid_points vox_points = vol_one[i];
+
+        float v , v_lat, x , y , z = 0.0;
+        float x1 = 0.0; float y1 = 0.0; float z1 = 0.0;
+
+        v = sampleVolume(volume_two, gridPos, gridSize);
+        v_lat = sampleVolume(vol_lattice, gridPos, gridSize);
+
+      
+            
+        if (dynamic)
+        {
+            
+            if( (uint(v_lat > iso1) & uint(v_lat < iso2)) | uint(vox_topo.val < (isoVal)))
+            {
+                vox_topo.val = -1;
+            }
+            else
+            {
+                vox_topo.val = 0;
+            }
+        }
+        else
+        {
+            if((uint(v < (isoVal)) && uint(vox_points.val < (isoVal)) )| uint(vox_topo.val < (isoVal)))
+            {
+                vox_topo.val = -1;
+            }
+            else
+            {
+                vox_topo.val = 0;
+            }
+        }
+    
+        
+
+        if(gridPos.x < (gridSize.x - 1) )
+        {
+            if(dynamic)
+            {
+                x = sampleVolume(vol_lattice, gridPos + make_uint3(1, 0, 0), gridSize);
+
+                if((uint(x < (iso1)) && uint(v_lat >= (iso1))) || (uint(x >= (iso1)) && uint(v_lat < (iso1))))
+                {
+
+                    float t = (iso1 - v_lat) / (x - v_lat);
+
+                    if(vox_topo.t_x > 0)
+                    {
+                        vox_topo.t_x = (vox_topo.t_x + t) *0.5;
+                    }
+                    else
+                    {
+                   
+                        vox_topo.t_x = t;
+                    }
+                }
+                else if((uint(x < (iso2)) && uint(v_lat >= (iso2))) || (uint(x >= (iso2)) && uint(v_lat < (iso2))))
+                {
+
+                    float t = (iso2 - v_lat) / (x - v_lat);
+
+                    if(vox_topo.t_x > 0)
+                    {
+                        vox_topo.t_x = (vox_topo.t_x + t) *0.5;
+                    }
+                    else
+                    {
+                        vox_topo.t_x = t;
+                    }
+                }
+            }
+            else
+            {
+                x = sampleVolume(volume_two, gridPos + make_uint3(1, 0, 0), gridSize);
+
+                x1 =  (sampleVolume_3(vol_one,gridPos + make_uint3(1, 0, 0), gridSize)).val;
+
+                
+                if((uint(x < (isoVal)) && uint(v >= (isoVal))) && (uint(x1 < (isoVal)) && uint(vox_points.val >= (isoVal))))
+                {
+                    float t = (isoVal - v) / (x - v);
+                    if(vox_topo.t_x > 0)
+                    {
+                        vox_topo.t_x = (vox_topo.t_x + vox_points.t_x + t) *0.33334;
+                    }
+                    else
+                    {
+                        vox_topo.t_x = t;
+                    }
+
+                }
+
+                else if ((uint(x >= (isoVal)) && uint(v < (isoVal))) && (uint(x1 >= (isoVal)) && uint(vox_points.val < (isoVal))))
+                {
+                    float t = (isoVal - v) / (x - v);
+                    if(vox_topo.t_x > 0)
+                    {
+                        vox_topo.t_x = (vox_topo.t_x + vox_points.t_x + t) *0.33334;
+                    }
+                    else
+                    {
+                        vox_topo.t_x = t;
+                    }
+                }
+                
+                else if((uint(x < (isoVal)) && uint(v >= (isoVal))) || (uint(x >= (isoVal)) && uint(v < (isoVal))))
+                {
+                    if(uint(x1 < (isoVal))  && uint(vox_points.val < (isoVal)))
+                    {
+                        float t = (isoVal - v) / (x - v);
+
+                        if(vox_topo.t_x > 0)
+                        {
+                            vox_topo.t_x = (vox_topo.t_x + t) *0.5;
+                        }
+                        else
+                        {
+                            vox_topo.t_x = t;
+                        }
+                    }
+                
+                }
+                else if ((uint(x1 < (isoVal)) && uint(vox_points.val >= (isoVal))) || (uint(x1 >= (isoVal)) && uint(vox_points.val < (isoVal))))
+                {
+                    if(uint(x < (isoVal))  && uint(v < (isoVal)))
+                    {
+                        
+
+                        if(vox_topo.t_x > 0)
+                        {
+                            vox_topo.t_x = (vox_topo.t_x + vox_points.t_x) *0.5;
+                        }
+                        else
+                        {
+                            vox_topo.t_x = vox_points.t_x;
+                        }
+                    }
+                }
+            }
+
+        }
+
+        if(gridPos.y < (gridSize.y - 1))
+        {
+     
+            if(dynamic)
+            {
+                y = sampleVolume(vol_lattice, gridPos + make_uint3(0, 1, 0), gridSize);
+
+                if((uint(y < (iso1)) && uint(v_lat >= (iso1))) || (uint(y >= (iso1)) && uint(v_lat < (iso1))))
+                {
+
+                    float t = (iso1 - v_lat) / (y - v_lat);
+
+                    if(vox_topo.t_y > 0)
+                    {
+                        vox_topo.t_y = (vox_topo.t_y + t) *0.5;
+                    }
+                    else
+                    {
+                        vox_topo.t_y = t;
+                    }
+                }
+                else if((uint(y < (iso2)) && uint(v_lat >= (iso2))) || (uint(y >= (iso2)) && uint(v_lat < (iso2))))
+                {
+
+                    float t = (iso2 - v_lat) / (y - v_lat);
+
+                    if(vox_topo.t_y > 0)
+                    {
+                        vox_topo.t_y = (vox_topo.t_y + t) *0.5;
+                    }
+                    else
+                    {
+                        vox_topo.t_y = t;
+                    }
+                }
+            }
+            
+            else
+            {
+                y = sampleVolume(volume_two, gridPos + make_uint3(0, 1, 0), gridSize);
+
+                y1 =  (sampleVolume_3(vol_one,gridPos + make_uint3(0, 1, 0), gridSize)).val;
+
+                
+                if((uint(y < (isoVal)) && uint(v >= (isoVal))) && (uint(y1 < (isoVal)) && uint(vox_points.val >= (isoVal))))
+                {
+                    float t = (isoVal - v) / (y - v);
+                    if(vox_topo.t_y > 0)
+                    {
+                        vox_topo.t_y = (vox_topo.t_y + vox_points.t_y + t) *0.33334;
+                    }
+                    else
+                    {
+                        vox_topo.t_y = t;
+                    }
+
+                }
+
+                else if ((uint(y >= (isoVal)) && uint(v < (isoVal))) && (uint(y1 >= (isoVal)) && uint(vox_points.val < (isoVal))))
+                {
+                    float t = (isoVal - v) / (y - v);
+                    if(vox_topo.t_y > 0)
+                    {
+                        vox_topo.t_y = (vox_topo.t_y + vox_points.t_y + t) *0.33334;
+                    }
+                    else
+                    {
+                        vox_topo.t_y = t;
+                    }
+                }
+                
+                else if((uint(y < (isoVal)) && uint(v >= (isoVal))) || (uint(y >= (isoVal)) && uint(v < (isoVal))))
+                {
+                    if(uint(y1 < (isoVal))  && uint(vox_points.val < (isoVal)))
+                    {
+                        float t = (isoVal - v) / (y - v);
+
+                        if(vox_topo.t_y > 0)
+                        {
+                            vox_topo.t_y = (vox_topo.t_y + t) *0.5;
+                        }
+                        else
+                        {
+                            vox_topo.t_y = t;
+                        }
+                    }
+                
+                }
+                else if ((uint(y1 < (isoVal)) && uint(vox_points.val >= (isoVal))) || (uint(y1 >= (isoVal)) && uint(vox_points.val < (isoVal))))
+                {
+                    if(uint(y < (isoVal))  && uint(v < (isoVal)))
+                    {
+                        
+
+                        if(vox_topo.t_y > 0)
+                        {
+                            vox_topo.t_y = (vox_topo.t_y + vox_points.t_y) *0.5;
+                        }
+                        else
+                        {
+                            vox_topo.t_y = vox_points.t_y;
+                        }
+                    }
+                }
+            }
+
+            
+        }
+
+
+        if(gridPos.z < (gridSize.z - 1))
+        {
+            if(dynamic)
+            {
+                z = sampleVolume(vol_lattice, gridPos + make_uint3(0, 0, 1), gridSize);
+
+                if((uint(z < (iso1)) && uint(v_lat >= (iso1))) || (uint(z >= (iso1)) && uint(v_lat < (iso1))))
+                {
+
+                    float t = (iso1 - v_lat) / (z - v_lat);
+
+                    if(vox_topo.t_z > 0)
+                    {
+                        vox_topo.t_z = (vox_topo.t_z + t) *0.5;
+                    }
+                    else
+                    {
+                        vox_topo.t_z = t;
+                    }
+                }
+                else if((uint(z < (iso2)) && uint(v_lat >= (iso2))) || (uint(z >= (iso2)) && uint(v_lat < (iso2))))
+                {
+
+                    float t = (iso2 - v_lat) / (z - v_lat);
+
+                    if(vox_topo.t_z > 0)
+                    {
+                        vox_topo.t_z = (vox_topo.t_z + t) *0.5;
+                    }
+                    else
+                    {
+                        vox_topo.t_z = t;
+                    }
+                }
+            }
+
+
+            else
+            {
+                z = sampleVolume(volume_two, gridPos + make_uint3(0, 0, 1), gridSize);
+
+                z1 =  (sampleVolume_3(vol_one,gridPos + make_uint3(0, 0, 1), gridSize)).val;
+
+                
+                if((uint(z < (isoVal)) && uint(v >= (isoVal))) && (uint(z1 < (isoVal)) && uint(vox_points.val >= (isoVal))))
+                {
+                    float t = (isoVal - v) / (z - v);
+                    if(vox_topo.t_z > 0)
+                    {
+                        vox_topo.t_z = (vox_topo.t_z + vox_points.t_z + t) *0.33334;
+                    }
+                    else
+                    {
+                        vox_topo.t_z = t;
+                    }
+
+                }
+
+                else if ((uint(z >= (isoVal)) && uint(v < (isoVal))) && (uint(z1 >= (isoVal)) && uint(vox_points.val < (isoVal))))
+                {
+                    float t = (isoVal - v) / (z - v);
+                    if(vox_topo.t_z > 0)
+                    {
+                        vox_topo.t_z = (vox_topo.t_z + vox_points.t_z + t) *0.33334;
+                    }
+                    else
+                    {
+                        vox_topo.t_z = t;
+                    }
+                }
+                
+                else if((uint(z < (isoVal)) && uint(v >= (isoVal))) || (uint(z >= (isoVal)) && uint(v < (isoVal))))
+                {
+                    if(uint(z1 < (isoVal))  && uint(vox_points.val < (isoVal)))
+                    {
+                        float t = (isoVal - v) / (z - v);
+
+                        if(vox_topo.t_z > 0)
+                        {
+                            vox_topo.t_z = (vox_topo.t_z + t) *0.5;
+                        }
+                        else
+                        {
+                            vox_topo.t_z = t;
+                        }
+                    }
+                
+                }
+                else if ((uint(z1 < (isoVal)) && uint(vox_points.val >= (isoVal))) || (uint(z1 >= (isoVal)) && uint(vox_points.val < (isoVal))))
+                {
+                    if(uint(z < (isoVal))  && uint(v < (isoVal)))
+                    {
+                        
+
+                        if(vox_topo.t_z > 0)
+                        {
+                            vox_topo.t_z = (vox_topo.t_z + vox_points.t_z) *0.5;
+                        }
+                        else
+                        {
+                            vox_topo.t_z = vox_points.t_z;
+                        }
+                    }
+                }
+            
+            }
+        }
+
+        vol_topo[i] = vox_topo;
+
+     
+    }
+  
+ 
+}
+
+
+void MarchingCubeCuda::classify_copy_regions(dim3 grid, dim3 threads,  uint *voxel_verts, grid_points *vol_topo,grid_points *vol_one,float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
+                     uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
+                     float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect)
+{
+
+ 
+    classify_copy_region_kernel<<<grid, threads>>>( voxel_verts,vol_topo, vol_one, volume_two,vol_lattice,fixed, dynamic,iso1, iso2,
+                                     gridSize, gridSizeShift, gridSizeMask,
+                                     numVoxels, voxelSize, isoValue, numVertsTex_s, obj_union, obj_diff, obj_intersect);
+    cudaDeviceSynchronize();
+
+    getLastCudaError("classifyVoxel failed");
+
+   
+}
+
+
+
+__global__ void
 classifyVoxel(float *vol,uint3 raster_grid, uint *voxelVerts, uint *voxelOccupied, grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
               uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,float iso1, float iso2,
               float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex , bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic, bool make_region)

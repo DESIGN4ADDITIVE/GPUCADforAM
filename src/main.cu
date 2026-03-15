@@ -2883,7 +2883,14 @@ class Multitopo : public VulkanBaseApp, Modelling
                 else if(ImguiApp::region_done)
                 {
 
-                    /// to update vol_topo ///
+                    ////check vol_topo poisitive field value (0 or 1)//////////
+                    isosurf.copy_regions(d_voxelVertstwo,0.0,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,numVoxelstwo,vol_topo,vol_one,d_boundary,d_volumethree,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,
+                    obj_union, obj_diff, obj_intersect);
+
+                    ImguiApp::region_done = false;
+                    ImguiApp::make_region = false;
+                    ImguiApp::show_region = false;
+                    ImguiApp::calculate = true;
                 }
                 else
                 {

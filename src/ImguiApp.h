@@ -156,6 +156,7 @@ class ImguiApp
 
     static bool make_region;
     static bool region_done;
+    static bool show_region;
     static float alpha_val;
 
     static float lcon;

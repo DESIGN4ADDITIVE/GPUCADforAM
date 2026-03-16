@@ -73,6 +73,8 @@ class  Gratings
 
     void copytotexture(float *d_phi,cudaPitchedPtr data_ptr, int NX, int NY, int NZ);
 
+    void copytotexture_results(float3 *d_displacement,cudaPitchedPtr data_ptr,int NX,int NY,int NZ, bool x_result, bool y_result, bool z_result);
+
     void updateTexture(cudaPitchedPtr data_ptr);
 
     void deleteTexture();

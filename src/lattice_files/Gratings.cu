@@ -905,43 +905,6 @@ __global__ void copytotexture_kernel(float * d_phi, cudaPitchedPtr data_ptr, int
 }
 
 
-__global__ void copytotexture_kernelone(float * d_phi, cudaPitchedPtr data_ptr, int NX,int NY, int NZ)
-{
-
-
-	int tx = blockIdx.x * blockDim.x + threadIdx.x;
-	int ty = blockIdx.y * blockDim.y + threadIdx.y;
-	int tz = blockIdx.z * blockDim.z + threadIdx.z;
-
-	int indx = tx + ty*(NX) + tz *(NX*NY);
-
-	char* devPtr = (char *) data_ptr.ptr;
-	size_t pitch = data_ptr.pitch;
-	size_t slicePitch = pitch * NY;
-
-	if(tz < NZ)
-	{
-		
-		char* slice = devPtr + tz * slicePitch;
-		if(ty < NY)
-		{
-
-			float* row = (float*)(slice + ty * pitch);
-			if (tx < NX)
-			{
-				float a = d_phi[indx];
-				row[tx] = a ;
-					
-			}
-		}
-	}
-
-
-}
-
-
-
-
 void Gratings::VecSMultAdd_lattice(float *d_v, float a1, float *d_w, const float a2, const int NX, const int NY, const int NZ)
 {
 
@@ -1186,6 +1149,72 @@ void Gratings::copytotexture(float *d_phi,cudaPitchedPtr data_ptr,int NX,int NY,
 	cudaDeviceSynchronize();
     getLastCudaError("copytotexture failed");
 }
+
+
+__global__ void copytotexture_results_kernel(float3 * d_displacemnt, cudaPitchedPtr data_ptr, int NX,int NY, int NZ, bool x_result, bool y_result, bool z_result)
+{
+
+
+	int tx = blockIdx.x * blockDim.x + threadIdx.x;
+	int ty = blockIdx.y * blockDim.y + threadIdx.y;
+	int tz = blockIdx.z * blockDim.z + threadIdx.z;
+
+	int indx = tx + ty*(NX) + tz *(NX*NY);
+
+	char* devPtr = (char *) data_ptr.ptr;
+	size_t pitch = data_ptr.pitch;
+	size_t slicePitch = pitch * NY;
+
+	if(tz < NZ)
+	{
+		char* slice = devPtr + tz * slicePitch;
+		if(ty < NY)
+		{
+
+			float* row = (float*)(slice + ty * pitch);
+			if (tx < NX)
+			{
+				if(x_result)
+				{
+					float a = d_displacemnt[indx].x;
+					row[tx] = fabsf(a);
+				}
+				else if(y_result)
+				{
+					float b = d_displacemnt[indx].y;
+					row[tx] = fabsf(b) ;
+				}
+				else if(z_result)
+				{
+					float c = d_displacemnt[indx].z;
+					row[tx] = fabsf(c) ;
+				}
+				else
+				{
+					float3 disp = d_displacemnt[indx];
+					float mag = sqrt(pow(disp.x,2) + pow(disp.y,2) + pow(disp.z,2));
+					row[tx] = mag ;
+				}
+
+					
+			}
+		}
+	}
+
+
+}
+
+
+void Gratings::copytotexture_results(float3 *d_displacement,cudaPitchedPtr data_ptr,int NX,int NY,int NZ, bool x_result, bool y_result, bool z_result)
+{
+	
+	dim3 grids(ceil((NX)/float(16)),ceil((NY)/float(16)),ceil((NZ)/float(4)));
+	dim3 tids(16,16,4);
+	copytotexture_results_kernel<<<grids,tids>>>(d_displacement,data_ptr,NX,NY,NZ, x_result, y_result, z_result);
+	cudaDeviceSynchronize();
+    getLastCudaError("copytotexture result failed");
+}
+
 
 __global__ void device_buffer(float *dataone,float *datatwo, int size,float a, float b)
 {

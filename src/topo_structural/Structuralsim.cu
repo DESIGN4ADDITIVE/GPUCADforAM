@@ -147,13 +147,6 @@ __global__ void MatVecKernel(const int NX, const int NY, const int NZ, const int
 				MyRes.z = 0.0;
 			}
 		
-		
-			// if(k==NZM1)
-			// {
-			// 	MyRes.x = 0.0;
-			// 	MyRes.y = 0.0;
-			// 	MyRes.z = 0.0;
-			// }
 			else
 			{
 		

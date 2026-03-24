@@ -181,7 +181,7 @@ __global__ void MatVecKernel_t(const int NX, const int NY, const int NZ, const i
 									const int EIDI = i-ei1;
 									if(EIDI >= 0 && EIDI < NX-1)
 									{
-										const REAL Dens = pow(s_d[ind-ei1*IOFF-ej1*(BLOCKSX + 2) -ek1*(BLOCKSX + 2) * (BLOCKSY + 2)], gpupexp);
+										const REAL Dens = 0.001 + (pow(s_d[ind-ei1*IOFF-ej1*(BLOCKSX + 2) -ek1*(BLOCKSX + 2) * (BLOCKSY + 2)], gpupexp) * 0.999);
 										
 										const int LID1 = ei1+ej1*2+ek1*4;
 										for(int ek2=0;ek2<2;ek2++)
@@ -196,7 +196,7 @@ __global__ void MatVecKernel_t(const int NX, const int NY, const int NZ, const i
 													const int kdiff = ek2-ek1;
 													const REAL3 MyU = s_u[ind+idiff*IOFF+jdiff*(BLOCKSX + 2)+kdiff*(BLOCKSX + 2) * (BLOCKSY + 2)];
 													
-													MyRes.x += (0.001+0.999*Dens)*(GPU_EleStiffone_t[LID1][LID2]*MyU.x);
+													MyRes.x += Dens*(GPU_EleStiffone_t[LID1][LID2]*MyU.x);
 													
 												}
 											}
@@ -389,7 +389,7 @@ __global__ void ResidualKernel_t(const int NX, const int NY, const int NZ, const
 									const int EIDI = i-ei1;
 									if(EIDI >= 0 && EIDI < NX-1)
 									{
-										const REAL Dens = pow(s_d[ind - ei1 * IOFF - ej1 * (BLOCKSX + 2) - ek1 * (BLOCKSX + 2) * (BLOCKSY + 2)], gpupexp);
+										const REAL Dens = 0.001 + (pow(s_d[ind - ei1 * IOFF - ej1 * (BLOCKSX + 2) - ek1 * (BLOCKSX + 2) * (BLOCKSY + 2)], gpupexp) * 0.999);
 										const int LID1 = ei1+ej1*2+ek1*4;
 										for(int ek2=0;ek2<2;ek2++)
 										{
@@ -403,7 +403,7 @@ __global__ void ResidualKernel_t(const int NX, const int NY, const int NZ, const
 													const int kdiff = ek2-ek1;
 													const REAL3 MyU = s_u[ind + idiff * IOFF + jdiff * 34 + kdiff * (BLOCKSX + 2) * (BLOCKSY + 2)];
 													//B-AX
-													MyRes.x -= (0.001+0.999*Dens)*(GPU_EleStiffone_t[LID1][LID2]*MyU.x) ;
+													MyRes.x -= Dens*(GPU_EleStiffone_t[LID1][LID2]*MyU.x) ;
 													
 												}
 											}

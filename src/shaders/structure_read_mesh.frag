@@ -31,10 +31,19 @@ layout( push_constant, std430) uniform push_constants
 
 } ;
 
-layout(location = 1) in  vec3 fragColor;
+
+
+layout(location = 0) in  vec4 fragColor;
+layout(location = 1) flat in int prim_id ;
+
 
 layout(location = 0)  out vec4 outColor;
 
+
+float a = mouse_x - pix_delta;
+float b = mouse_x + pix_delta;
+float c = mouse_y - pix_delta;
+float d = mouse_y + pix_delta;
 
 void main() 
 {
@@ -44,7 +53,27 @@ void main()
 
         if(make_region > 0)
         {
-                outColor = vec4(fragColor, 1.0);
+                outColor = fragColor;
+
+                if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
+                {
+
+                        val[prim_id] = -1.0;
+
+                }
+
+                else if ((mouse_click == 1) && (support == 1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
+                {
+                        val[prim_id] = 1.0;
+                }
+
+
+                else if ((mouse_click == -1) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
+                {
+                        val[prim_id] = 0.0;
+                }
+
+                
         }
 
         else
@@ -52,7 +81,26 @@ void main()
                 if(gl_FragCoord.z == ch_depth)
                 {
 
-                        outColor = vec4(fragColor, 1.0);
+                        outColor = fragColor;
+
+                        if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
+                        {
+                
+                                val[prim_id] = -1.0;
+                        
+                        }
+
+                        else if ((mouse_click == 1) && (support == 1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
+                        {
+                                val[prim_id] = 1.0;
+                        }
+
+                        
+                        else if ((mouse_click == -1) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
+                        {
+                                val[prim_id] = 0.0;
+                        }
+                      
                 }
                 else
                 {

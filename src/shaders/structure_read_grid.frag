@@ -7,8 +7,7 @@
 
 
 layout(location = 0) in vec4 fragColorout;
-layout(location = 1) flat in int frag_id ;
-layout(location = 2) flat in float r_val;
+
 
 
 
@@ -52,9 +51,6 @@ float d = mouse_y + pix_delta;
 void main() {
      
         
-        
-
-        
         vec4 colorr = subpassLoad(inputColor).rgba;
         float ch_depth = subpassLoad(inputDepth).r;
 
@@ -63,66 +59,61 @@ void main() {
         {
                 if((gl_FragCoord.z == ch_depth) && (fragColorout.w >= 0.6))
                 {
-                        
-                        if(fragColorout.w == 0.7)
+                        if(make_region > 0)
                         {
-                                outColor = vec4(0.0,0.8,1.0,alpha_val);
+                                if(fragColorout.w == 0.643)
+                                {
+                                        outColor = vec4(0.9,0.0,0.3,alpha_val);
+                                }
+                                else
+                                {
+                                      outColor = vec4(0.15,0.9,0.1,alpha_val);  
+                                }
                         }
-                        
-                        else if(fragColorout.w == 0.8)
-                        {
-                                outColor = vec4(0.5,1.0,0.5,alpha_val);
-                        }
-
-
-                        else if(fragColorout.w == 0.9)
-                        {
-                                outColor = vec4(1.0,0.0,0.5,alpha_val);
-                        }
-
-
-                        else if(fragColorout.w == 0.925)
-                        {
-                                outColor = vec4(fragColorout.xyz,alpha_val);
-                        }
-
-
-                        else if(fragColorout.w == 1.0)
-                        {
-                                outColor = vec4(1.0,0.0,1.0,alpha_val);
-                        }
-
-
-
-                        else if(fragColorout.w == 0.625)
-                        {
-                                outColor = vec4(0.85,1.0,0.5,alpha_val);
-                        }
-
                         else
                         {
-                                outColor = vec4(fragColorout.xyz,alpha_val);
-                        }
-                        
-                
-                        if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
-                        {
-                
-                                val[frag_id] = -1.0;
-                        
-                        }
+                                if(fragColorout.w == 0.7)
+                                {
+                                        outColor = vec4(0.0,0.8,1.0,alpha_val);
+                                }
+                                
+                                else if(fragColorout.w == 0.8)
+                                {
+                                        outColor = vec4(0.5,1.0,0.5,alpha_val);
+                                }
 
-                        else if ((mouse_click == 1) && (support == 1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
-                        {
-                                val[frag_id] = 1.0;
-                        }
 
-                        
-                        else if ((mouse_click == -1) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
-                        {
-                                val[frag_id] = 0.0;
+                                else if(fragColorout.w == 0.9)
+                                {
+                                        outColor = vec4(1.0,0.0,0.5,alpha_val);
+                                }
+
+
+                                else if(fragColorout.w == 0.925)
+                                {
+                                        outColor = vec4(fragColorout.xyz,alpha_val);
+                                }
+
+
+                                else if(fragColorout.w == 1.0)
+                                {
+                                        outColor = vec4(1.0,0.0,1.0,alpha_val);
+                                }
+
+
+
+                                else if(fragColorout.w == 0.625)
+                                {
+                                        outColor = vec4(0.85,1.0,0.5,alpha_val);
+                                }
+
+                                else
+                                {
+                                        outColor = vec4(fragColorout.xyz,alpha_val);
+                                }
                         }
-                      
+                
+
                         
                 }
 
@@ -143,44 +134,21 @@ void main() {
                  
                         
                         outColor = vec4(fragColorout.xyz,alpha_val);
-                     
-                  
-                        
-                        if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
-                        {
-                
-                                val[frag_id] = -1.0;
-                        
-                        }
-
-                        else if ((mouse_click == 1) && (support == 1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
-                        {
-                                val[frag_id] = 1.0;
-                        }
-
-                        
-                        else if ((mouse_click == -1) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
-                        {
-                                val[frag_id] = 0.0;
-                        }
-                
-
-        
-
-                
-                        
-                        
+                                             
                         
                 }
 
                 else
                 {
-                        
+                      
                         discard;
                 }
 
         }
    
 }
+    
+    
+
     
     

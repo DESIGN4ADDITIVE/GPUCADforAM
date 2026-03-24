@@ -51,8 +51,7 @@ layout(location = 1) in vec4 pos[];
 layout(location = 2) in float raster[];
 
 layout (location = 0) out vec4 fragColorout;
-layout (location = 1) out int  frag_id;
-layout (location = 2) out float r_val;
+
 
 
 
@@ -96,8 +95,7 @@ void main(void)
 		
 		if (gl_InvocationID == 0)
 		{
-			frag_id = gl_PrimitiveIDIn;
-
+			
 			
 			
 		
@@ -126,27 +124,15 @@ void main(void)
 			}
 
 
-			// if(fragColorout.w  == 0.625)
-			// {
-			// 	gl_PointSize = 15.0;
-			// }
-
-			if(val[frag_id] == 1.0)
+			if(fragColorout.w  == 0.625)
 			{
-				gl_PointSize = point_size;
-				fragColorout = vec4(1.0,0.0,0.0,0.925);
+				gl_PointSize = p_size_3;
+			}
+
+	
 		
 				
-			}
-			if(val[frag_id] == -1.0)
-			{
-				gl_PointSize = point_size;
-				fragColorout = vec4(1.0,1.0,0.0,0.925);
-				
-				
-				
-			}
-
+			
 		}
 
 

@@ -117,27 +117,6 @@ void main(void)
 				gl_PointSize = p_size_4;
 			}
 
-			// if(fragColor.w  == 0.625)
-			// {
-			// 	gl_PointSize = 15;
-			// }
-
-			if(val[frag_id] == -1.0)
-			{
-				gl_PointSize = point_size;
-				fragColor = vec4(1.0,0.0,0.0,1.0);
-				fragColor.w = 1.0;
-				
-			}
-			if(val[frag_id] == 1.0)
-			{
-				gl_PointSize = point_size;
-				fragColor = vec4(1.0,1.0,0.0,1.0);
-				fragColor.w = 1.0;
-
-				
-				
-			}
 			
 			
 		}

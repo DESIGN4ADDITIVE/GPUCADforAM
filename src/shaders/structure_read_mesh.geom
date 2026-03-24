@@ -37,53 +37,54 @@ layout( push_constant, std430) uniform push_constants
         int boundary;
         float alpha_val;
         int make_region;
+        int show_region;
+        int show_domain;
+        int analysis;
 
 } ;
 
 layout(location = 0) in vec4 posit[];
 layout(location = 1) in vec4 norm[];
+layout(location = 2) in float field[];
 
-layout (location = 1) out vec3 fragColor;
 
 
-/////////////////////////////////////////////////////////////////////////////
-float colormap_red(float x) {
-    if (x < 100.0) {
-        return (-9.55123422981038E-02 * x + 5.86981763554179E+00) * x - 3.13964093701986E+00;
-    } else {
-        return 5.25591836734694E+00 * x - 8.32322857142857E+02;
-    }
+layout (location = 0) out vec4 fragColor;
+layout (location = 1) out int  prim_id;
+
+
+float saturate (float x)
+{
+    return min(1.0, max(0.0,x));
+}
+vec3 saturate (vec3 x)
+{
+    return min(vec3(1.,1.,1.), max(vec3(0.,0.,0.),x));
 }
 
-float colormap_green(float x) {
-    if (x < 150.0) {
-        return 5.24448979591837E+00 * x - 3.20842448979592E+02;
-    } else {
-        return -5.25673469387755E+00 * x + 1.34195877551020E+03;
-    }
-}
+vec3 spectral_jet(float x)
+{
+ 
+	vec3 c;
 
-float colormap_blue(float x) {
-    if (x < 80.0) {
-        return 4.59774436090226E+00 * x - 2.26315789473684E+00;
-    } else {
-        return -5.25112244897959E+00 * x + 8.30385102040816E+02;
-    }
-}
+	if (x < 0.25)
+		c = vec3(0.0, 4.0 * x, 1.0);
+	else if (x < 0.5)
+		c = vec3(0.0, 1.0, 1.0 + 4.0 * (0.25 - x));
+	else if (x < 0.75)
+		c = vec3(4.0 * (x - 0.5), 1.0, 0.0);
+	else
+		c = vec3(1.0, 1.0 + 4.0 * (0.75 - x), 0.0);
 
-vec4 colormap(float x) {
-    float t = x * 255.0;
-    float r = clamp(colormap_red(t) / 255.0, 0.0, 1.0);
-    float g = clamp(colormap_green(t) / 255.0, 0.0, 1.0);
-    float b = clamp(colormap_blue(t) / 255.0, 0.0, 1.0);
-    return vec4(r, g, b, 1.0);
+	// Clamp colour components in [0,1]
+	return saturate(c);
 }
-
 
 
 void main(void)
 {	
-
+    prim_id = gl_PrimitiveIDIn;
+    
 	for(int i = 0; i < 3 ; i++)
 	{
 
@@ -92,26 +93,78 @@ void main(void)
 	
 		vec3 lightvector = normalize(eyes.xyz - posit[i].xyz);
 		
-		vec3 lightcolor = vec3(1.0,1.0,1.0);
+		vec3 lightcolor1 = vec3(1.0,1.0,1.0);
 	
+        vec3 lightcolor2 = vec3(0.0,1.0,1.0);
+
+        vec3 lightcolor3 = vec3(1.0,1.0,0.0);
+
+        vec3 lightcolor4 = vec3(0.6,1.0,0.3);
+
 		float amg = abs(dot(lightvector.xyz,n_normal.xyz));
+
+        float coll = norm[i].w;
 		
 		if (gl_InvocationID == 0)
 			{
                 gl_Position =ubo.modelViewProj[0]*posit[i];
-                
-                fragColor = lightcolor*amg;
+                if(analysis == 0)
+                {
+                    if((make_region > 0) || (show_domain > 0) )
+                    {
+                        if(norm[i].w == 0.25)
+                        {
+                            
+                            fragColor = vec4(lightcolor4*amg,norm[i].w);
+                        }
+                        else if (norm[i].w == 0.5)
+                        {
+                    
+                            fragColor = vec4(lightcolor3*amg,norm[i].w);
+                        }
+                        else
+                        {
+                            fragColor = vec4(lightcolor2*amg,norm[i].w);
+                        }
+                    }
+                    else if(show_region > 0)
+                    {
+                        fragColor = vec4(lightcolor4*amg,norm[i].w);
+                    }
+               
+    
+                    else
+                    {
+                        fragColor = vec4(lightcolor1*amg,norm[i].w);
+                    }
+                }
+
+                if(analysis > 0)
+                {
+                    fragColor = vec4(spectral_jet(coll).xyz*amg, 1.0);
+                }
+
+                if(val[prim_id] == 1)
+                {
+                    fragColor = vec4(1.0,0.0,0.0,1.0);
+                }
+
+                if(val[prim_id] == -1)
+                {
+                    fragColor = vec4(1.0,1.0,0.0,1.0);
+                }
+
                 gl_PointSize =float(2);
 
 			}
 
 		gl_ViewportIndex =gl_InvocationID;
 
-		gl_PrimitiveID = gl_PrimitiveIDIn;
+		
         
 		EmitVertex();
 	}
-	
+
 	EndPrimitive();
 
 }

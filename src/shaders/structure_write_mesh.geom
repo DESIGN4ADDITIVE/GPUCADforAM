@@ -36,13 +36,17 @@ layout( push_constant, std430) uniform push_constants
 		float point_size;
         int boundary;
         float alpha_val;
+        int make_region;
+        int show_region;
+        int show_domain;
 
 } ;
 
 layout(location = 0) in vec4 posit[];
 layout(location = 1) in vec4 norm[];
+layout(location = 2) in float field[];
 
-layout (location = 1) out vec3 fragColor;
+layout (location = 1) out vec4 fragColor;
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -103,7 +107,7 @@ void main(void)
 			{
                 gl_Position =ubo.modelViewProj[0]*posit[i];
 
-                fragColor = lightcolor*amg;
+                fragColor = vec4(lightcolor*amg,1.0);
 
                 gl_PointSize =float(2);
 

@@ -294,6 +294,7 @@ void VulkanBaseApp::initVulkan()
     createDepthResources();
     createFramebuffers();
     initVulkanCuda_semaphores();
+    createStorageBuffers(int((256*256*256*4)/3)+ 3 );
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -1116,6 +1117,11 @@ VkShaderModule createShaderModule(VkDevice device, const char *filename)
     return shaderModule;
 }
 
+
+void VulkanBaseApp::createStorageBuffers(size_t nVerts)
+{
+
+}
 
 void VulkanBaseApp::erase_topo_data()
 {

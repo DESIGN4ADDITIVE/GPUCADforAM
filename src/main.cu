@@ -1983,6 +1983,31 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     }
 
+    void createStorageBuffers(size_t nVerts)
+    {
+        storageBuffers.resize(swapChainImages.size());
+
+        storageMemory.resize(swapChainImages.size());
+
+        d_cudastorageBuffers.resize(swapChainImages.size());
+
+        d_cudastorageMemory.resize(swapChainImages.size());
+
+        for (size_t i = 0; i < storageBuffers.size(); i++) 
+        {
+          
+            createExternalBuffer(nVerts * sizeof(float),
+                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                             getDefaultMemHandleType(),
+                             storageBuffers[i], storageMemory[i]);
+        
+            importCudaExternalMemory((void **)&d_cudastorageBuffers[i], d_cudastorageMemory[i], storageMemory[i], nVerts * sizeof(float), getDefaultMemHandleType());
+            getLastCudaError("Cuda External Memory - Storage Buffer \n");
+        }
+        
+    }
+
 
 
     void erase_primitive_data()

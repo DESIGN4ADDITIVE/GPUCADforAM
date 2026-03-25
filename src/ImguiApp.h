@@ -35,6 +35,9 @@ struct LightPushConstants
     int boundary;
     float alpha_val;
     int make_region;
+    int show_region;
+    int show_domain;
+    int show_analysis;
 
 } ;
 
@@ -70,6 +73,10 @@ class ImguiApp
     static bool execute_lattice;
     static bool execute_topo_data;
 
+    static bool x_result;
+    static bool y_result;
+    static bool z_result;
+
    
     static bool view_front;
     static bool view_back;
@@ -97,6 +104,8 @@ class ImguiApp
     static bool lattice_fixed;
     static bool lattice_dynamic;
 
+    static bool results_view;
+
     static bool primitive_done_lattice_do;
     static bool show_primitive_lattice;
     static bool primitive_lattice_options;
@@ -110,6 +119,8 @@ class ImguiApp
     static bool update_support;
     static bool update_source;
     static bool update_sink;
+    static bool clear_load;
+    static bool clear_support;
 
     static bool spatial_angle_window;
     static bool spatial_period_window;
@@ -157,6 +168,8 @@ class ImguiApp
     static bool make_region;
     static bool region_done;
     static bool show_region;
+    static bool show_domain;
+    static bool show_analysis;
     static float alpha_val;
 
     static float lcon;
@@ -206,6 +219,7 @@ class ImguiApp
     std::vector<bool*> window_bools;
     std::vector<bool*> view_bools;
     std::vector<bool*> physics_bools;
+    std::vector<bool*> result_bools;
 
     static float3 center;
     static float3 axis;

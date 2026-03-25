@@ -27,8 +27,6 @@ Gratings::Gratings()
 }
 
 
-
-
 __global__ void Reduction_lattice(float *d_DataIn, float *d_DataOut, int block_num)
 {
 	__shared__ float sdata[1024];
@@ -1270,11 +1268,8 @@ __global__ void device_bufferfour(float *dataone,float *datatwo,float *datathree
 	{
 		k = dataone[tx];
 
-
 		k = (k - a)/(b-a);
 
-		
-	
 		if ((xx == 0) || (xx == (NX-1)) || (yy == 0) || (yy == (NY-1)) || (zz == 0) || (zz == (NZ-1)))
 		{
 			

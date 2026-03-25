@@ -611,7 +611,6 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL *active_ele
 
 
     if((sum - (VolFrac* (*solid_voxels))) > 0)
-    //if((sum - (VolFrac*(NX-1)*(NY-1)*(NZ -1 ))) > 0)
     {
       l1 = lmid;
     }

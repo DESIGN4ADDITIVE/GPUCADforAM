@@ -22,6 +22,15 @@ bool ImguiApp::cad_bool = false;
 bool ImguiApp::make_region = false;
 bool ImguiApp::region_done = false;
 bool ImguiApp::show_region = false;
+bool ImguiApp::show_domain = false;
+bool ImguiApp::show_analysis = false;
+
+
+bool ImguiApp::x_result = false;
+bool ImguiApp::y_result = false;
+bool ImguiApp::z_result = false;
+
+bool ImguiApp::results_view = false;
 
 uint ImguiApp::lattice_type_index = 0;
 uint ImguiApp::lattice_size_index = 0;
@@ -108,6 +117,8 @@ bool ImguiApp::update_load = false;
 bool ImguiApp::update_support = false;
 bool ImguiApp::update_source = false;
 bool ImguiApp::update_sink = false;
+bool ImguiApp::clear_load = false;;
+bool ImguiApp::clear_support = false;
 
 bool ImguiApp::spatial_angle_window = false;
 bool ImguiApp::spatial_period_window = false;
@@ -267,6 +278,12 @@ ImguiApp::ImguiApp()
         &thermal,
         &primitives,
         &lattice
+    };
+
+    result_bools = {
+        &x_result,
+        &y_result,
+        &z_result
     };
 }
 
@@ -923,38 +940,6 @@ ImguiApp::ImguiApp()
  }
 
 
-//  void ImguiApp::show_execute_primitive(bool *execute_primitive, bool *execute_signal, bool *execute_code, bool *execute_done  )
-//  {
-//     ImGui::Begin("CLEAR PRIMITIVE DATA", execute_primitive); 
-//     ImGui::SetWindowPos(ImVec2(5,50));
-//     ImGui::SetWindowSize(window_extent);
-//     static int execute_lattice_num = 0;
-
-//      if(ImguiApp::execute_signal && ImguiApp::show_model)
-//     {
-//         ImGui::SeparatorText("CLEAR");
-//         execute_lattice_num = 0;
-//         ImGui::Text("CLEAR DATA");
-//         if (ImGui::Button("CLEAR PRIMITIVE"))
-//         {
-            
-//             execute_lattice_num++;
-//             *execute_signal = false;
-//             *execute_done = true;
-         
-//         }
-//     }
-
-//     else if ((execute_lattice_num > 1) && (!(*execute_signal)))
-//     {
-//         *execute_done = false;
-//         ImGui::Text("Primitive Data Cleared!");
-
-//         *execute_primitive = false;
-//     }
- 
-//     ImGui::End();
-//  }
 
 
 void ImguiApp::show_grid_settings(bool *grid_setting, bool vulkan_buffer_created, ImVec4 clear_color)
@@ -1399,7 +1384,7 @@ void ImguiApp::show_selected_primitive()
         
             if(ImguiApp::boundary_buffers)
             {
-                if(!ImguiApp::make_region)
+                if(!ImguiApp::make_region || !ImguiApp::show_region || !ImguiApp::show_domain)
                 {
                     ImGui::NewLine();
 
@@ -1482,6 +1467,11 @@ void ImguiApp::show_selected_primitive()
                         ImguiApp::retain = false;
                         ImguiApp::undoo = false;
 
+                        ImguiApp::make_region = false;
+                        ImguiApp::show_region = false;
+                        ImguiApp::region_done = false;
+                        ImguiApp::show_domain = false;
+
                    
 
                         ImguiApp::show_model = true;
@@ -1504,6 +1494,9 @@ void ImguiApp::show_selected_primitive()
                     ImguiApp::retain = false;
                     ImguiApp::undoo = false;
 
+                    ImguiApp::show_region = false;
+                    ImguiApp::show_domain = false;
+
 
                     ImguiApp::boundary = true;
 
@@ -1513,6 +1506,51 @@ void ImguiApp::show_selected_primitive()
                     ImguiApp::primitive_lattice_options = false;
   
                 }
+
+                ImGui::NewLine();
+
+                if(ImGui::Button("SHOW FIXED REGION"))
+                {
+                    ImGui::NewLine();
+
+                    ImguiApp::calculate = false;
+                    ImguiApp::make_region = false;
+                    ImguiApp::region_done = false;
+                    ImguiApp::retain = false;
+                    ImguiApp::undoo = false;
+                    ImguiApp::show_region = true;
+                    ImguiApp::show_domain = false;
+
+
+                    ImguiApp::boundary = false;
+
+                    ImguiApp::show_model = true;
+                    ImguiApp::show_primitive_lattice = false;
+                    
+                    ImguiApp::primitive_lattice_options = false;
+                }
+         
+                if(ImGui::Button("SHOW DOMAIN"))
+                {
+                    ImGui::NewLine();
+
+                    ImguiApp::calculate = false;
+                    ImguiApp::make_region = false;
+                    ImguiApp::region_done = false;
+                    ImguiApp::retain = false;
+                    ImguiApp::undoo = false;
+                    ImguiApp::show_region = false;
+                    ImguiApp::show_domain = true;
+
+
+                    ImguiApp::boundary = false;
+
+                    ImguiApp::show_model = true;
+                    ImguiApp::show_primitive_lattice = false;
+                    
+                    ImguiApp::primitive_lattice_options = false;
+                }
+
                 if(ImguiApp::make_region)
                 {
                     ImGui::SameLine();
@@ -1523,6 +1561,24 @@ void ImguiApp::show_selected_primitive()
                     {
                     
                         ImguiApp::region_done = true;
+                    }
+
+                    ImGui::NewLine();
+                    ImGui::NewLine();
+
+                    if(ImGui::Button("CANCEL "))
+                    {
+                        ImguiApp::calculate = true;
+                        ImguiApp::retain = false;
+                        ImguiApp::undoo = false;
+                        ImguiApp::show_model = true;
+                        ImguiApp::show_primitive_lattice = false;
+                        ImguiApp::make_region = false;
+                        ImguiApp::show_region = false;
+                        ImguiApp::show_domain = false;
+                        
+                        ImguiApp::primitive_lattice_options = false;
+                        ImguiApp::region_done = false;
                     }
 
                     ImGui::NewLine();

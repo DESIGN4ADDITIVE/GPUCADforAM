@@ -144,9 +144,7 @@ protected:
     virtual VkDeviceSize getUniformSize() const;
     virtual void updateUniformBuffer(uint32_t imageIndex,bool shift);
     virtual void update_inputevents();
-    virtual void updateStorageBuffer(uint32_t imageIndex, bool load_selection, bool boundary_selection, bool delete_selection);
     virtual void drawFrame(bool shift);
-    virtual void createStorageBuffers(size_t nVerts);
 
     virtual void erase_topo_data();
     virtual void erase_lattice_data();

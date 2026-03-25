@@ -294,7 +294,6 @@ void VulkanBaseApp::initVulkan()
     createDepthResources();
     createFramebuffers();
     initVulkanCuda_semaphores();
-    createStorageBuffers((150*150*150));
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -1117,10 +1116,7 @@ VkShaderModule createShaderModule(VkDevice device, const char *filename)
     return shaderModule;
 }
 
-void VulkanBaseApp::createStorageBuffers(size_t nVerts)
-{
 
-}
 void VulkanBaseApp::erase_topo_data()
 {
 
@@ -1640,7 +1636,7 @@ void VulkanBaseApp::createDescriptorSets()
 
         VkDescriptorBufferInfo bufferInfo_1 = {};
         bufferInfo_1.offset = 0;
-        bufferInfo_1.range = (150 * 150 * 150 * 4);
+        bufferInfo_1.range = int(((256 * 256 * 256 * 4) / 3)) + 3;
         bufferInfo_1.buffer = storageBuffers[i];
 
         VkWriteDescriptorSet descriptorWriteone = {};
@@ -1692,7 +1688,7 @@ void VulkanBaseApp::createDescriptorSetsread()
 
         VkDescriptorBufferInfo bufferInfoone = {};
         bufferInfoone.offset = 0;
-        bufferInfoone.range = (150 * 150 * 150 * 4);
+        bufferInfoone.range = int((256 * 256 * 256 * 4) / 3) + 3;
         bufferInfoone.buffer = storageBuffers[i];
 
         VkWriteDescriptorSet descriptorWriteone = {};
@@ -2126,7 +2122,7 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
 
                     if(ImguiApp::thermal)
                     {
-                            if (ImGui::BeginMenu("Apply Source"))
+                        if (ImGui::BeginMenu("Apply Source"))
                         {
                             if(ImGui::MenuItem("Select Node ",NULL,&VulkanBaseApp::select_load_node))
                             {
@@ -2184,6 +2180,55 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
                     {
                         ImguiApp::make_inactive(window_bools,&optimisation_settings);
                     };
+
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("Results  "))
+                {
+                    
+      
+
+                    if (ImGui::MenuItem("DISPLACEMENT",NULL))
+                    {
+                      
+                        ImguiApp::results_view = true;
+                      
+                        
+
+                        ImguiApp::make_all_inactive(result_bools);
+                    }
+                    if (ImGui::MenuItem("X DISPLACEMENT",NULL,&x_result))
+                    {
+                   
+                        ImguiApp::results_view = true;
+                       
+
+                        ImguiApp::make_inactive(result_bools,&x_result);
+                    }
+                    if (ImGui::MenuItem("Y DISPLACEMENT",NULL,&y_result))
+                    {
+                       
+                   
+                        ImguiApp::results_view = true;
+                 
+               
+                        
+
+                        ImguiApp::make_inactive(result_bools,&y_result);
+                    }
+                    if (ImGui::MenuItem("Z DISPLACEMENT",NULL,&z_result))
+                    {
+                      
+                      
+                        ImguiApp::results_view = true;
+                    
+                        
+
+                        ImguiApp::make_inactive(result_bools,&z_result);
+                    }
+
+                
 
                     ImGui::EndMenu();
                 }
@@ -2593,9 +2638,6 @@ VkDeviceSize VulkanBaseApp::getUniformSize() const
     return VkDeviceSize(0);
 }
 
-void VulkanBaseApp::updateStorageBuffer(uint32_t imageIndex, bool load_selection, bool boundary_selection, bool delete_selection)
-{
-}
 
 void VulkanBaseApp::updateUniformBuffer(uint32_t imageIndex, bool shift)
 {
@@ -3001,8 +3043,6 @@ void VulkanBaseApp::clean_up()
         vkDestroyBuffer(device, storageBuffers[i], nullptr);
         vkFreeMemory(device, storageMemory[i], nullptr);
     }
-
-
 
     if (descriptorPool != VK_NULL_HANDLE) {
         vkDestroyDescriptorPool(device, descriptorPool, nullptr);

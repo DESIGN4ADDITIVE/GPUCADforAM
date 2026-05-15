@@ -2411,7 +2411,14 @@ generateTriangles_region_kernel(float4 *pos, float4 *norm, uint *compactVoxelArr
                 
                 v[2] = &vertlist[(edge*NTHREADS)+threadIdx.x];
 
-                float3 n = (calcNormal(v[0], v[1], v[2]));
+                float3 n = normalize((calcNormal(v[0], v[1], v[2])));
+
+                if(show_region)
+                {
+                    triangle_data[ind_1].centroid = {(v[0]->x + v[1]->x + v[2]->x)/3,(v[0]->y + v[1]->y + v[2]->y)/3,(v[0]->z + v[1]->z + v[2]->z)/3};
+                    triangle_data[ind_1].normal = n;
+      
+                }
 
             
                 if (index < (maxVerts - 3))

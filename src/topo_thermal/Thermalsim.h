@@ -4,6 +4,7 @@
 #ifndef __THERMALSIM_H_
 #define __THERMALSIM_H_
 
+#include "../ImguiApp.h"
 #include "../general/DataTypes.h"
 #include "../gpu_kernels/general_kernels.h"
 
@@ -24,7 +25,7 @@ class Thermalsim
 
     void GPUMatVec(REAL3 *d_u, REAL *d_den, REAL *d_selection, REAL3 *d_res, size_t pitch_bytes, REAL pexp);
 
-    void GPURes(REAL3 *d_u, REAL *d_den, REAL *d_selection, REAL3 *d_res, size_t pitch_bytes, REAL pexp);
+    void GPURes(REAL3 *d_u, REAL *d_den, REAL *d_selection, REAL3 *d_res, size_t pitch_bytes, REAL pexp, float source_val, float sink_val);
 
     void GPUCG(REAL3 *d_u, REAL *d_den, REAL *d_selection,const int iter, const int OptIter, const REAL EndRes, int &FinalIter, REAL &FinalRes, REAL pexp);
 

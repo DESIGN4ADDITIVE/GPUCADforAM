@@ -1,15 +1,13 @@
 #pragma once
 
-
 #ifndef __IMGUIAPP_H__
 #define __IMGUIAPP_H__
-
-
-#include"../src/general/DataTypes.h"
 
 #include "imgui_folder/imgui.h"
 #include "imgui_folder/imgui_impl_glfw.h"
 #include "imgui_folder/imgui_impl_vulkan.h"
+
+#include "../src/general/DataTypes.h"
 
 #include <iostream>
 #include <vector>
@@ -41,6 +39,15 @@ struct LightPushConstants
 
 } ;
 
+struct InstancePushConstants
+{
+    fvec4 eyes;
+    fvec4 upaxis;
+    fvec4 force_dir;
+    fvec4 Scale_load;
+    fvec4 Scale_support;
+} ;
+
 class ImguiApp 
 {
     
@@ -48,6 +55,12 @@ class ImguiApp
     protected:
 
     static LightPushConstants push_constants;
+
+    static InstancePushConstants Inst_push_constants;
+
+    static float3 Inst_scale_load;
+
+    static float3 Inst_scale_support;
 
     static bool vulkan_buffer_created;
     static int grid_value;
@@ -122,14 +135,15 @@ class ImguiApp
     static bool clear_load;
     static bool clear_support;
 
+    static bool load_icon;
+    static bool support_icon;
+
+    static uint compute_load_icon;
+    static uint compute_support_icon;
+
     static bool spatial_angle_window;
     static bool spatial_period_window;
 
-    static bool x_axis;
-    static bool y_axis;
-    static bool z_axis;
-
-    
     static bool select_load_node;
     static bool select_support_node;
 
@@ -163,7 +177,18 @@ class ImguiApp
     static bool calculate;
     static bool undoo;
 
+    static uint loadinstance_count;
+    static uint supportinstance_count;
+
     public:
+
+    static float x_load_axis;
+    static float y_load_axis;
+    static float z_load_axis;
+
+
+    static float temp_source;
+    static float temp_sink;
 
     static bool make_region;
     static bool region_done;
@@ -252,7 +277,9 @@ class ImguiApp
     static ImVec4 clear_color;
 
     ImguiApp();
+    
     ~ImguiApp();
+
     static void show_view_settings(bool *view_setting, bool *shift, bool *reset,bool *show_grid, bool *show_mesh );
     static void show_execute_topo(bool *execute_setting, bool *execute_signal, bool *execute_done );
     static void show_execute_lattice(bool *execute_lattice, bool *execute_signal, bool *execute_done );
@@ -274,6 +301,7 @@ class ImguiApp
     static void spatial_lattice_settings();
     static void show_export_settings();
     static void show_debugging_window();
+
 };
 
 class Topopt_val

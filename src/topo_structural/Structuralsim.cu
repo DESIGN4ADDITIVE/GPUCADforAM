@@ -209,7 +209,7 @@ __global__ void MatVecKernel(const int NX, const int NY, const int NZ, const int
 
 
 
-__global__ void ResidualKernel(const int NX, const int NY, const int NZ, const int pitchX, REAL3 *d_u,REAL *d_den, REAL *d_selection, REAL3 *res, REAL gpupexp)
+__global__ void ResidualKernel(const int NX, const int NY, const int NZ, const int pitchX, REAL3 *d_u,REAL *d_den, REAL *d_selection, REAL3 *res, REAL gpupexp, const float x_axis, const float y_axis, const float z_axis)
 {
 
 	int indg;
@@ -350,7 +350,10 @@ __global__ void ResidualKernel(const int NX, const int NY, const int NZ, const i
 			
 			if(select == 1.0)
 			{
-				MyRes.y = -1.0;
+				MyRes.x = x_axis;
+				MyRes.y = y_axis;
+				MyRes.z = z_axis;
+				
 			}
 
 			if(select == -1.0)
@@ -721,19 +724,15 @@ void Structuralsim::GPUMatVec(REAL3 *d_u, REAL *d_den, REAL *d_selection, REAL3 
 }
 
 //computes the residual b-Ax inside the GPU
-void Structuralsim::GPURes(REAL3 *d_u,REAL *d_den, REAL *d_selection, REAL3 *d_res, size_t pitch_bytes, const REAL pexp)
+void Structuralsim::GPURes(REAL3 *d_u,REAL *d_den, REAL *d_selection, REAL3 *d_res, size_t pitch_bytes, const REAL pexp,const float x_axis, const float y_axis, const float z_axis)
 {
-	
-
-		
-	
 	
 	dim3 threads(BLOCKSX,BLOCKSY,1);
         
     dim3 grids(ceil((NX)/ float(threads.x)), ceil((NY)/ float(threads.y)), 1);
 	const int pitch = pitch_bytes/sizeof(REAL3);
 
-	ResidualKernel<<<grids,threads>>>( NX,  NY,  NZ, pitch, d_u, d_den,d_selection, d_res, pexp);
+	ResidualKernel<<<grids,threads>>>( NX,  NY,  NZ, pitch, d_u, d_den,d_selection, d_res, pexp, x_axis, y_axis, z_axis);
 
 	cudaDeviceSynchronize();
 
@@ -743,7 +742,7 @@ void Structuralsim::GPURes(REAL3 *d_u,REAL *d_den, REAL *d_selection, REAL3 *d_r
 
 
 
-void Structuralsim::GPUCG(REAL3 *d_u,REAL *d_den, REAL *d_selection, const int iter, const int OptIter, const REAL EndRes, int &FinalIter, REAL &FinalRes, const REAL pexp)
+void Structuralsim::GPUCG(REAL3 *d_u,REAL *d_den, REAL *d_selection, const int iter, const int OptIter, const REAL EndRes, int &FinalIter, REAL &FinalRes, const REAL pexp, const float fx_val, const float fy_val , const float fz_val)
 {
 
 	size_t pitch_bytes = sizeof(REAL3)* NX;
@@ -754,13 +753,11 @@ void Structuralsim::GPUCG(REAL3 *d_u,REAL *d_den, REAL *d_selection, const int i
 
 	cudaMalloc((void **)&d_val, sizeof(REAL3)* NX * NY* NZ);
 	
-	
-
 	cudaMemset(d_ResReduction, 0.0, p2*sizeof(REAL));
 
 	int iCounter = 1;
 	//r = b - Ax
-	GPURes(d_u,d_den,d_selection, d_res, pitch_bytes,pexp);
+	GPURes(d_u,d_den,d_selection, d_res, pitch_bytes,pexp,fx_val, fy_val, fz_val);
 	cudaMemcpy(d_val,d_res, sizeof(REAL3) *NX*NY*NZ, cudaMemcpyDeviceToDevice);
 	// p = r
 	cudaMemcpy(d_d,d_res, sizeof(REAL3)* NX * NY* NZ, cudaMemcpyDeviceToDevice);

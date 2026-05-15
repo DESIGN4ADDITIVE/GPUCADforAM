@@ -217,7 +217,7 @@ __global__ void MatVecKernel_t(const int NX, const int NY, const int NZ, const i
 	}
 }
 
-__global__ void ResidualKernel_t(const int NX, const int NY, const int NZ, const int pitchX, REAL3 *d_u, REAL *d_den, REAL *d_selection, REAL3 *res, REAL gpupexp)
+__global__ void ResidualKernel_t(const int NX, const int NY, const int NZ, const int pitchX, REAL3 *d_u, REAL *d_den, REAL *d_selection, REAL3 *res, REAL gpupexp, float source_val, float sink_val)
 {
 	
 	int indg;
@@ -368,12 +368,12 @@ __global__ void ResidualKernel_t(const int NX, const int NY, const int NZ, const
 
 			if(select == -1.0)
 			{
-				MyRes.x  = 0.0;
+				MyRes.x  = sink_val;
 			}
 
 			else 
 			{
-				MyRes.x = 0.01;
+				MyRes.x = source_val;
 				for(int ek1=0;ek1<2;ek1++)
 				{
 					const int EIDK = k-ek1;
@@ -698,7 +698,7 @@ void Thermalsim::GPUMatVec(REAL3 *d_u, REAL *d_den, REAL *d_selection, REAL3 *d_
 
 
 //computes the residual b-Ax inside the GPU
-void Thermalsim::GPURes(REAL3 *d_u, REAL *d_den, REAL *d_selection, REAL3 *d_res, size_t pitch_bytes, REAL pexp)
+void Thermalsim::GPURes(REAL3 *d_u, REAL *d_den, REAL *d_selection, REAL3 *d_res, size_t pitch_bytes, REAL pexp,float source_val, float sink_val)
 {
 	dim3 threads(BLOCKSX,BLOCKSY,1);
         
@@ -706,7 +706,7 @@ void Thermalsim::GPURes(REAL3 *d_u, REAL *d_den, REAL *d_selection, REAL3 *d_res
 	
 	const int pitch = pitch_bytes/sizeof(REAL3);
 
-	ResidualKernel_t<<<grids, threads>>>(NX, NY, NZ, pitch, d_u, d_den,d_selection, d_res, pexp);
+	ResidualKernel_t<<<grids, threads>>>(NX, NY, NZ, pitch, d_u, d_den,d_selection, d_res, pexp,source_val,sink_val);
 
 	cudaDeviceSynchronize();
 
@@ -728,7 +728,7 @@ void Thermalsim::GPUCG(REAL3 *d_u, REAL *d_den, REAL *d_selection, const int ite
 
 	int iCounter = 0;
 
-	GPURes(d_u, d_den, d_selection, d_res, pitch_bytes,pexp);
+	GPURes(d_u, d_den, d_selection, d_res, pitch_bytes,pexp,ImguiApp::temp_source, ImguiApp::temp_sink);
 
 
 	//computing r^t * r

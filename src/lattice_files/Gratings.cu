@@ -1564,7 +1564,7 @@ void Gratings::normalise_bufferthree(float *dataone, float *datatwo, size_t size
 	__shared__ float dd[1024];
 
 	
-	if (ind <n)
+	if (ind < n)
 	{
 		cc[tx] = d_vec1[ind];
 		dd[tx] = d_vec1[ind];
@@ -1604,6 +1604,11 @@ void Gratings::normalise_bufferthree(float *dataone, float *datatwo, size_t size
 __global__ void Min_reduction_lattice(float2 *d_DataIn,int block_num)
 {
 	__shared__ float2 sdata_min[1024];
+
+    for (int i = threadIdx.x; i < 1024; i += blockDim.x) {
+        sdata_min[i] = {0.0f,0.0f};
+    }
+    __syncthreads(); 
 
 	unsigned int tid = threadIdx.x;
 

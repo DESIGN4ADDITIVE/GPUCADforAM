@@ -112,7 +112,6 @@ __global__ void Selection_Min_reduction(float2 *d_DataIn,float* d_volume , int b
 	
 	__syncthreads();
 
-	
 
 	for(unsigned int s=blockDim.x/2; s>0;s/=2) 
 	{
@@ -1073,10 +1072,8 @@ __global__ void update_raster_fixed_region_kernel(float isoval_fixed_region,floa
 		}
 
 		__syncthreads();
-		}
 
-		__syncthreads();
-
+	}
 
 }
 
@@ -1106,16 +1103,12 @@ __global__ void update_make_region_kernel(float isoval_fixed, float iso_dynamic,
 
 		int r_val = 0.0;
 
-	
 		float a,b,c,d,e,f,g;
-
 
 		a = b = c = d = e = f = g = 0.0;
 
-
 		float field[7];
 			
-
 		field[0] = sampleVolume_hgrid(boundary, gridPosone, gridSize);
 		field[1] = (int(gridPos.x - 1) >= 0 ) ? sampleVolume_hgrid(boundary, gridPosone - make_uint3(1,0,0), gridSize) : nanf("") ;
 		field[2] = ((gridPos.x + 1) < Nx) ? sampleVolume_hgrid(boundary, gridPosone + make_uint3(1,0,0), gridSize) : nanf("") ;
@@ -1135,22 +1128,14 @@ __global__ void update_make_region_kernel(float isoval_fixed, float iso_dynamic,
 				{
 					a = 1.0;
 					
-		
-					
-					
 				}
 				else if (r_val == 2)
 				{
 					
 					b = 1.0;
-
-					
-					
 				}
 
 			}
-
-			
 
 			if((field[2] != nanf("")))
 			{
@@ -1167,7 +1152,6 @@ __global__ void update_make_region_kernel(float isoval_fixed, float iso_dynamic,
 					
 				}
 			
-			
 			}
 
 			
@@ -1179,8 +1163,7 @@ __global__ void update_make_region_kernel(float isoval_fixed, float iso_dynamic,
 				if(r_val == 1)
 				{
 					a = 1.0;
-					
-					
+
 				}
 				else if (r_val == 4)
 				{
@@ -1190,12 +1173,9 @@ __global__ void update_make_region_kernel(float isoval_fixed, float iso_dynamic,
 			
 			}
 
-			
-
 			if((field[4] != nanf("")))
 			{
 				r_val = ((field[4] < iso_dynamic) && (field[0] >= iso_dynamic)) ? 1 : ((field[4] >= iso_dynamic) && (field[0] < iso_dynamic)) ? 5 : 0 ;
-			
 			
 				if(r_val == 1)
 				{
@@ -1204,42 +1184,28 @@ __global__ void update_make_region_kernel(float isoval_fixed, float iso_dynamic,
 				else if (r_val == 5)
 				{
 					e = 1.0;
-					
 				}
 			
 			
 			}
-
-			
-
 
 			if((field[5] != nanf("")))
 			{
 				r_val = ((field[5] < iso_dynamic) && (field[0] >= iso_dynamic)) ? 1 : ((field[5] >= iso_dynamic) && (field[0] < iso_dynamic)) ? 6 : 0 ;
 
-			
 				if(r_val == 1)
 				{
 					a = 1.0;
-					
-					
 				}
 				else if (r_val == 6)
 				{
 					f = 1.0;
-					
 				}
-			
-			
-			
 			}
-
-			
 
 			if((field[6] != nanf("")))
 			{
 				r_val = ((field[6] < iso_dynamic) && (field[0] >= iso_dynamic)) ? 1 : ((field[6] >= iso_dynamic) && (field[0] < iso_dynamic)) ? 7 : 0 ;
-
 
 				if(r_val == 1)
 				{
@@ -1252,14 +1218,9 @@ __global__ void update_make_region_kernel(float isoval_fixed, float iso_dynamic,
 				
 				}
 			
-			
 			}
 
-
-		
 		}
-
-
 
 		__syncthreads();	
 
@@ -1327,6 +1288,7 @@ __global__ void update_make_region_kernel(float isoval_fixed, float iso_dynamic,
 		}
 
 		__syncthreads();
+
 	}
 
 }
@@ -1337,10 +1299,8 @@ void Selection::raster_make_region(float isoval_fixed, float iso_dynamic, float 
 	dim3 grids(ceil((Nx*Ny*Nz)/float(1024)),1,1);
 	dim3 tids(1024,1,1);
 
-
 	update_make_region_kernel<<<grids,tids>>>(isoval_fixed, iso_dynamic, iso1, iso2,raster,d_solid, vol_one, boundary, lattice_field,fix_lat_field, fixed, dynamic, Nx, Ny, Nz);
 	cudaDeviceSynchronize();
-
 
 	getLastCudaError("Raster make region copy failed");
 }
@@ -1465,7 +1425,6 @@ void Selection::fixed_free(int *fixed_free, REAL *raster, int Nx, int Ny, int Nz
 	dim3 grids(ceil((Nx*Ny*Nz)/float(1024)),1,1);
 	dim3 tids(1024,1,1);
 	
-
 	Fixed_free_kernel<<<grids,tids>>>(fixed_free,raster, Nx , Ny, Nz);
 
 	cudaDeviceSynchronize();
@@ -1574,8 +1533,6 @@ __device__ uint2 index_cal(uint edge, uint3 gridpos,uint3 gridSizeMask)
 __device__ uint final_idx(uint2 indxx , float isoval, float *d_vol)
 {
 	
-
-	
 	float a = d_vol[indxx.x];
 	float b = d_vol[indxx.y];
 	if((a < isoval) && (b >= isoval))
@@ -1587,14 +1544,11 @@ __device__ uint final_idx(uint2 indxx , float isoval, float *d_vol)
 		return indxx.x;
 	}
 
-
 }
 
 
 __device__ int final_idx_val(uint2 indxx , grid_points *vol_one, float isoval, uint voxel , uint edge)
 {
-	
-
 	
 	int a = vol_one[indxx.x].val ;
 	int b = vol_one[indxx.y].val ;
@@ -1612,7 +1566,6 @@ __device__ int final_idx_val(uint2 indxx , grid_points *vol_one, float isoval, u
 	{
 		return -1;
 	}
-
 
 }
 
@@ -1672,8 +1625,6 @@ uint3 gridSizeShift, uint3 gridSizeMask, uint Nx, uint Ny, grid_points *d_vol_on
 
 	int tx = blockIdx.x*blockDim.x + threadIdx.x;
 	
-	
-
 	if(tx < active_facets)
 	{
 
@@ -1732,7 +1683,6 @@ uint3 gridSizeShift, uint3 gridSizeMask, uint Nx, uint Ny, grid_points *d_vol_on
 		}
 		__syncthreads();
 
-
 	}
 
 }
@@ -1756,17 +1706,14 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
     uint yy = (z_rem)/(Nx);
     uint xx = (z_rem) % (Nx);
 
-
 	uint3 shift = make_uint3(1,Nx,Nx*Ny);
 	uint3 mask = make_uint3(Nx,Ny,Nz);
 
 	if(tx < (Nx * Ny * Nz) )
 	{
 		uint3 gridPos = calcGridPos_selection(tx, shift, mask);
+
 		uint3 gridPosone = 2 * gridPos;
-
-
-
 
 		uint indone = gridPosone.x  + (gridPosone.y * ((mask.x) * 2)) + (gridPosone.z * ((mask.x) * 2) * ((mask.y) * 2));
 
@@ -1788,8 +1735,6 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 		{
 			d_selection[tx] = 1.0;
 		}
-
-	
 
 		__syncthreads();
 
@@ -2091,4 +2036,167 @@ void Selection::apply_to_lower(REAL *d_selection, REAL *d_selection2, grid_point
     dim3 tids(1024,1,1);
 	apply_to_lower_kernel<<<grids,tids>>>(d_selection,d_selection2,d_vol_one,Nx,Ny,Nz,gridSizeMask, gridSizeShift,isoval);
 	cudaDeviceSynchronize();
+}
+
+
+
+__global__ void Min_reduction_selection(int2 *d_DataIn,int block_num)
+{
+	__shared__ int2 sdata_min[1024];
+
+	for (int i = threadIdx.x; i < 1024; i += blockDim.x) {
+        sdata_min[i] = {0,0};
+    }
+    __syncthreads(); 
+
+	unsigned int tid = threadIdx.x;
+
+	int index;
+	int e;
+	e = (block_num/1024) + (!(block_num%1024)?0:1);
+	
+	float c ;
+	float d ;
+
+	for (int k = 0; k< e;k++)
+	{
+		index = tid + k*1024;
+		if(index < block_num)
+		{
+			c = sdata_min[tid].x;
+			d = sdata_min[tid].y;		
+
+			sdata_min[tid] = d_DataIn[index];
+			sdata_min[tid].x = c + sdata_min[tid].x;
+			sdata_min[tid].y = d + sdata_min[tid].y;
+		}
+
+	}
+
+	__syncthreads();
+
+	for(unsigned int s=blockDim.x/2; s>0;s/=2) 
+	{
+		
+		if (tid < s) 
+		{
+			
+			sdata_min[tid].x += sdata_min[tid + s].x;
+			sdata_min[tid].y += sdata_min[tid + s].y;
+			
+		}
+		__syncthreads();
+	}
+
+	
+	if (tid == 0) 
+	{
+		d_DataIn[0] = sdata_min[0];
+		
+	}
+	
+}
+
+
+__global__ void
+instanced_pos_kernel( float *storage_buffer,uint *facets_check, uint *facets_check_occupied, uint active_facets, InstanceData *d_instance_buffer, triangle_metadata *triangle_data)
+{
+	int tx = threadIdx.x;
+	int i = blockIdx.x*blockDim.x+tx;
+
+    if(i < active_facets)
+    {
+        if (facets_check[i])
+        {
+            d_instance_buffer[facets_check_occupied[i]].pos = triangle_data[i].centroid;
+			
+			d_instance_buffer[facets_check_occupied[i]].normal = triangle_data[i].normal;
+
+			d_instance_buffer[facets_check_occupied[i]].val = storage_buffer[i];
+
+        }
+    
+    }
+}
+
+void Selection::instanced_pos(float *storage_buffer, uint *facets_check, uint *facets_check_occupied, uint active_facets, InstanceData *d_instance_buffer, triangle_metadata *triangle_data)
+{
+    dim3 gids(ceil((active_facets)/float(1024)), 1, 1);
+	dim3 tids(1024,1,1);
+	
+	instanced_pos_kernel<<<gids, tids>>>( storage_buffer,facets_check,
+                                     facets_check_occupied, active_facets, d_instance_buffer, triangle_data);
+    cudaDeviceSynchronize();
+	getLastCudaError("instanced_pos fails");
+}
+
+
+ __global__ void load_icon_count_kernel(float *storage_buffer, uint active_facets, uint *facets_check)
+{
+	int tx = threadIdx.x;
+	int ind = blockIdx.x*blockDim.x+tx;
+	__shared__ float cc[1024];
+	
+	if (ind < active_facets)
+	{
+		cc[tx] = storage_buffer[ind];
+
+		facets_check[ind] = (cc[tx] == 1.0);
+
+	}
+	
+}
+
+ __global__ void support_icon_count_kernel(float *storage_buffer, uint active_facets, uint *facets_check)
+ {
+	int tx = threadIdx.x;
+	int ind = blockIdx.x*blockDim.x+tx;
+	__shared__ float cc[1024];
+	
+	if (ind < active_facets)
+	{
+		cc[tx] = storage_buffer[ind];
+
+		facets_check[ind] = (cc[tx] == -1.0);
+	}
+
+ }
+
+void Selection::icon_count(float *storage_buffer, uint active_facets, uint *icon_count, uint *facets_check, uint *facets_check_occupied,  std::string type, InstanceData *d_instance_buffer, triangle_metadata *triangle_data)
+{
+	
+	dim3 grids(ceil((active_facets)/float(1024)),1,1);
+
+	dim3 tids(1024,1,1);
+
+	if(type == "load")
+	{
+		load_icon_count_kernel<<<grids,tids>>>(storage_buffer,active_facets,facets_check);
+	}
+
+	else if (type == "support")
+	{
+		support_icon_count_kernel<<<grids,tids>>>(storage_buffer,active_facets,facets_check);
+	}
+
+	cudaDeviceSynchronize();
+
+
+	ThrustScanWrapper_lattice(facets_check_occupied,facets_check,active_facets);
+
+	{
+		uint lastElement_1, lastScanElement_1;
+		checkCudaErrors(cudaMemcpy((void *) &lastElement_1,
+							(void *)(facets_check + (active_facets)-1),
+							sizeof(uint), cudaMemcpyDeviceToHost));
+		checkCudaErrors(cudaMemcpy((void *) &lastScanElement_1,
+							(void *)(facets_check_occupied + (active_facets)-1),
+							sizeof(uint), cudaMemcpyDeviceToHost));
+
+		*icon_count = lastElement_1 + lastScanElement_1;
+
+	}
+
+	instanced_pos(storage_buffer , facets_check, facets_check_occupied, active_facets, d_instance_buffer, triangle_data);
+	
 }

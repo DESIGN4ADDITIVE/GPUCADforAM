@@ -4,8 +4,9 @@
 
 #include "../src/general/DataTypes.h"
 #include "Isosurface.h"
+#include "Instances.h"
 
-class Selection
+class Selection : public MarchingCubeCuda
 {
     public:
 
@@ -35,6 +36,9 @@ class Selection
 
     void raster_region_update(float isoval_fixed_region,  float *raster, grid_points *vol_topo, grid_points *vol_one, int Nx,int Ny, int Nz, bool show_domain);
 
+    void instanced_pos(float *storage_buffer, uint *facets_check, uint *facets_check_occupied, uint active_facets, InstanceData *d_instance_buffer, triangle_metadata *triangle_data);
+
+    void icon_count(float *storage_buffer, uint active_facets, uint *icon_count, uint *facets_check, uint *facets_check_occupied,  std::string type, InstanceData *d_instance_buffer, triangle_metadata *triangle_data);
 };
 
 

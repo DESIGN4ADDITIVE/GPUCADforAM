@@ -96,12 +96,8 @@ void main(void)
 		if (gl_InvocationID == 0)
 		{
 			
-			
-			
-		
 			fragColorout.xyz = spectral_jet(hei[i]);
-			
-		
+
 			fragColorout.w = raster[i];
 
 			if(hei[i] > 0.5)
@@ -129,13 +125,7 @@ void main(void)
 				gl_PointSize = p_size_3;
 			}
 
-	
-		
-				
-			
 		}
-
-
 
 		gl_ViewportIndex = gl_InvocationID;
 

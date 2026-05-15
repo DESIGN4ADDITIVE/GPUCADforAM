@@ -77,6 +77,9 @@ protected:
     std::vector<std::pair<VkShaderStageFlagBits, std::string> > shaderFilesone;
     std::vector<std::pair<VkShaderStageFlagBits, std::string> > shaderFilesoneread;
 
+    std::vector<std::pair<VkShaderStageFlagBits, std::string> > shaderFilesinstance;
+    std::vector<std::pair<VkShaderStageFlagBits, std::string> > shaderFilesinstanceread;
+
     VkRenderPass renderPass;
 
     VkPipelineLayout pipelineLayout;
@@ -134,11 +137,14 @@ protected:
     virtual void fillRenderingCommandBufferfour(VkCommandBuffer& buffer) {};
     virtual void fillRenderingCommandBufferfour_subpass1(VkCommandBuffer& buffer) {};
 
+    virtual void fillRenderingCommandBuffer_instance(VkCommandBuffer& buffer) {};
+    virtual void fillRenderingCommandBuffer_instance_subpass1(VkCommandBuffer& buffer) {};
+
     virtual std::vector<const char *> getRequiredExtensions() const;
     virtual std::vector<const char *> getRequiredDeviceExtensions() const;
     virtual void getVertexDescriptions(std::vector<VkVertexInputBindingDescription>& bindingDesc, std::vector<VkVertexInputAttributeDescription>& attribDesc);
     virtual void getVertexDescriptionsone(std::vector<VkVertexInputBindingDescription>& bindingDesc, std::vector<VkVertexInputAttributeDescription>& attribDesc);
-    virtual void getAssemblyStateInfo(VkPipelineInputAssemblyStateCreateInfo& info);
+    virtual void getVertexDescriptions_instance(std::vector<VkVertexInputBindingDescription>& bindingDesc, std::vector<VkVertexInputAttributeDescription>& attribDesc);
     virtual void getWaitFrameSemaphores(std::vector<VkSemaphore>& wait, std::vector< VkPipelineStageFlags>& waitStages) const;
     virtual void getSignalFrameSemaphores(std::vector<VkSemaphore>& signal) const;
     virtual VkDeviceSize getUniformSize() const;

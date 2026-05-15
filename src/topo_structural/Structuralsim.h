@@ -5,6 +5,7 @@
 #ifndef __STRUCTURALSIM_H_
 #define __STRUCTURALSIM_H_
 
+#include "../ImguiApp.h"
 #include "../general/DataTypes.h"
 #include "../gpu_kernels/general_kernels.h"
 
@@ -32,12 +33,11 @@ class  Structuralsim
 
     void GPUMatVec (REAL3 *d_u, REAL *d_den, REAL *d_selection, REAL3 *d_res, size_t pitch_bytes, const REAL pexp);
 
-    void GPURes (REAL3 *d_u,REAL *d_den, REAL *d_selection, REAL3 *d_res, size_t pitch_bytes, const REAL pexp);
+    void GPURes (REAL3 *d_u,REAL *d_den, REAL *d_selection, REAL3 *d_res, size_t pitch_bytes, const REAL pexp , const float x_axis, const float y_axis, const float z_axis);
 
-    void GPUCG (REAL3 *d_u,REAL *d_den, REAL *d_selection, const int iter, const int OptIter, const REAL EndRes, int &FinalIter, REAL &FinalRes, const REAL pexp);
+    void GPUCG (REAL3 *d_u,REAL *d_den, REAL *d_selection, const int iter, const int OptIter, const REAL EndRes, int &FinalIter, REAL &FinalRes, const REAL pexp, const float fx_val, const float fy_val , const float fz_val);
 
     void GPUCompGrad (REAL3 *d_u,REAL *d_den, REAL *d_grad, REAL &Obj, REAL &Vol, const size_t u_pitch_bytes, size_t grad_pitch_bytes, const REAL pexp);
-
 
     void GPUCleanUp ();
 

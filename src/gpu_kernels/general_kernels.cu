@@ -8,6 +8,13 @@ __global__ void Sum1Kernel(REAL *d_result, REAL *a, const int pitchX, const int 
 {
 ///////////////////////////////////////////////////////////////////////////////////////
 	__shared__ REAL Accum[1024];
+	for (int i = threadIdx.x; i < 1024; i += blockDim.x) {
+        Accum[i] = 0.0f;
+    }
+    __syncthreads(); 
+
+
+
 	REAL sum = 0.0;
 	int i = threadIdx.x;
 	int j = threadIdx.y;
@@ -64,6 +71,13 @@ __global__ void Sum1Kernel(REAL *d_result, REAL *a, const int pitchX, const int 
 __global__ void SumVolumeKernel(REAL *d_result, REAL *d_den, const int pitchX, const int NX, const int NY, const int NZ)
 {
 	__shared__ REAL Accum[1024];
+	for (int i = threadIdx.x; i < 1024; i += blockDim.x) {
+		Accum[i] = 0.0f;
+    }
+    __syncthreads(); 
+
+
+
 	REAL sum = 0.0;
 	int i = threadIdx.x;
 	int j = threadIdx.y;
@@ -115,6 +129,11 @@ __global__ void SumVolumeKernel(REAL *d_result, REAL *d_den, const int pitchX, c
 __global__ void MyReduction(REAL *d_DataIn, REAL *d_DataOut)
 {
 	__shared__ REAL sdata[p2];
+
+	for (int i = threadIdx.x; i < p2; i += blockDim.x) {
+        sdata[i] = 0.0f;
+    }
+    __syncthreads(); 
 
 	unsigned int tid = threadIdx.x;
 	unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
@@ -170,6 +189,12 @@ __global__ void MyVecSMultAddKernel(REAL3 *v, const REAL a1, REAL3 *w, const REA
 __global__ void ScalarProd4Kernel(REAL *d_result, REAL3 *a, REAL3 *b, const int pitchX, const int NX, const int NY, const int NZ)
 {
 	__shared__ REAL3 Accum[1024];
+	for (int i = threadIdx.x; i < 1024; i += blockDim.x) {
+        Accum[i] = {0.0f,0.0f,0.0f};
+    }
+    __syncthreads(); 
+
+
 	REAL sum = 0.0;
 	int i = threadIdx.x;
 	int j = threadIdx.y;
@@ -296,6 +321,12 @@ void General_Kernels::VecSMultAdd(REAL3 *d_v, REAL a1, REAL3 *d_w, const REAL a2
 __global__ void ScalarProd4Kernelone_t(REAL *d_result, REAL3 *a, REAL3 *b, const int pitchX, const int NX, const int NY, const int NZ)
 {
 	__shared__ REAL3 Accum[1024];
+	for (int i = threadIdx.x; i < 1024; i += blockDim.x) {
+        Accum[i] = {0.0f,0.0f, 0.0f};
+    }
+    __syncthreads(); 
+
+
 	REAL sum = 0.0;
 	int i = threadIdx.x;
 	int j = threadIdx.y;

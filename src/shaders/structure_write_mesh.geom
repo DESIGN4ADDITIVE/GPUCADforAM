@@ -39,6 +39,7 @@ layout( push_constant, std430) uniform push_constants
         int make_region;
         int show_region;
         int show_domain;
+        int analysis;
 
 } ;
 

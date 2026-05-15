@@ -26,6 +26,8 @@ layout( push_constant, std430) uniform push_constants
         float point_size;
         int boundary;
         float alpha_val;
+        int make_region;
+   
 
 } ;
 

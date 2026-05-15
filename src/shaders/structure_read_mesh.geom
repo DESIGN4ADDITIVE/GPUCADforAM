@@ -137,6 +137,16 @@ void main(void)
                     {
                         fragColor = vec4(lightcolor1*amg,norm[i].w);
                     }
+
+                    if(val[prim_id] == 1)
+                    {
+                        fragColor = vec4(1.0,0.0,0.0,1.0);
+                    }
+
+                    if(val[prim_id] == -1)
+                    {
+                        fragColor = vec4(1.0,1.0,0.0,1.0);
+                    }
                 }
 
                 if(analysis > 0)
@@ -144,15 +154,7 @@ void main(void)
                     fragColor = vec4(spectral_jet(coll).xyz*amg, 1.0);
                 }
 
-                if(val[prim_id] == 1)
-                {
-                    fragColor = vec4(1.0,0.0,0.0,1.0);
-                }
 
-                if(val[prim_id] == -1)
-                {
-                    fragColor = vec4(1.0,1.0,0.0,1.0);
-                }
 
                 gl_PointSize =float(2);
 

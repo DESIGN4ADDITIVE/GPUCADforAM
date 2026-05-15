@@ -4,11 +4,8 @@
 #include <float.h>
 
 
-
-
 float Modelling::a;
 float Modelling::b;
-
 
 Modelling::Modelling(int Nx, int Ny, int Nz)
 {
@@ -16,11 +13,11 @@ Modelling::Modelling(int Nx, int Ny, int Nz)
 	Modelling::a = 0.0;
 	Modelling::b = 1.0;
 }
+
 Modelling::~Modelling()
 {
     
 }
-
 
 __global__ void concentric_cylinder_kernel(float* data_1,float3 center,float radius, float thickness_radial, float thickness_axial, int Nx,int Ny, int Nz)
 {
@@ -244,7 +241,6 @@ void Modelling::GPU_buffer_normalise_dual(float *d_vec1,float *d_vec2,float *d_v
 }
 
 
-
 __global__ void distance_from_line_kernel(float* data_1,float3 center,float3 axis,float radius, float thickness_radial, float thickness_axial, int Nx,int Ny, int Nz, bool cylind_disc_selected)
 {
     int tx = blockIdx.x*blockDim.x + threadIdx.x;
@@ -359,7 +355,6 @@ __global__ void implicit_sphere_kernel(float* data_1,float3 center,float radius,
 }
 
 
-
 void Modelling::sphere_with_center(float* data_1,float3 center,float radius_1,float thickness_wall,int Nx,int Ny, int Nz,bool sphere_shell_selected)
 {
     dim3 grids(ceil( (Nx*Ny*Nz)/ 1024.0),1,1);
@@ -368,7 +363,6 @@ void Modelling::sphere_with_center(float* data_1,float3 center,float radius_1,fl
     cudaDeviceSynchronize();
 
 }
-
 
 
 __global__ void implicit_cuboid_kernel(float* data_1,float3 center,float3 angles,float x_width,float y_width,float z_width, int Nx, int Ny, int Nz)
@@ -397,13 +391,13 @@ __global__ void implicit_cuboid_kernel(float* data_1,float3 center,float3 angles
 
 	float3 field_vec = {x_1 - center.x,y_1 - center.y ,z_1 - center.z};
 
-	float3 pl_x = {(cosf(angles.x) * cosf(angles.y)),(sinf(angles.x) * cosf(angles.y)),(-1.0f * sinf(angles.y))};
+	float3 pl_x = {(cosf(angles.z) * cosf(angles.y)),(cosf(angles.z) * sinf(angles.y) * sinf(angles.x)) - (sinf(angles.z) * cosf(angles.x)),(cosf(angles.z) * sinf(angles.y) * cosf(angles.x)) + (sinf(angles.z) * sinf(angles.x))};
 
-	float3 pl_y = {((cosf(angles.x)) * sinf(angles.y) * sinf(angles.z)) - (sinf(angles.x) * cosf(angles.z)),
-	(sinf(angles.x) * sinf(angles.y) * sinf(angles.z)) + (cosf(angles.x) * cosf(angles.z)),cosf(angles.y) * sinf(angles.z)};
+	float3 pl_y = {((sinf(angles.z)) * cosf(angles.y)) ,
+	(sinf(angles.z) * sinf(angles.y) * sinf(angles.x)) + (cosf(angles.z) * cosf(angles.x)),(sinf(angles.z) * sinf(angles.y) * cosf(angles.x)) - (cosf(angles.z) * sinf(angles.x)) };
 
-	float3 pl_z = {(cosf(angles.x) * sinf(angles.y) * cosf(angles.z)) + (sinf(angles.x) * sinf(angles.z)),
-	(sinf(angles.x) * sinf(angles.y) * cosf(angles.z)) - (cosf(angles.x) * sinf(angles.z)), cosf(angles.y) * cosf(angles.z)};
+	float3 pl_z = {(-1.0f * sinf(angles.y)),
+	cosf(angles.y) * sinf(angles.x), cosf(angles.y) * cosf(angles.x)};
 
 
 	float fld_1 = field_vec.x*pl_x.x +field_vec.y*pl_x.y + field_vec.z*pl_x.z ;
@@ -457,13 +451,13 @@ __global__ void implicit_cuboid_shell_kernel(float* data_1,float3 center,float3 
 
 	float3 field_vec = {x_1 - center.x,y_1 - center.y ,z_1 - center.z};
 
-	float3 pl_x = {(cosf(angles.x) * cosf(angles.y)),(sinf(angles.x) * cosf(angles.y)),(-1.0f * sinf(angles.y))};
+	float3 pl_x = {(cosf(angles.z) * cosf(angles.y)),(cosf(angles.z) * sinf(angles.y) * sinf(angles.x)) - (sinf(angles.z) * cosf(angles.x)),(cosf(angles.z) * sinf(angles.y) * cosf(angles.x)) + (sinf(angles.z) * sinf(angles.x))};
 
-	float3 pl_y = {((cosf(angles.x)) * sinf(angles.y) * sinf(angles.z)) - (sinf(angles.x) * cosf(angles.z)),
-	(sinf(angles.x) * sinf(angles.y) * sinf(angles.z)) + (cosf(angles.x) * cosf(angles.z)),cosf(angles.y) * sinf(angles.z)};
+	float3 pl_y = {((sinf(angles.z)) * cosf(angles.y)) ,
+	(sinf(angles.z) * sinf(angles.y) * sinf(angles.x)) + (cosf(angles.z) * cosf(angles.x)),(sinf(angles.z) * sinf(angles.y) * cosf(angles.x)) - (cosf(angles.z) * sinf(angles.x)) };
 
-	float3 pl_z = {(cosf(angles.x) * sinf(angles.y) * cosf(angles.z)) + (sinf(angles.x) * sinf(angles.z)),
-	(sinf(angles.x) * sinf(angles.y) * cosf(angles.z)) - (cosf(angles.x) * sinf(angles.z)), cosf(angles.y) * cosf(angles.z)};
+	float3 pl_z = {(-1.0f * sinf(angles.y)),
+	cosf(angles.y) * sinf(angles.x), cosf(angles.y) * cosf(angles.x)};
 
 
 	float fld_1 = field_vec.x*pl_x.x +field_vec.y*pl_x.y + field_vec.z*pl_x.z ;
@@ -484,9 +478,6 @@ __global__ void implicit_cuboid_shell_kernel(float* data_1,float3 center,float3 
 	data_1[tx] = fld;
 
 }
-
-
-
 
 
 void Modelling::cuboid_shell(float* data_1,float3 center,float3 angles, float x_width,float y_width,float z_width,float thickness, int Nx,int Ny, int Nz)
@@ -523,19 +514,20 @@ __global__ void implicit_torus_kernel(float* data_1,float3 center,float3 angles,
     if(tx < size)
     {
 
-		float3 pl_x = {(cosf(angles.x) * cosf(angles.y)),(sinf(angles.x) * cosf(angles.y)),(-1.0f * sinf(angles.y))};
+	float3 pl_x = {(cosf(angles.z) * cosf(angles.y)),(cosf(angles.z) * sinf(angles.y) * sinf(angles.x)) - (sinf(angles.z) * cosf(angles.x)),(cosf(angles.z) * sinf(angles.y) * cosf(angles.x)) + (sinf(angles.z) * sinf(angles.x))};
 
-		float3 pl_y = {((cosf(angles.x)) * sinf(angles.y) * sinf(angles.z)) - (sinf(angles.x) * cosf(angles.z)),
-		(sinf(angles.x) * sinf(angles.y) * sinf(angles.z)) + (cosf(angles.x) * cosf(angles.z)),cosf(angles.y) * sinf(angles.z)};
+	float3 pl_y = {((sinf(angles.z)) * cosf(angles.y)) ,
+	(sinf(angles.z) * sinf(angles.y) * sinf(angles.x)) + (cosf(angles.z) * cosf(angles.x)),(sinf(angles.z) * sinf(angles.y) * cosf(angles.x)) - (cosf(angles.z) * sinf(angles.x)) };
 
-		float3 pl_z = {(cosf(angles.x) * sinf(angles.y) * cosf(angles.z)) + (sinf(angles.x) * sinf(angles.z)),
-		(sinf(angles.x) * sinf(angles.y) * cosf(angles.z)) - (cosf(angles.x) * sinf(angles.z)), cosf(angles.y) * cosf(angles.z)};
+	float3 pl_z = {(-1.0f * sinf(angles.y) ),
+	cosf(angles.y) * sinf(angles.x), cosf(angles.y) * cosf(angles.x)};
 
 		vec_field.x = field_vec.x*pl_x.x +field_vec.y*pl_x.y + field_vec.z*pl_x.z ;
 		vec_field.y = field_vec.x*pl_y.x +field_vec.y*pl_y.y + field_vec.z*pl_y.z ;
 		vec_field.z = field_vec.x*pl_z.x +field_vec.y*pl_z.y + field_vec.z*pl_z.z ;
-
+		
 		float side = (torus_radius - sqrtf(powf(vec_field.x,2) + powf(vec_field.y,2)));
+
 		float fld_1 = powf(vec_field.z,2) - powf(torus_circle_radius,2) + powf(side,2);
 		
 	
@@ -588,13 +580,13 @@ __global__ void implicit_cone_kernel(float* data_1,float3 center,float3 angles,f
 		
 
 		///////////////////////////////////////////////////////////////
-		float3 pl_x = {(cosf(angles.y) * cosf(angles.z)),(-1.0f*cosf(angles.y)*sinf(angles.z)),(sinf(angles.y))};
+		float3 pl_x = {(cosf(angles.z) * cosf(angles.y)),(cosf(angles.z) * sinf(angles.y) * sinf(angles.x)) - (sinf(angles.z) * cosf(angles.x)),(cosf(angles.z) * sinf(angles.y) * cosf(angles.x)) + (sinf(angles.z) * sinf(angles.x))};
 
-		float3 pl_y = {((sinf(angles.x)) * sinf(angles.y) * cosf(angles.z)) + (cosf(angles.x) * sinf(angles.z)),
-		(-1.0f * sinf(angles.x) * sinf(angles.y) * sinf(angles.z)) + (cosf(angles.x) * cosf(angles.z)),-1.0f*sinf(angles.x) * cosf(angles.y)};
+		float3 pl_y = {((sinf(angles.z)) * cosf(angles.y)) ,
+		(sinf(angles.z) * sinf(angles.y) * sinf(angles.x)) + (cosf(angles.z) * cosf(angles.x)),(sinf(angles.z) * sinf(angles.y) * cosf(angles.x)) - (cosf(angles.z) * sinf(angles.x)) };
 
-		float3 pl_z = {(-1.0f* cosf(angles.x) * sinf(angles.y) * cosf(angles.z)) + (sinf(angles.x) * sinf(angles.z)),
-		(cosf(angles.x) * sinf(angles.y) * sinf(angles.z)) + (sinf(angles.x) * cosf(angles.z)), cosf(angles.x) * cosf(angles.y)};
+		float3 pl_z = {(-1.0f * sinf(angles.y)),
+		cosf(angles.y) * sinf(angles.x), cosf(angles.y) * cosf(angles.x)};
 
 		vec_field.x = field_vec.x*pl_x.x +field_vec.y*pl_x.y + field_vec.z*pl_x.z ;
 		vec_field.y = field_vec.x*pl_y.x +field_vec.y*pl_y.y + field_vec.z*pl_y.z ;
@@ -606,7 +598,6 @@ __global__ void implicit_cone_kernel(float* data_1,float3 center,float3 angles,f
 		float h = max(((g-(cone_height/2.0)) - (cone_height/2.0)) *100,((g-(cone_height/2.0)) + (cone_height/2.0)) *100 * -1.0);
 		float fld_1 = ((powf((vec_field.x),2) + powf((vec_field.z),2))*fld_2) - powf((vec_field.y - cone_height),2);
 		
-	
 		data_1[tx] = max(fld_1,h);
     }
 
@@ -823,8 +814,6 @@ __global__ void retain_boundary_kernel(float* data_1, float* data_2,float* data_
 		
 	}
 
-
-
 }
 
 
@@ -840,10 +829,6 @@ void Modelling::retain_boundary(float* data_1, float* data_2,float* data_3,int N
 }
 
 
-
-
-
-
 __global__ void device_bufferfour(float *dataone,float *datatwo,float *datathree, float a, float b,int NX, int NY, int NZ, float isoval_1)
 {
 	
@@ -853,7 +838,6 @@ __global__ void device_bufferfour(float *dataone,float *datatwo,float *datathree
 	float k;
 	float m;
 
-	
 
 	if(tx < size)
 	{
@@ -875,10 +859,8 @@ __global__ void device_bufferfour(float *dataone,float *datatwo,float *datathree
 		datatwo[tx] = m;
 		datathree[tx] = k;
 	}
+
 }
-
-
-
 
 
 void Modelling::GPU_buffer_normalise_four(float *d_vec1,float *d_vec2,float *d_vec3, size_t size, int Nx, int Ny, int Nz, float isoval_1)
@@ -926,7 +908,6 @@ __global__ void init_final_boundary_kernel(float* data_1,int NX,int NY, int NZ)
 	{
 		data_1[tx] = FLT_MAX;
 	}
-
 
 }
 

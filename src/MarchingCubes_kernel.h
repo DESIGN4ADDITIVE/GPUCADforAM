@@ -9,8 +9,6 @@
 
 #define NTHREADS 32
 
-
-
 struct grid_points
 {
     int val = 0;
@@ -27,6 +25,8 @@ struct triangle_metadata
     uint edge_1;
     uint edge_2;
     uint edge_3;
+    float3 centroid;
+    float3 normal;
 };
 
 class MarchingCubeCuda

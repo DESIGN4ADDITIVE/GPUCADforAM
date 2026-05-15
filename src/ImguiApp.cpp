@@ -25,6 +25,8 @@ bool ImguiApp::show_region = false;
 bool ImguiApp::show_domain = false;
 bool ImguiApp::show_analysis = false;
 
+float3 ImguiApp::Inst_scale_load = {1.0,1.0,1.0};
+float3 ImguiApp::Inst_scale_support = {1.0,1.0,1.0};
 
 bool ImguiApp::x_result = false;
 bool ImguiApp::y_result = false;
@@ -74,7 +76,7 @@ uint ImguiApp::lattice_index_type = 0;
 
 bool ImguiApp::grid_value_check;
 bool ImguiApp::initialise_grid = false;
-bool ImguiApp::execute_signal;
+bool ImguiApp::execute_signal = false;
 bool ImguiApp::execute_done = false;
 bool ImguiApp::execute_primitive_lattice = false;
 bool ImguiApp::primitive_lattice_options = false;
@@ -109,6 +111,11 @@ bool ImguiApp::select_load_node = false;
 bool ImguiApp::select_support_node = false;
 
 
+bool ImguiApp::load_icon = false;
+bool ImguiApp::support_icon = false;
+uint ImguiApp::compute_load_icon = 0;
+uint ImguiApp::compute_support_icon = 0;
+
 bool ImguiApp::execute_lattice = false;
 bool ImguiApp::execute_primitive = false;
 bool ImguiApp::execute_topo_data = false;
@@ -126,6 +133,9 @@ bool ImguiApp::spatial_period_window = false;
 bool ImguiApp::fea_settings = false;
 bool ImguiApp::fea_settings_set = false;
 
+uint ImguiApp::loadinstance_count = 0;
+uint ImguiApp::supportinstance_count = 0;
+
 
 bool ImguiApp::cg_solver_settings = false;
 bool ImguiApp::solver_settings_set = false;
@@ -135,9 +145,12 @@ bool ImguiApp::optimisation_settings_set = false;
 
 bool ImguiApp::unit_lattice_settings = false;
 
-bool ImguiApp::x_axis = false;
-bool ImguiApp::y_axis = false;
-bool ImguiApp::z_axis = false;
+float ImguiApp::x_load_axis = 0.0f;
+float ImguiApp::y_load_axis = 1.0f;
+float ImguiApp::z_load_axis = 0.0f;
+
+float ImguiApp::temp_source = 0.01f;
+float ImguiApp::temp_sink = 0.0f;
 
 bool ImguiApp::view_front = true;
 bool ImguiApp::view_back = false;
@@ -194,6 +207,9 @@ ImVec4 ImguiApp::clear_color = ImVec4(0.148f, 0.148f, 0.148f, 1.00f);
 
 
 LightPushConstants ImguiApp::push_constants = {{0.0f,0.0f,0.0f,0.0f},0.0f,0.0f,0.0f,1.0f,0.0f,0.0f,0,5.0,0,15,0,1.0,0};
+
+InstancePushConstants ImguiApp::Inst_push_constants = {{0.0f,0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f,0.0f}, {0.0f,1.0f,0.0f,0.0f},
+{1.0f,1.0f,1.0f,1.0f}, {1.0f,1.0f,1.0f,1.0f}};
 
 
 /////////////////////Topopt_val//////////////////////////////
@@ -296,242 +312,236 @@ ImguiApp::ImguiApp()
  void sphere_settings()
  {
 
-    ////////////////////////////////////////////////////////////////
-            ImGui::SeparatorText("Center");
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_x = 0.0;
-            ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.x = c_x;
-            }
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_y = 0.0;
-            ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.y = c_y;
-            }
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_z = 0.0;
-            ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.z = c_z;
-            }
-     
+    ImGui::SeparatorText("Center");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_x = 0.0;
+    ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.x = c_x;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_y = 0.0;
+    ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.y = c_y;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_z = 0.0;
+    ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.z = c_z;
+    }
 
-            ImGui::NewLine();
 
-            static bool rad1 = false;
-            static bool thik = false;
-            static bool thik_ax = false;
-            static float rad = 5.0f;
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("Sphere Radius", &rad,2, 100, "%.1f");
-            rad1 = ImGui::IsItemActive();
+    ImGui::NewLine();
 
-            if(rad1)
-            {
-                ImguiApp::sphere_radius = rad;
-            }
+    static bool rad1 = false;
+    static bool thik = false;
+    static bool thik_ax = false;
+    static float rad = 5.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Sphere Radius", &rad,2, 100, "%.1f");
+    rad1 = ImGui::IsItemActive();
 
-            if(ImguiApp::sphere_shell_selected)
-            {
-                ImGui::NewLine();
-                static float thick = 2.0f;
-                ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-                ImGui::SliderFloat("Wall Thickness ", &thick,1, 20, "%.1f");
-                thik = ImGui::IsItemActive();  
-            
-                if(thik )
-                {
-                    ImguiApp::sphere_thickness = thick;
-            
-                }
-            }
+    if(rad1)
+    {
+        ImguiApp::sphere_radius = rad;
+    }
+
+    if(ImguiApp::sphere_shell_selected)
+    {
+        ImGui::NewLine();
+        static float thick = 2.0f;
+        ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+        ImGui::SliderFloat("Wall Thickness ", &thick,1, 20, "%.1f");
+        thik = ImGui::IsItemActive();  
+    
+        if(thik )
+        {
+            ImguiApp::sphere_thickness = thick;
+    
+        }
+    }
  }
 
 
 
  void cylinder_settings()
  {
-    ////////////////////////////////////////////////////////////////
-            ImGui::SeparatorText("Center");
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_x = 0.0;
-            ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.x = c_x;
-            }
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_y = 0.0;
-            ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.y = c_y;
-            }
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_z = 0.0;
-            ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.z = c_z;
-            }
-           
-            /////////////////////////////////////////////////////////////
-            ImGui::SeparatorText("Axis");
-            ImGui::SetNextItemWidth(500);
-            static float a_xis[3] = { 0.0f, 0.0f, 1.0f};
-            ImGui::DragFloat3("Axis",a_xis,0.01,-1.0,1.0,"%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::axis.x = a_xis[0];
-                ImguiApp::axis.y = a_xis[1];
-                ImguiApp::axis.z = a_xis[2];
-            }
-          
-           
-            ////////////////////////////////////////////////////////////////
+    
+    ImGui::SeparatorText("Center");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_x = 0.0;
+    ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.x = c_x;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_y = 0.0;
+    ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.y = c_y;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_z = 0.0;
+    ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.z = c_z;
+    }
+    
+    /////////////////////////////////////////////////////////////
+    ImGui::SeparatorText("Axis");
+    ImGui::SetNextItemWidth(500);
+    static float a_xis[3] = { 0.0f, 1.0f, 0.0f};
+    ImGui::DragFloat3("Axis",a_xis,0.01,-1.0,1.0,"%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::axis.x = a_xis[0];
+        ImguiApp::axis.y = a_xis[1];
+        ImguiApp::axis.z = a_xis[2];
+    }
+    
+    static bool rad1 = false;
+    static bool thik = false;
+    static bool thik_ax = false;
+    static float rad = 20.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Radius", &rad,1, 150, "%.0f");
+    rad1 = ImGui::IsItemActive();
 
+    static float thick_axial = 45.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Thickness Axial", &thick_axial,0, 150 , "%.0f");
+    thik_ax = ImGui::IsItemActive();  
+    if(rad1 || thik_ax )
+    {
+        ImguiApp::radius = rad;
+        
+        ImguiApp::thickness_axial = thick_axial;
+    }
 
-            static bool rad1 = false;
-            static bool thik = false;
-            static bool thik_ax = false;
-            static float rad = 5.0f;
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("Radius", &rad,1, 150, "%.1f");
-            rad1 = ImGui::IsItemActive();
-     
-            static float thick_axial = 6.0f;
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("Thickness Axial", &thick_axial,0, 150 , "%.1f");
-            thik_ax = ImGui::IsItemActive();  
-            if(rad1 || thik_ax )
-            {
-                ImguiApp::radius = rad;
-                
-                ImguiApp::thickness_axial = thick_axial;
-            }
-
-            if(ImguiApp::cylind_disc_selected)
-            {
-                static float thick = 2.0f;
-                ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-                ImGui::SliderFloat("Thickness Radial", &thick,0, 150, "%.1f");
-                thik = ImGui::IsItemActive(); 
-                if(thik)
-                {
-                    ImguiApp::thickness_radial = thick;
-                
-                } 
-            }
+    if(ImguiApp::cylind_disc_selected)
+    {
+        static float thick = 2.0f;
+        ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+        ImGui::SliderFloat("Thickness Radial", &thick,0, 150, "%.1f");
+        thik = ImGui::IsItemActive(); 
+        if(thik)
+        {
+            ImguiApp::thickness_radial = thick;
+        
+        } 
+    }
  }
 
 
   void cuboid_settings()
  {
 
-    ////////////////////////////////////////////////////////////////
-            ImGui::SeparatorText("Center");
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_x = 0.0;
-            ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.x = c_x;
-            }
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_y = 0.0;
-            ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.y = c_y;
-            }
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_z = 0.0;
-            ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.z = c_z;
-            }
-     
 
+    ImGui::SeparatorText("Center");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_x = 0.0;
+    ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.x = c_x;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_y = 0.0;
+    ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.y = c_y;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_z = 0.0;
+    ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.z = c_z;
+    }
 
-            static bool xx_roll = false;
-            static bool yy_pitch = false;
-            static bool zz_yaw = false;
+    static bool xx_roll = false;
+    static bool yy_pitch = false;
+    static bool zz_yaw = false;
 
-            ImGui::SeparatorText("Angle");
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float x_roll = 0.0;
-            ImGui::SliderFloat("roll", &x_roll, -180.0f, 180.0f, "%.1f");
-            xx_roll = ImGui::IsItemActive();
-      
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float y_pitch = 0.0;
-            ImGui::SliderFloat("pitch", &y_pitch, -180.0f, 180.0f, "%.1f");
-            yy_pitch = ImGui::IsItemActive();
-          
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float z_yaw = 0.0;
-            ImGui::SliderFloat("yaw", &z_yaw, -180.0f, 180.0f, "%.1f");
-            zz_yaw = ImGui::IsItemActive();
-            if(xx_roll || yy_pitch || zz_yaw)
-            {
-                ImguiApp::angles.x = (x_roll/180)*3.14;
-                ImguiApp::angles.y = (y_pitch/180)*3.14;
-                ImguiApp::angles.z = (z_yaw/180)*3.14;
-            }
-     
-            ImGui::SeparatorText("Width");
-            static bool x_wid = false;
-            static bool y_wid = false;
-            static bool z_wid = false;
+    ImGui::SeparatorText("Angle");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float x_roll = 0.0;
+    ImGui::SliderFloat("roll", &x_roll, -180.0f, 180.0f, "%.1f");
+    xx_roll = ImGui::IsItemActive();
 
-          
-            static float x_1 = 5.0f;
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("x_width", &x_1,1, 150, "%.1f");
-            x_wid = ImGui::IsItemActive();
-            static float y_1 = 2.0f;
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("y_width ", &y_1,1, 150, "%.1f");
-            y_wid = ImGui::IsItemActive();  
-            static float z_1 = 4.0f;
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("z_width ", &z_1,1, 150, "%.1f");
-            z_wid = ImGui::IsItemActive(); 
-            if(x_wid || y_wid || z_wid )
-            {
-                ImguiApp::cuboid_x = x_1;
-                ImguiApp::cuboid_y = y_1;
-                ImguiApp::cuboid_z = z_1;
-          
-            }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float y_pitch = 0.0;
+    ImGui::SliderFloat("pitch", &y_pitch, -180.0f, 180.0f, "%.1f");
+    yy_pitch = ImGui::IsItemActive();
+    
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float z_yaw = 0.0;
+    ImGui::SliderFloat("yaw", &z_yaw, -180.0f, 180.0f, "%.1f");
+    zz_yaw = ImGui::IsItemActive();
+    if(xx_roll || yy_pitch || zz_yaw)
+    {
+        ImguiApp::angles.x = (x_roll/180)*3.14;
+        ImguiApp::angles.y = (y_pitch/180)*3.14;
+        ImguiApp::angles.z = (z_yaw/180)*3.14;
+    }
 
-            if(ImguiApp::cuboid_shell_selected)
-            {
-                ImGui::SeparatorText("Thickness");
-                static bool cu_thick = false;
-                static float c_t = 2.0f;
-                ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-                ImGui::SliderFloat("thickness", &c_t,1, 50, "%.1f");
-                cu_thick = ImGui::IsItemActive();
-                if(cu_thick)
-                {
-                    ImguiApp::cu_sh_thick = c_t;
-                }
-            }
+    ImGui::SeparatorText("Width");
+
+    static bool x_wid = false;
+    static bool y_wid = false;
+    static bool z_wid = false;
+
+    
+    static float x_1 = 5.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("x_width", &x_1,1, 150, "%.1f");
+    x_wid = ImGui::IsItemActive();
+    static float y_1 = 2.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("y_width ", &y_1,1, 150, "%.1f");
+    y_wid = ImGui::IsItemActive();  
+    static float z_1 = 4.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("z_width ", &z_1,1, 150, "%.1f");
+    z_wid = ImGui::IsItemActive(); 
+    if(x_wid || y_wid || z_wid )
+    {
+        ImguiApp::cuboid_x = x_1;
+        ImguiApp::cuboid_y = y_1;
+        ImguiApp::cuboid_z = z_1;
+    
+    }
+
+    if(ImguiApp::cuboid_shell_selected)
+    {
+        ImGui::SeparatorText("Thickness");
+        static bool cu_thick = false;
+        static float c_t = 2.0f;
+        ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+        ImGui::SliderFloat("thickness", &c_t,1, 50, "%.1f");
+        cu_thick = ImGui::IsItemActive();
+        if(cu_thick)
+        {
+            ImguiApp::cu_sh_thick = c_t;
+        }
+    }
 
  }
 
@@ -539,164 +549,158 @@ ImguiApp::ImguiApp()
  void torus_settings()
  {
 
-    ////////////////////////////////////////////////////////////////
-            ImGui::SeparatorText("Torus Center");
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_x = 0.0;
-            ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.x = c_x;
-            }
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_y = 0.0;
-            ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.y = c_y;
-            }
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float c_z = 0.0;
-            ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.z = c_z;
-            }
-     
+
+    ImGui::SeparatorText("Torus Center");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_x = 0.0;
+    ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.x = c_x;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_y = 0.0;
+    ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.y = c_y;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float c_z = 0.0;
+    ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.z = c_z;
+    }
 
 
-            static bool xx_roll = false;
-            static bool yy_pitch = false;
-            static bool zz_yaw = false;
 
-            ImGui::SeparatorText("Angle");
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float x_roll = 0.0;
-            ImGui::SliderFloat("roll", &x_roll, -180.0f, 180.0f, "%.1f");
-            xx_roll = ImGui::IsItemActive();
-      
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float y_pitch = 0.0;
-            ImGui::SliderFloat("pitch", &y_pitch, -180.0f, 180.0f, "%.1f");
-            yy_pitch = ImGui::IsItemActive();
-          
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float z_yaw = 0.0;
-            ImGui::SliderFloat("yaw", &z_yaw, -180.0f, 180.0f, "%.1f");
-            zz_yaw = ImGui::IsItemActive();
-            if(xx_roll || yy_pitch || zz_yaw)
-            {
-                ImguiApp::angles.x = (x_roll/180)*3.14;
-                ImguiApp::angles.y = (y_pitch/180)*3.14;
-                ImguiApp::angles.z = (z_yaw/180)*3.14;
-            }
-     
-            ImGui::SeparatorText("Torus Radius");
-            static bool T_rad = false;
-            static bool C_rad = false;
+    static bool xx_roll = false;
+    static bool yy_pitch = false;
+    static bool zz_yaw = false;
+
+    ImGui::SeparatorText("Angle");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float x_roll = 0.0;
+    ImGui::SliderFloat("roll", &x_roll, -180.0f, 180.0f, "%.1f");
+    xx_roll = ImGui::IsItemActive();
+
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float y_pitch = 0.0;
+    ImGui::SliderFloat("pitch", &y_pitch, -180.0f, 180.0f, "%.1f");
+    yy_pitch = ImGui::IsItemActive();
     
-            static float Tor_rad = 5.0f;
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("Torus Radius", &Tor_rad,1, 100, "%.1f");
-            T_rad = ImGui::IsItemActive();
-            static float Cir_rad = 2.0f;
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("Circle Radius ", &Cir_rad,1, 5, "%.1f");
-            C_rad = ImGui::IsItemActive();  
-          
-            if(T_rad || C_rad )
-            {
-                ImguiApp::torus_radius = Tor_rad;
-                ImguiApp::torus_circle_radius = Cir_rad;
-            }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float z_yaw = 0.0;
+    ImGui::SliderFloat("yaw", &z_yaw, -180.0f, 180.0f, "%.1f");
+    zz_yaw = ImGui::IsItemActive();
+    if(xx_roll || yy_pitch || zz_yaw)
+    {
+        ImguiApp::angles.x = (x_roll/180)*3.14;
+        ImguiApp::angles.y = (y_pitch/180)*3.14;
+        ImguiApp::angles.z = (z_yaw/180)*3.14;
+    }
 
-   
+    ImGui::SeparatorText("Torus Radius");
+    static bool T_rad = false;
+    static bool C_rad = false;
+
+    static float Tor_rad = 5.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Torus Radius", &Tor_rad,1, 100, "%.1f");
+    T_rad = ImGui::IsItemActive();
+    static float Cir_rad = 2.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Circle Radius ", &Cir_rad,1, 5, "%.1f");
+    C_rad = ImGui::IsItemActive();  
+    
+    if(T_rad || C_rad )
+    {
+        ImguiApp::torus_radius = Tor_rad;
+        ImguiApp::torus_circle_radius = Cir_rad;
+    }
 
  }
 
 
   void cone_settings()
  {
-      ////////////////////////////////////////////////////////////////
-            ImGui::SeparatorText("Cone Center");
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float co_x = 0.0;
-            ImGui::InputFloat("x1", &co_x, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.x = co_x;
-            }
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float co_y = 0.0;
-            ImGui::InputFloat("y1", &co_y, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.y = co_y;
-            }
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float co_z = 0.0;
-            ImGui::InputFloat("z1", &co_z, 0.1f, 1.0f, "%.1f");
-            if(ImGui::IsItemActive())
-            {
-                ImguiApp::center.z = co_z;
-            }
-     
 
+    ImGui::SeparatorText("Cone Center");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float co_x = 0.0;
+    ImGui::InputFloat("x1", &co_x, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.x = co_x;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float co_y = 0.0;
+    ImGui::InputFloat("y1", &co_y, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.y = co_y;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float co_z = 0.0;
+    ImGui::InputFloat("z1", &co_z, 0.1f, 1.0f, "%.1f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.z = co_z;
+    }
 
-            static bool cone_roll = false;
-            static bool cone_pitch = false;
-            static bool cone_yaw = false;
+    static bool cone_roll = false;
+    static bool cone_pitch = false;
+    static bool cone_yaw = false;
 
-            ImGui::SeparatorText("Angle");
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float conx_roll = 0.0;
-            ImGui::SliderFloat("roll", &conx_roll, -180.0f, 180.0f, "%.1f");
-            cone_roll = ImGui::IsItemActive();
-      
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float cony_pitch = 1.0;
-            ImGui::SliderFloat("pitch", &cony_pitch, -180.0f, 180.0f, "%.1f");
-            cone_pitch = ImGui::IsItemActive();
-          
-            ImGui::SameLine();
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            static float conz_yaw = 0.0;
-            ImGui::SliderFloat("yaw", &conz_yaw, -180.0f, 180.0f, "%.1f");
-            cone_yaw = ImGui::IsItemActive();
-            if(cone_roll || cone_pitch || cone_yaw)
-            {
-                ImguiApp::angles.x = (conx_roll/180)*3.14;
-                ImguiApp::angles.y = (cony_pitch/180)*3.14;
-                ImguiApp::angles.z = (conz_yaw/180)*3.14;
-  
+    ImGui::SeparatorText("Angle");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float conx_roll = 0.0;
+    ImGui::SliderFloat("roll", &conx_roll, -180.0f, 180.0f, "%.1f");
+    cone_roll = ImGui::IsItemActive();
 
-            }
-
-            ImGui::SeparatorText("Radius & Height");
-            static bool co_rad = false;
-            static bool co_hei = false;
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float cony_pitch = 1.0;
+    ImGui::SliderFloat("pitch", &cony_pitch, -180.0f, 180.0f, "%.1f");
+    cone_pitch = ImGui::IsItemActive();
     
-            static float cone_rad = 3.0f;
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("Base Radius", &cone_rad,1, 100, "%.1f");
-            co_rad = ImGui::IsItemActive();
-            static float cone_hei = 6.0f;
-            ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-            ImGui::SliderFloat("Cone Height ", &cone_hei,1, 100, "%.1f");
-            co_hei = ImGui::IsItemActive();  
-          
-            if(co_rad || co_hei )
-            {
-                ImguiApp::base_radius = cone_rad;
-                ImguiApp::cone_height = cone_hei;
-            }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float conz_yaw = 0.0;
+    ImGui::SliderFloat("yaw", &conz_yaw, -180.0f, 180.0f, "%.1f");
+    cone_yaw = ImGui::IsItemActive();
+    if(cone_roll || cone_pitch || cone_yaw)
+    {
+        ImguiApp::angles.x = (conx_roll/180)*3.14;
+        ImguiApp::angles.y = (cony_pitch/180)*3.14;
+        ImguiApp::angles.z = (conz_yaw/180)*3.14;
+    }
+
+    ImGui::SeparatorText("Radius & Height");
+    static bool co_rad = false;
+    static bool co_hei = false;
+
+    static float cone_rad = 3.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Base Radius", &cone_rad,1, 100, "%.1f");
+    co_rad = ImGui::IsItemActive();
+    static float cone_hei = 6.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Cone Height ", &cone_hei,1, 100, "%.1f");
+    co_hei = ImGui::IsItemActive();  
+    
+    if(co_rad || co_hei )
+    {
+        ImguiApp::base_radius = cone_rad;
+        ImguiApp::cone_height = cone_hei;
+    }
 
  }
 
@@ -740,7 +744,6 @@ ImguiApp::ImguiApp()
                 check_num = 0;
             }
 
-          
         }
         if(check_num == 1)
         {
@@ -769,7 +772,6 @@ ImguiApp::ImguiApp()
                 ImGui::Text("Please Apply Support ");
             }
 
-
         }
 
         if(check_num == 3)
@@ -783,7 +785,6 @@ ImguiApp::ImguiApp()
             {
                 ImGui::Text("Please Apply Sink ");
             }
-
 
         }
     }
@@ -812,11 +813,11 @@ ImguiApp::ImguiApp()
         
         ImGui::NewLine();
         
-        if(ImGui::Button("LATTICE GENERATION ") && ImguiApp::topo_done_lattice_do)
-        {
-            ImguiApp::generate_topo_lattice = true;
+        // if(ImGui::Button("LATTICE GENERATION ") && ImguiApp::topo_done_lattice_do)
+        // {
+        //     ImguiApp::generate_topo_lattice = true;
            
-        }
+        // }
 
         ImGui::NewLine();
         ImGui::NewLine();
@@ -850,6 +851,49 @@ ImguiApp::ImguiApp()
 
         ImGui::NewLine();
         ImGui::NewLine();
+
+        if(ImguiApp::topo_done_lattice_do)
+
+        {
+
+            if(ImGui::Button("EDIT LOAD AND CONSTRIANTS ") )
+            {
+                ImguiApp::execute_topo_data = false;
+                ImguiApp::topo_done_lattice_do = false;
+
+             
+                ImguiApp::show_analysis = false;
+              
+
+                if(ImguiApp::show_topo_lattice)
+                {
+                    ImguiApp::show_topo_lattice = false;
+                }
+                
+
+                if(ImguiApp::structural)
+                {
+                    ImguiApp::update_load = false;
+                    ImguiApp::update_support = false;
+                    
+                }
+                else if(ImguiApp::thermal)
+                {
+                    ImguiApp::update_source = false;
+                    ImguiApp::update_sink = false;
+                }
+                
+                ImguiApp::checkpoint = 5;
+
+                execute_code_num = 0;
+                *execute_signal = true;
+            }
+
+        }
+
+        ImGui::NewLine();
+        ImGui::NewLine();
+
         ImGui::SeparatorText("CLEAR DATA");
         if (ImGui::Button("CLEAR OPTIMISATION DATA"))
         {
@@ -857,13 +901,8 @@ ImguiApp::ImguiApp()
             *execute_done = true;
             execute_code_num++;
         
-            
         }
 
- 
-
-      
-        
     }
     else if ((execute_code_num > 2) && (!(*execute_signal)))
     {
@@ -878,8 +917,6 @@ ImguiApp::ImguiApp()
         *execute_setting = false;
         
     }
-
- 
  
     ImGui::End();
  }
@@ -923,7 +960,6 @@ ImguiApp::ImguiApp()
             *execute_done = true;
             execute_lattice_num++;
             
-        
         }
 
         ImguiApp::execute_lattice_data = false;
@@ -996,7 +1032,6 @@ void ImguiApp::show_grid_settings(bool *grid_setting, bool vulkan_buffer_created
                 initialise_grid_num = 1;
             }
 
-            
         }
     }
 
@@ -1007,7 +1042,7 @@ void ImguiApp::show_grid_settings(bool *grid_setting, bool vulkan_buffer_created
         ImGui::SameLine();
         
             
-        if ((ImguiApp::grid_value < 16 ) || (ImguiApp::grid_value > 150))
+        if ((ImguiApp::grid_value < 16 ) || (ImguiApp::grid_value > 128))
         {
             ImguiApp::grid_value_check = false;
         }
@@ -1039,7 +1074,7 @@ void ImguiApp::show_grid_settings(bool *grid_setting, bool vulkan_buffer_created
     else if(initialise_grid_num == 2)
     {
         ImGui::SameLine();
-        ImGui::Text("Grid dimension shoulbe in between 16 and 150");
+        ImGui::Text("Grid dimension should be in between 16 and 128");
         
     }
 
@@ -1124,7 +1159,7 @@ void ImguiApp::show_view_settings(bool *view_setting, bool *shift, bool *reset, 
     ImGui::SliderFloat("Point Size2", &f1_2, 0.0f, 10.0f, "%.1f");
     static float f1_3 = 0.0f;
     ImGui::SliderFloat("Point Size3", &f1_3, 0.0f, 10.0f, "%.1f");
-    static float f1_4 = (ImguiApp::structural || ImguiApp::thermal) ? 15.0 : (ImguiApp::lattice) ? 1.0 : 2.0;
+    static float f1_4 = 1.0;
     ImGui::SliderFloat("Point Size4", &f1_4, 0.0f, 15.0f, "%.1f");
 
     ImGui::Checkbox("Show 3D Mesh", show_mesh);
@@ -1154,14 +1189,49 @@ void ImguiApp::show_select_load_structure(bool* window)
         reset_load_button = false;
     }
 
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float xx_vall = 0.0f;
+    ImGui::SliderFloat("X Axis ", &xx_vall,-1.0, 1.0, "%.1f");
+    ImguiApp::x_load_axis = xx_vall;
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float yy_vall = 1.0f;
+    ImGui::SliderFloat("Y Axis ", &yy_vall,-1.0, 1.0, "%.1f");
+    ImguiApp::y_load_axis = yy_vall;
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float zz_vall = 0.0f;
+    ImGui::SliderFloat("Z Axis ", &zz_vall,-1.0, 1.0, "%.1f");
+    ImguiApp::z_load_axis = zz_vall;
+
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float xx_scale = 0.2f;
+    ImGui::SliderFloat("Scale X ", &xx_scale,0.1, 2.0, "%.1f");
+    ImguiApp::Inst_scale_load.x = xx_scale;
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float yy_scale =0.2f;
+    ImGui::SliderFloat("Scale Y ", &yy_scale,0.1, 2.0, "%.1f");
+    ImguiApp::Inst_scale_load.y = yy_scale;
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float zz_scale = 0.2f;
+    ImGui::SliderFloat("Scale Z ", &zz_scale,0.1, 2.0, "%.1f");
+    ImguiApp::Inst_scale_load.z = zz_scale;
+
     ImGui::NewLine();
     if(execute_load == 0)
     {
-        
-        ImGui::Checkbox("X",&x_axis);
-        ImGui::Checkbox("Y",&y_axis);
-        ImGui::Checkbox("Z",&z_axis);
-        
+
+        ImGui::NewLine();
         if(ImGui::Button("APPLY LOAD"))
         {
          
@@ -1169,15 +1239,57 @@ void ImguiApp::show_select_load_structure(bool* window)
             {
                 
                 ImguiApp::update_load = true;
+
+                ImguiApp::load_icon = true;
+
                 execute_load++;
             }
 
         }
+
+
     }
     if(execute_load == 1)
     {
         
         ImGui::Text("Loads Applied ! ");
+
+        ImGui::NewLine();
+
+        if(ImGui::Button("ADD LOAD"))
+        {
+            ImguiApp::update_load = false;
+        }
+        ImGui::NewLine();
+        if(load_icon)
+        {
+            if(ImGui::Button("HIDE ICON"))
+            {
+            
+                if(select_load_node)
+                {
+                    
+                    ImguiApp::load_icon = false;
+                
+                }
+
+            }
+        }
+        else if(!load_icon)
+        {
+            if(ImGui::Button("UNHIDE ICON"))
+            {
+                ImguiApp::load_icon = true;
+                
+                ImguiApp::compute_load_icon = 1;
+            }
+        }
+
+        if((!update_load))
+        {
+            execute_load = 0;
+
+        }
        
     }
     
@@ -1197,10 +1309,17 @@ void ImguiApp::show_select_load_thermal()
 
     static int execute_source = 0;
 
+    ImGui::NewLine();
+
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float source_val = 0.01f;
+    ImGui::InputFloat("Source  ", &source_val, 0.0f, 1.0f,"%.2f");
+    ImguiApp::temp_source = source_val;
+
     if(ImguiApp::reset_source_button)
     {
-    execute_source = 0;
-    reset_source_button = false;
+        execute_source = 0;
+        reset_source_button = false;
 
     }
 
@@ -1236,6 +1355,26 @@ void ImguiApp::show_select_support_structure(bool *window)
     ImGui::SetWindowSize(window_extent);
     ImGui::SetWindowCollapsed(true,2);
 
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float xx_scale = 0.2f;
+    ImGui::SliderFloat("Scale X ", &xx_scale,0.1, 2.0, "%.1f");
+    ImguiApp::Inst_scale_support.x = xx_scale;
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float yy_scale = 0.2f;
+    ImGui::SliderFloat("Scale Y ", &yy_scale,0.1, 2.0, "%.1f");
+    ImguiApp::Inst_scale_support.y = yy_scale;
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float zz_scale = 0.2f;
+    ImGui::SliderFloat("Scale Z ", &zz_scale,0.1, 2.0, "%.1f");
+    ImguiApp::Inst_scale_support.z = zz_scale;
+
+    ImGui::NewLine();
+
     static int execute_support = 0;
 
     if(ImguiApp::reset_support_button)
@@ -1253,18 +1392,61 @@ void ImguiApp::show_select_support_structure(bool *window)
             if(select_support_node)
             {
                 update_support = true;
+
+                ImguiApp::support_icon = true;
+
                 execute_support++;
             }
 
         }
     }
+
     if(execute_support == 1)
     {
         ImGui::Text("Support Applied ! ");
+
+        ImGui::NewLine();
+        ImGui::NewLine();
+
+        if(ImGui::Button("ADD SUPPORT"))
+        {
+            update_support = false;
+        }
+
+
+        ImGui::NewLine();
+        ImGui::NewLine();
+
+        if(support_icon)
+        {
+            if(ImGui::Button("HIDE ICON"))
+            {
+
+            if(select_support_node)
+            {
+                
+                ImguiApp::support_icon = false;
+
+            }
+
+            }
+        }
+        else if(!support_icon)
+        {
+            if(ImGui::Button("UNHIDE ICON"))
+            {
+                ImguiApp::support_icon = true;
+                ImguiApp::compute_support_icon = 1;
+            }
+        }
+
      
-        
+        if((!update_support))
+        {
+            execute_support  = 0;
+        }
     }
-    
+
     ImGui::End();
 }
 
@@ -1278,6 +1460,11 @@ void ImguiApp::show_select_support_thermal()
     ImGui::SetWindowCollapsed(true,2);
 
     static int execute_sink = 0;
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float sink_val = 0.0f;
+    ImGui::InputFloat("Sink  ", &sink_val, 0.0f, 1.0f,"%.2f");
+    ImguiApp::temp_sink = sink_val;
 
     if(ImguiApp::reset_sink_button)
     {
@@ -1289,6 +1476,7 @@ void ImguiApp::show_select_support_thermal()
     ImGui::NewLine();
     if(execute_sink == 0)
     {
+        
         if(ImGui::Button("APPLY SINK"))
         {
             if(select_support_node)
@@ -1313,342 +1501,334 @@ void ImguiApp::show_select_support_thermal()
 void ImguiApp::show_selected_primitive()
 {
 
-            if(ImguiApp::cylind_selected)
+    if(ImguiApp::cylind_selected)
+    {
+        ImGui::Begin("CYLINDER PARAMETERS", &ImguiApp::cylind_selected ); 
+    }
+
+    if(ImguiApp::cylind_disc_selected)
+    {
+        ImGui::Begin("CYLINDER DISC PARAMETERS", &ImguiApp::cylind_disc_selected ); 
+    }
+
+    if(ImguiApp::sphere_selected)
+    {
+        ImGui::Begin("SPHERE PARAMETERS", &ImguiApp::sphere_selected ); 
+    }
+    if(ImguiApp::sphere_shell_selected)
+    {
+        ImGui::Begin("SPHERE SHELL PARAMETERS", &ImguiApp::sphere_shell_selected ); 
+    }
+
+    if(ImguiApp::cuboid_selected)
+    {
+        ImGui::Begin("CUBOID PARAMETERS", &ImguiApp::cuboid_selected ); 
+    }
+
+    if(ImguiApp::cuboid_shell_selected)
+    {
+        ImGui::Begin("CUBOID SHELL PARAMETERS", &ImguiApp::cuboid_shell_selected ); 
+    }
+
+    if(ImguiApp::torus_selected)
+    {
+        ImGui::Begin("TORUS PARAMETERS",&ImguiApp::torus_selected);
+    }
+
+    if(ImguiApp::cone_selected)
+    {
+        ImGui::Begin("CONE PARAMETERS",&ImguiApp::cone_selected);
+    }
+
+    ImGui::SetWindowPos(ImVec2(5,50));
+    ImGui::SetWindowSize(window_extent);
+    ImGui::SetWindowCollapsed(true,2);
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    if(ImguiApp::cylind_selected || ImguiApp::cylind_disc_selected)
+    {
+        cylinder_settings();
+    }
+
+    if(ImguiApp::sphere_selected || ImguiApp::sphere_shell_selected)
+    {
+        sphere_settings();
+    }
+
+    if(ImguiApp::cuboid_selected || ImguiApp::cuboid_shell_selected)
+    {
+        cuboid_settings();
+    }
+
+    if(ImguiApp::torus_selected)
+    {
+        torus_settings();
+    }
+    if(ImguiApp::cone_selected)
+    {
+        cone_settings();
+    }
+
+    if(ImguiApp::boundary_buffers)
+    {
+        if(!ImguiApp::make_region || !ImguiApp::show_region || !ImguiApp::show_domain)
+        {
+            ImGui::NewLine();
+
+            static int obj_op = 0;
+            ImGui::RadioButton("UNION", &obj_op, 0);
+            if(ImGui::IsItemActive())
             {
-                ImGui::Begin("CYLINDER PARAMETERS", &ImguiApp::cylind_selected ); 
+                ImguiApp::cad_bool = true;
+            }
+            ImGui::RadioButton("DIFFERENCE ", &obj_op, 1);
+            if(ImGui::IsItemActive())
+            {
+                ImguiApp::cad_bool = true;
+            }
+            ImGui::RadioButton("INTERSECT ", &obj_op, 2);
+            if(ImGui::IsItemActive())
+            {
+                ImguiApp::cad_bool = true;
             }
 
-            if(ImguiApp::cylind_disc_selected)
+            if(obj_op == 0)
             {
-                ImGui::Begin("CYLINDER DISC PARAMETERS", &ImguiApp::cylind_disc_selected ); 
-            }
+                obj_union = true;
+                obj_diff = false;
+                obj_intersect = false;
 
-            if(ImguiApp::sphere_selected)
-            {
-              ImGui::Begin("SPHERE PARAMETERS", &ImguiApp::sphere_selected ); 
-            }
-            if(ImguiApp::sphere_shell_selected)
-            {
-                ImGui::Begin("SPHERE SHELL PARAMETERS", &ImguiApp::sphere_shell_selected ); 
-            }
-
-            if(ImguiApp::cuboid_selected)
-            {
-                ImGui::Begin("CUBOID PARAMETERS", &ImguiApp::cuboid_selected ); 
-            }
-
-            if(ImguiApp::cuboid_shell_selected)
-            {
-                ImGui::Begin("CUBOID SHELL PARAMETERS", &ImguiApp::cuboid_shell_selected ); 
-            }
-
-            if(ImguiApp::torus_selected)
-            {
-                ImGui::Begin("TORUS PARAMETERS",&ImguiApp::torus_selected);
-            }
-
-            if(ImguiApp::cone_selected)
-            {
-                ImGui::Begin("CONE PARAMETERS",&ImguiApp::cone_selected);
-            }
-
-            ImGui::SetWindowPos(ImVec2(5,50));
-            ImGui::SetWindowSize(window_extent);
-            ImGui::SetWindowCollapsed(true,2);
-
-
-            ///////////////////////////////////////////////////////////////////////////////////////////////
-            if(ImguiApp::cylind_selected || ImguiApp::cylind_disc_selected)
-            {
-                cylinder_settings();
-            }
-
-            if(ImguiApp::sphere_selected || ImguiApp::sphere_shell_selected)
-            {
-                sphere_settings();
-            }
-
-            if(ImguiApp::cuboid_selected || ImguiApp::cuboid_shell_selected)
-            {
-                cuboid_settings();
-            }
-
-            if(ImguiApp::torus_selected)
-            {
-                torus_settings();
-            }
-            if(ImguiApp::cone_selected)
-            {
-                cone_settings();
-            }
-        
-            if(ImguiApp::boundary_buffers)
-            {
-                if(!ImguiApp::make_region || !ImguiApp::show_region || !ImguiApp::show_domain)
-                {
-                    ImGui::NewLine();
-
-                    static int obj_op = 0;
-                    ImGui::RadioButton("UNION", &obj_op, 0);
-                    if(ImGui::IsItemActive())
-                    {
-                        ImguiApp::cad_bool = true;
-                    }
-                    ImGui::RadioButton("DIFFERENCE ", &obj_op, 1);
-                    if(ImGui::IsItemActive())
-                    {
-                        ImguiApp::cad_bool = true;
-                    }
-                    ImGui::RadioButton("INTERSECT ", &obj_op, 2);
-                    if(ImGui::IsItemActive())
-                    {
-                        ImguiApp::cad_bool = true;
-                    }
-        
-                    if(obj_op == 0)
-                    {
-                        obj_union = true;
-                        obj_diff = false;
-                        obj_intersect = false;
-
-                        
-                    }
-
-                    else if(obj_op == 1)
-                    {
-                        obj_union = false;
-                        obj_diff = true;
-                        obj_intersect = false;
-
-                        
-                    }
-
-                    else if(obj_op == 2)
-                    {
-                        obj_union = false;
-                        obj_diff = false;
-                        obj_intersect = true;
-
-                        
-                    }
-
-                    
-                    
-                    ImGui::NewLine();
-                    if (ImGui::Button("RETAIN"))
-                    {
-            
-                        ImguiApp::retain = true;
-                        ImguiApp::calculate = false;
-                        ImguiApp::undoo = false;
-
-                        ImguiApp::show_model = true;
-                        ImguiApp::show_primitive_lattice = false;
-
-                  
-                    }
-
-                    ImGui::SameLine();
-                    ImGui::Text("  ");
-                    ImGui::SameLine();
-                    if(ImGui::Button("UNDO"))
-                    {
-                        ImguiApp::undoo = true;
-                        ImguiApp::calculate = false;
-                        ImguiApp::retain = false;
-
-                  
-                    }
-
-                    ImGui::NewLine();
-                    if(ImGui::Button("CONTINUE"))
-                    {
-                        ImguiApp::calculate = true;
-                        ImguiApp::retain = false;
-                        ImguiApp::undoo = false;
-
-                        ImguiApp::make_region = false;
-                        ImguiApp::show_region = false;
-                        ImguiApp::region_done = false;
-                        ImguiApp::show_domain = false;
-
-                   
-
-                        ImguiApp::show_model = true;
-                        ImguiApp::show_primitive_lattice = false;
-                        
-                        ImguiApp::primitive_lattice_options = false;
-    
-                    }
-
-                    ImGui::NewLine();
-                   
-                }
-                if(ImGui::Button("MAKE_REGION"))
-                {   
-                    ImGui::NewLine();
-
-                    ImguiApp::calculate = true;
-                    ImguiApp::make_region = true;
-                    ImguiApp::region_done = false;
-                    ImguiApp::retain = false;
-                    ImguiApp::undoo = false;
-
-                    ImguiApp::show_region = false;
-                    ImguiApp::show_domain = false;
-
-
-                    ImguiApp::boundary = true;
-
-                    ImguiApp::show_model = true;
-                    ImguiApp::show_primitive_lattice = false;
-                    
-                    ImguiApp::primitive_lattice_options = false;
-  
-                }
-
-                ImGui::NewLine();
-
-                if(ImGui::Button("SHOW FIXED REGION"))
-                {
-                    ImGui::NewLine();
-
-                    ImguiApp::calculate = false;
-                    ImguiApp::make_region = false;
-                    ImguiApp::region_done = false;
-                    ImguiApp::retain = false;
-                    ImguiApp::undoo = false;
-                    ImguiApp::show_region = true;
-                    ImguiApp::show_domain = false;
-
-
-                    ImguiApp::boundary = false;
-
-                    ImguiApp::show_model = true;
-                    ImguiApp::show_primitive_lattice = false;
-                    
-                    ImguiApp::primitive_lattice_options = false;
-                }
-         
-                if(ImGui::Button("SHOW DOMAIN"))
-                {
-                    ImGui::NewLine();
-
-                    ImguiApp::calculate = false;
-                    ImguiApp::make_region = false;
-                    ImguiApp::region_done = false;
-                    ImguiApp::retain = false;
-                    ImguiApp::undoo = false;
-                    ImguiApp::show_region = false;
-                    ImguiApp::show_domain = true;
-
-
-                    ImguiApp::boundary = false;
-
-                    ImguiApp::show_model = true;
-                    ImguiApp::show_primitive_lattice = false;
-                    
-                    ImguiApp::primitive_lattice_options = false;
-                }
-
-                if(ImguiApp::make_region)
-                {
-                    ImGui::SameLine();
-                    ImGui::Text("  ");
-                    ImGui::SameLine();
-
-                    if(ImGui::Button("REGION DONE"))
-                    {
-                    
-                        ImguiApp::region_done = true;
-                    }
-
-                    ImGui::NewLine();
-                    ImGui::NewLine();
-
-                    if(ImGui::Button("CANCEL "))
-                    {
-                        ImguiApp::calculate = true;
-                        ImguiApp::retain = false;
-                        ImguiApp::undoo = false;
-                        ImguiApp::show_model = true;
-                        ImguiApp::show_primitive_lattice = false;
-                        ImguiApp::make_region = false;
-                        ImguiApp::show_region = false;
-                        ImguiApp::show_domain = false;
-                        
-                        ImguiApp::primitive_lattice_options = false;
-                        ImguiApp::region_done = false;
-                    }
-
-                    ImGui::NewLine();
-                    ImGui::NewLine();
-
-                    static float alpha_v = 0.5f;
-                    ImGui::SliderFloat("Alpha Val ", &alpha_v,0.0, 1.0, "%.2f");
-                    ImguiApp::alpha_val = alpha_v;
-
-                }
-
-             
-                ImGui::NewLine();
-                ImGui::NewLine();
-                ImGui::SeparatorText("GENERATE LATTICE");
-             
-                if(ImGui::Button("FIXED"))
-                {
-                    
-                    ImguiApp::primitive_lattice_options = true;
-                    ImguiApp::lattice_fixed = true;
-                    ImguiApp::lattice_dynamic = false;
-
-                    ImguiApp::retain = false;
-                    ImguiApp::calculate = false;
-                    ImguiApp::undoo = false;
-
-                    ImguiApp::show_model = true;
-                    ImguiApp::primitive_done_lattice_do = true;
-                }
-
-                if(ImGui::Button("DYNAMIC"))
-                {
-                    
-                    ImguiApp::primitive_lattice_options = true;
-                    ImguiApp::lattice_fixed = false;
-                    ImguiApp::lattice_dynamic = true;
-
-                    ImguiApp::calculate = false;
-                    ImguiApp::retain = false;
-                    ImguiApp::undoo = false;
-
-                    ImguiApp::show_model = true;
-                    ImguiApp::primitive_done_lattice_do = true;
-                }
-
-                if(ImGui::Button("NONE"))
-                {
-                    ImguiApp::primitive_lattice_options = false;
-                    ImguiApp::lattice_fixed = false;
-                    ImguiApp::lattice_dynamic = false;
-
-                    ImguiApp::calculate = true;
-                    ImguiApp::retain = false;
-                    ImguiApp::undoo = false;
-                    
-                    ImguiApp::show_model = true;
-                    ImguiApp::show_primitive_lattice = false;
-                    
-                    ImguiApp::primitive_done_lattice_do = false;
-                }
-                    
                 
             }
-            else
+
+            else if(obj_op == 1)
             {
-                ImguiApp::debug_window = true;
+                obj_union = false;
+                obj_diff = true;
+                obj_intersect = false;
+
             }
+
+            else if(obj_op == 2)
+            {
+                obj_union = false;
+                obj_diff = false;
+                obj_intersect = true;
+ 
+            }
+
+            ImGui::NewLine();
+            if (ImGui::Button("RETAIN"))
+            {
+    
+                ImguiApp::retain = true;
+                ImguiApp::calculate = false;
+                ImguiApp::undoo = false;
+
+                ImguiApp::show_model = true;
+                ImguiApp::show_primitive_lattice = false;
+
+            }
+
+            ImGui::SameLine();
+            ImGui::Text("  ");
+            ImGui::SameLine();
+            if(ImGui::Button("UNDO"))
+            {
+                ImguiApp::undoo = true;
+                ImguiApp::calculate = false;
+                ImguiApp::retain = false;
+
+            }
+
+            ImGui::NewLine();
+            if(ImGui::Button("CONTINUE"))
+            {
+                ImguiApp::calculate = true;
+                ImguiApp::retain = false;
+                ImguiApp::undoo = false;
+
+                ImguiApp::make_region = false;
+                ImguiApp::show_region = false;
+                ImguiApp::region_done = false;
+                ImguiApp::show_domain = false;
+
+                ImguiApp::show_model = true;
+                ImguiApp::show_primitive_lattice = false;
+                
+                ImguiApp::primitive_lattice_options = false;
+
+            }
+
+            ImGui::NewLine();
             
-            ImGui::End();
+        }
+        if(ImGui::Button("MAKE_REGION"))
+        {   
+            ImGui::NewLine();
+
+            ImguiApp::calculate = true;
+            ImguiApp::make_region = true;
+            ImguiApp::region_done = false;
+            ImguiApp::retain = false;
+            ImguiApp::undoo = false;
+
+            ImguiApp::show_region = false;
+            ImguiApp::show_domain = false;
+
+            ImguiApp::boundary = true;
+
+            ImguiApp::show_model = true;
+            ImguiApp::show_primitive_lattice = false;
+            
+            ImguiApp::primitive_lattice_options = false;
+
+        }
+
+        ImGui::NewLine();
+
+        if(ImGui::Button("SHOW FIXED REGION"))
+        {
+            
+            ImguiApp::calculate = false;
+            ImguiApp::make_region = false;
+            ImguiApp::region_done = false;
+            ImguiApp::retain = false;
+            ImguiApp::undoo = false;
+            ImguiApp::show_region = true;
+            ImguiApp::show_domain = false;
+
+
+            ImguiApp::boundary = false;
+
+            ImguiApp::show_model = true;
+            ImguiApp::show_primitive_lattice = false;
+            
+            ImguiApp::primitive_lattice_options = false;
+        }
+
+        ImGui::NewLine();
+
+        if(ImGui::Button("SHOW DOMAIN"))
+        {
+            
+
+            ImguiApp::calculate = false;
+            ImguiApp::make_region = false;
+            ImguiApp::region_done = false;
+            ImguiApp::retain = false;
+            ImguiApp::undoo = false;
+            ImguiApp::show_region = false;
+            ImguiApp::show_domain = true;
+
+
+            ImguiApp::boundary = false;
+
+            ImguiApp::show_model = true;
+            ImguiApp::show_primitive_lattice = false;
+            
+            ImguiApp::primitive_lattice_options = false;
+        }
+
+        if(ImguiApp::make_region)
+        {
+            ImGui::SameLine();
+            ImGui::Text("  ");
+            ImGui::SameLine();
+
+            if(ImGui::Button("REGION DONE"))
+            {
+            
+                ImguiApp::region_done = true;
+            }
+
+            ImGui::NewLine();
+            ImGui::NewLine();
+
+            if(ImGui::Button("CANCEL "))
+            {
+                ImguiApp::calculate = true;
+                ImguiApp::retain = false;
+                ImguiApp::undoo = false;
+                ImguiApp::show_model = true;
+                ImguiApp::show_primitive_lattice = false;
+                ImguiApp::make_region = false;
+                ImguiApp::show_region = false;
+                ImguiApp::show_domain = false;
+                
+                ImguiApp::primitive_lattice_options = false;
+                ImguiApp::region_done = false;
+            }
+
+            ImGui::NewLine();
+            ImGui::NewLine();
+
+            static float alpha_v = 0.5f;
+            ImGui::SliderFloat("Alpha Val ", &alpha_v,0.0, 1.0, "%.2f");
+            ImguiApp::alpha_val = alpha_v;
+
+        }
+
+        
+        // ImGui::NewLine();
+        // ImGui::NewLine();
+        // ImGui::SeparatorText("GENERATE LATTICE");
+        
+        // if(ImGui::Button("FIXED"))
+        // {
+            
+        //     ImguiApp::primitive_lattice_options = true;
+        //     ImguiApp::lattice_fixed = true;
+        //     ImguiApp::lattice_dynamic = false;
+
+        //     ImguiApp::retain = false;
+        //     ImguiApp::calculate = false;
+        //     ImguiApp::undoo = false;
+
+        //     ImguiApp::show_model = true;
+        //     ImguiApp::primitive_done_lattice_do = true;
+        // }
+
+        // if(ImGui::Button("DYNAMIC"))
+        // {
+            
+        //     ImguiApp::primitive_lattice_options = true;
+        //     ImguiApp::lattice_fixed = false;
+        //     ImguiApp::lattice_dynamic = true;
+
+        //     ImguiApp::calculate = false;
+        //     ImguiApp::retain = false;
+        //     ImguiApp::undoo = false;
+
+        //     ImguiApp::show_model = true;
+        //     ImguiApp::primitive_done_lattice_do = true;
+        // }
+
+        // if(ImGui::Button("NONE"))
+        // {
+        //     ImguiApp::primitive_lattice_options = false;
+        //     ImguiApp::lattice_fixed = false;
+        //     ImguiApp::lattice_dynamic = false;
+
+        //     ImguiApp::calculate = true;
+        //     ImguiApp::retain = false;
+        //     ImguiApp::undoo = false;
+            
+        //     ImguiApp::show_model = true;
+        //     ImguiApp::show_primitive_lattice = false;
+            
+        //     ImguiApp::primitive_done_lattice_do = false;
+        // }
+            
+        
+    }
+    else
+    {
+        ImguiApp::debug_window = true;
+    }
+    
+    ImGui::End();
 }
 
 
@@ -2138,11 +2318,6 @@ void ImguiApp::show_export_settings()
        }
     }
 
-
-
-
-
-
     ImGui::End();
 }
 
@@ -2158,13 +2333,13 @@ void ImguiApp::show_debugging_window()
     ImGui::NewLine();
     ImGui::Text("in 'Edit/Grid Settings' ");
     ImGui::NewLine();
+
     ImGui::End();
 }
 
 void ImguiApp::make_inactive(std::vector<bool*> window_bools, bool* active)
 {
    
- 
     for (auto it = window_bools.begin(); it != window_bools.end(); ++it) 
     {
         if(*it != active)
@@ -2180,7 +2355,6 @@ void ImguiApp::make_inactive(std::vector<bool*> window_bools, bool* active)
 void ImguiApp::make_all_inactive(std::vector<bool*> window_bools)
 {
    
- 
     for (auto it = window_bools.begin(); it != window_bools.end(); ++it) 
     {
       

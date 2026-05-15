@@ -13,8 +13,6 @@ layout(location = 0) out float hei;
 layout(location = 1) out vec4 pos;
 layout(location = 2) out float rasterr;
 
-
-
 void main() {
     
     hei = height;

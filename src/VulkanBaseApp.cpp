@@ -64,6 +64,8 @@ struct {
     VkPipeline graphicsPipelineread_region;
     VkPipeline graphicsPipelineone;
     VkPipeline graphicsPipelineoneread;
+    VkPipeline graphicsPipelineInstance;
+    VkPipeline graphicsPipelineInstanceread;
     
 } pipelines;
 
@@ -105,6 +107,8 @@ VulkanBaseApp::VulkanBaseApp(const std::string& appName, bool enableValidation) 
     shaderFilesread(),
     shaderFilesone(),
     shaderFilesoneread(),
+    shaderFilesinstance(),
+    shaderFilesinstanceread(),
     renderPass(),
     pipelineLayout(VK_NULL_HANDLE),
     pipelineLayoutread(VK_NULL_HANDLE),
@@ -1089,9 +1093,6 @@ void VulkanBaseApp::createDescriptorSetLayoutread()
     }
 }
 
-
-
-
 VkShaderModule createShaderModule(VkDevice device, const char *filename)
 {
     std::vector<char> shaderContents;
@@ -1146,11 +1147,8 @@ void VulkanBaseApp::getVertexDescriptionsone(std::vector<VkVertexInputBindingDes
 {
 }
 
-
-
-void VulkanBaseApp::getAssemblyStateInfo(VkPipelineInputAssemblyStateCreateInfo& info)
+void VulkanBaseApp::getVertexDescriptions_instance(std::vector<VkVertexInputBindingDescription>& bindingDesc, std::vector<VkVertexInputAttributeDescription>& attribDesc)
 {
-
 }
 
 void VulkanBaseApp::createGraphicsPipeline()
@@ -1180,7 +1178,9 @@ void VulkanBaseApp::createGraphicsPipeline()
     vertexInputInfo.pVertexAttributeDescriptions = vertexAttributeDescriptions.data();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-    getAssemblyStateInfo(inputAssembly);
+    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+    inputAssembly.primitiveRestartEnable = VK_FALSE;
     
     viewports.resize(vpcount);
     scissors.resize(vpcount);
@@ -1238,7 +1238,16 @@ void VulkanBaseApp::createGraphicsPipeline()
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments = &colorBlendAttachment;
 
-      
+
+    //////////////////////Dynamic_state///////////////////////////////////////
+    // std::vector<VkDynamicState> dynamicState = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+    // VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo{};
+    // pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    // pipelineDynamicStateCreateInfo.pDynamicStates = dynamicState.data();
+    // pipelineDynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicState.size());
+    // pipelineDynamicStateCreateInfo.flags = 0;
+
+    /////////////////////////////////////////////////////////////////////////
 
     ////////////////////////Push Constants//////////////////////////////////
     VkPushConstantRange push_constant;
@@ -1272,6 +1281,7 @@ void VulkanBaseApp::createGraphicsPipeline()
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pDepthStencilState = &depthStencil; // Optional
     pipelineInfo.pColorBlendState = &colorBlending;
+    // pipelineInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
 
 
     pipelineInfo.layout = pipelineLayout;
@@ -1342,10 +1352,43 @@ void VulkanBaseApp::createGraphicsPipeline()
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    for (size_t i = 0; i < shaderFilesinstance.size(); i++) {
+
+        shaderStageInfos[i].module = createShaderModule(device, shaderFilesinstance[i].second.c_str());
+
+    }
+
+    std::vector<VkVertexInputBindingDescription> vertexBindingDescriptions_instance;
+    std::vector<VkVertexInputAttributeDescription> vertexAttributeDescriptions_instance;
+    getVertexDescriptions_instance(vertexBindingDescriptions_instance, vertexAttributeDescriptions_instance);
+
+    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexBindingDescriptions_instance.size());
+    vertexInputInfo.pVertexBindingDescriptions = vertexBindingDescriptions_instance.data();
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttributeDescriptions_instance.size());
+    vertexInputInfo.pVertexAttributeDescriptions = vertexAttributeDescriptions_instance.data();
+
+    VkPushConstantRange push_constantInst;
+    push_constantInst.offset = 0;
+    push_constantInst.size = sizeof(Inst_push_constants);
+    push_constantInst.stageFlags = VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT ;
+
+    pipelineLayoutInfo.pPushConstantRanges = &push_constantInst; // Optional
+ 
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipelines.graphicsPipelineInstance) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create graphics pipeline instance !");
+    }
+
+    for (size_t i = 0; i < shaderStageInfos.size(); i++) {
+        vkDestroyShaderModule(device, shaderStageInfos[i].module, nullptr);
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     std::vector<VkPipelineShaderStageCreateInfo> shaderStageInfosread(shaderFilesread.size());
     for (size_t i = 0; i < shaderFilesread.size(); i++) {
-
 
         shaderStageInfosread[i] = {};
         shaderStageInfosread[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -1479,6 +1522,36 @@ void VulkanBaseApp::createGraphicsPipeline()
     for (size_t i = 0; i < shaderStageInfosread.size(); i++) {
         vkDestroyShaderModule(device, shaderStageInfosread[i].module, nullptr);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    for (size_t i = 0; i < shaderFilesinstanceread.size(); i++) {
+
+        shaderStageInfosread[i].module = createShaderModule(device, shaderFilesinstanceread[i].second.c_str());
+
+    }
+
+
+    getVertexDescriptions_instance(vertexBindingDescriptions_instance, vertexAttributeDescriptions_instance);
+
+    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexBindingDescriptions_instance.size());
+    vertexInputInfo.pVertexBindingDescriptions = vertexBindingDescriptions_instance.data();
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttributeDescriptions_instance.size());
+    vertexInputInfo.pVertexAttributeDescriptions = vertexAttributeDescriptions_instance.data();
+
+
+    pipelineLayoutInforead.pPushConstantRanges = &push_constantInst; // Optional
+
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInforead, nullptr, &pipelines.graphicsPipelineInstanceread) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create graphics pipeline instanceread !");
+    }
+
+    for (size_t i = 0; i < shaderStageInfosread.size(); i++) {
+        vkDestroyShaderModule(device, shaderStageInfosread[i].module, nullptr);
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 }
@@ -1845,7 +1918,14 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
 
                 else if(ImguiApp::structural || ImguiApp::thermal)
                 {
+
                     fillRenderingCommandBufferone(commandBuffer);
+
+                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.graphicsPipelineInstance);
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+                    fillRenderingCommandBuffer_instance(commandBuffer);
+                 
+                    
                 }
                 else if((ImguiApp::primitives))
                 {
@@ -1886,6 +1966,11 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
                 else if(ImguiApp::structural || ImguiApp::thermal)
                 {
                     fillRenderingCommandBufferone_subpass1(commandBuffer);
+                  
+                    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.graphicsPipelineInstanceread);
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayoutread, 0, 1, &descriptorSetsread[currentFrame], 0, nullptr);
+                    fillRenderingCommandBuffer_instance_subpass1(commandBuffer);
+                   
                 }
 
                 else if((ImguiApp::primitives))
@@ -2473,6 +2558,8 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
             {
                 ImGui::Text("Select a Physics");  
             }
+
+            ImguiApp::make_inactive(window_bools,&select_support_node);
             
         }
 
@@ -3020,6 +3107,14 @@ void VulkanBaseApp::cleanupSwapChain()
 
     if (pipelines.graphicsPipelineoneread != VK_NULL_HANDLE) {
         vkDestroyPipeline(device, pipelines.graphicsPipelineoneread, nullptr);
+    }
+
+    if (pipelines.graphicsPipelineInstance != VK_NULL_HANDLE) {
+        vkDestroyPipeline(device, pipelines.graphicsPipelineInstance, nullptr);
+    }
+
+    if (pipelines.graphicsPipelineInstanceread != VK_NULL_HANDLE) {
+        vkDestroyPipeline(device, pipelines.graphicsPipelineInstanceread, nullptr);
     }
 
 

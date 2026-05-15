@@ -86,6 +86,17 @@ Vulkan Basics  - *https://vulkan-tutorial.com/*
 
   * *https://github.com/SaschaWillems/Vulkan/blob/master/examples/inputattachments/inputattachments.cpp*
 
+*Vulkan Instanced Rendering*
+
+  * *https://github.com/SaschaWillems/Vulkan/blob/master/examples/instancing/instancing.cpp*
+
+
+# Rotation Formula for load 'icon'
+
+  * *https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula* (Rotation matrix from axis and angle)
+
+
+
 
 
 # Shadertoy

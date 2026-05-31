@@ -241,7 +241,7 @@ void Modelling::GPU_buffer_normalise_dual(float *d_vec1,float *d_vec2,float *d_v
 }
 
 
-__global__ void distance_from_line_kernel(float* data_1,float3 center,float3 axis,float radius, float thickness_radial, float thickness_axial, int Nx,int Ny, int Nz, bool cylind_disc_selected)
+__global__ void distance_from_line_kernel(float* data_1,float3 center,float3 axis,float radius, float thickness_radial, float thickness_axial, int Nx,int Ny, int Nz, float dx,float dy, float dz, bool cylind_disc_selected)
 {
     int tx = blockIdx.x*blockDim.x + threadIdx.x;
     int size = Nx*Ny*Nz;
@@ -254,10 +254,12 @@ __global__ void distance_from_line_kernel(float* data_1,float3 center,float3 axi
 	float mean_z = (Nz-1)/2.0;
 
 	__syncthreads();
-	float x_1 = xx - mean_x;
-	float y_1 = yy - mean_y;
-	float z_1 = zz - mean_z;
-    float3 field_vec = {x_1 - center.x,y_1 - center.y ,z_1 - center.z};
+
+	float x_1 = ((xx - mean_x) ) * dx ;
+	float y_1 = ((yy - mean_y) ) * dy ;
+	float z_1 = ((zz - mean_z) ) * dz ;
+
+    float3 field_vec = {x_1,y_1,z_1};
 
 	float t_diff = thickness_radial/2.0;
 	float t_diff_ax = thickness_axial/2.0;
@@ -267,6 +269,7 @@ __global__ void distance_from_line_kernel(float* data_1,float3 center,float3 axi
 	axis.z = (axis.z/axis_mag);
 	float3 end = axis + center ;
 	float fld_1, fld_2 = 0.0;
+	
     if(tx < size)
     {
 		
@@ -298,17 +301,17 @@ __global__ void distance_from_line_kernel(float* data_1,float3 center,float3 axi
 
 }
 
-void Modelling::distance_from_line(float* data_1,float3 center,float3 axis,float radius_1,float thickness_radial,float thickness_axial,int Nx,int Ny, int Nz,bool cylind_disc_selected)
+void Modelling::distance_from_line(float* data_1,float3 center,float3 axis,float radius_1,float thickness_radial,float thickness_axial,int Nx,int Ny, int Nz, float dx,float dy, float dz, bool cylind_disc_selected)
 {
     dim3 grids(ceil( (Nx*Ny*Nz)/ 1024.0),1,1);
     dim3 tids(1024,1,1);
-    distance_from_line_kernel<<<grids,tids>>>(data_1,center,axis,radius_1,thickness_radial,thickness_axial,Nx,Ny,Nz,cylind_disc_selected);
+    distance_from_line_kernel<<<grids,tids>>>(data_1,center,axis,radius_1,thickness_radial,thickness_axial,Nx,Ny,Nz,dx, dy, dz, cylind_disc_selected);
     cudaDeviceSynchronize();
 
 }
 
 
-__global__ void implicit_sphere_kernel(float* data_1,float3 center,float radius, float thickness_radial, int Nx,int Ny, int Nz, bool sphere_shell_selected)
+__global__ void implicit_sphere_kernel(float* data_1,float3 center,float radius, float thickness_radial, int Nx,int Ny, int Nz,float dx,float dy, float dz, bool sphere_shell_selected)
 {
     int tx = blockIdx.x*blockDim.x + threadIdx.x;
     int size = Nx*Ny*Nz;
@@ -321,10 +324,12 @@ __global__ void implicit_sphere_kernel(float* data_1,float3 center,float radius,
 	float mean_z = (Nz-1)/2.0;
 
 	__syncthreads();
-	float x_1 = xx - mean_x;
-	float y_1 = yy - mean_y;
-	float z_1 = zz - mean_z;
-    float3 field_vec = {x_1 - center.x,y_1 - center.y ,z_1 - center.z};
+
+	float x_1 = ((xx - mean_x) ) * dx - center.x;
+	float y_1 = ((yy - mean_y) ) * dy - center.y;
+	float z_1 = ((zz - mean_z) ) * dz - center.z;
+
+    float3 field_vec = {x_1,y_1,z_1};
 
 	float t_diff = thickness_radial/2.0;
 
@@ -355,17 +360,18 @@ __global__ void implicit_sphere_kernel(float* data_1,float3 center,float radius,
 }
 
 
-void Modelling::sphere_with_center(float* data_1,float3 center,float radius_1,float thickness_wall,int Nx,int Ny, int Nz,bool sphere_shell_selected)
+void Modelling::sphere_with_center(float* data_1,float3 center,float radius_1,float thickness_wall,int Nx,int Ny, int Nz,float dx,float dy, float dz, bool sphere_shell_selected)
 {
     dim3 grids(ceil( (Nx*Ny*Nz)/ 1024.0),1,1);
     dim3 tids(1024,1,1);
-    implicit_sphere_kernel<<<grids,tids>>>(data_1,center,radius_1,thickness_wall,Nx,Ny,Nz,sphere_shell_selected);
+    implicit_sphere_kernel<<<grids,tids>>>(data_1,center,radius_1,thickness_wall,Nx,Ny,Nz,dx,dy,dz, sphere_shell_selected);
     cudaDeviceSynchronize();
+	
 
 }
 
 
-__global__ void implicit_cuboid_kernel(float* data_1,float3 center,float3 angles,float x_width,float y_width,float z_width, int Nx, int Ny, int Nz)
+__global__ void implicit_cuboid_kernel(float* data_1,float3 center,float3 angles,float x_width,float y_width,float z_width, int Nx, int Ny, int Nz, float dx,float dy, float dz)
 {
 
 	int tx = blockIdx.x*blockDim.x + threadIdx.x;
@@ -385,11 +391,11 @@ __global__ void implicit_cuboid_kernel(float* data_1,float3 center,float3 angles
 
 	__syncthreads();
 	
-	float x_1 = xx - mean_x;
-	float y_1 = yy - mean_y;
-	float z_1 = zz - mean_z;
+	float x_1 = ((xx - mean_x) ) * dx - center.x;
+	float y_1 = ((yy - mean_y) ) * dy - center.y;
+	float z_1 = ((zz - mean_z) ) * dz - center.z;
 
-	float3 field_vec = {x_1 - center.x,y_1 - center.y ,z_1 - center.z};
+    float3 field_vec = {x_1,y_1,z_1};
 
 	float3 pl_x = {(cosf(angles.z) * cosf(angles.y)),(cosf(angles.z) * sinf(angles.y) * sinf(angles.x)) - (sinf(angles.z) * cosf(angles.x)),(cosf(angles.z) * sinf(angles.y) * cosf(angles.x)) + (sinf(angles.z) * sinf(angles.x))};
 
@@ -413,19 +419,19 @@ __global__ void implicit_cuboid_kernel(float* data_1,float3 center,float3 angles
 
 }
 
-void Modelling::cuboid(float* data_1,float3 center,float3 angles, float x_width,float y_width,float z_width, int Nx,int Ny, int Nz)
+void Modelling::cuboid(float* data_1,float3 center,float3 angles, float x_width,float y_width,float z_width, int Nx,int Ny, int Nz, float dx,float dy, float dz)
 {
 	dim3 grids(ceil( (Nx*Ny*Nz)/ 1024.0),1,1);
     dim3 tids(1024,1,1);
 
-	implicit_cuboid_kernel<<<grids,tids>>>(data_1,center,angles,x_width,y_width,z_width,Nx,Ny,Nz);
+	implicit_cuboid_kernel<<<grids,tids>>>(data_1,center,angles,x_width,y_width,z_width,Nx,Ny,Nz, dx,dy,dz);
     cudaDeviceSynchronize();
 
 }
 
 
 
-__global__ void implicit_cuboid_shell_kernel(float* data_1,float3 center,float3 angles,float x_width,float y_width,float z_width,float thickness, int Nx, int Ny, int Nz)
+__global__ void implicit_cuboid_shell_kernel(float* data_1,float3 center,float3 angles,float x_width,float y_width,float z_width,float thickness, int Nx, int Ny, int Nz,float dx,float dy, float dz)
 {
 
 	int tx = blockIdx.x*blockDim.x + threadIdx.x;
@@ -445,11 +451,11 @@ __global__ void implicit_cuboid_shell_kernel(float* data_1,float3 center,float3 
 
 	__syncthreads();
 	
-	float x_1 = xx - mean_x;
-	float y_1 = yy - mean_y;
-	float z_1 = zz - mean_z;
+	float x_1 = ((xx - mean_x) ) * dx - center.x;
+	float y_1 = ((yy - mean_y) ) * dy - center.y;
+	float z_1 = ((zz - mean_z) ) * dz - center.z;
 
-	float3 field_vec = {x_1 - center.x,y_1 - center.y ,z_1 - center.z};
+    float3 field_vec = {x_1,y_1,z_1};
 
 	float3 pl_x = {(cosf(angles.z) * cosf(angles.y)),(cosf(angles.z) * sinf(angles.y) * sinf(angles.x)) - (sinf(angles.z) * cosf(angles.x)),(cosf(angles.z) * sinf(angles.y) * cosf(angles.x)) + (sinf(angles.z) * sinf(angles.x))};
 
@@ -480,18 +486,18 @@ __global__ void implicit_cuboid_shell_kernel(float* data_1,float3 center,float3 
 }
 
 
-void Modelling::cuboid_shell(float* data_1,float3 center,float3 angles, float x_width,float y_width,float z_width,float thickness, int Nx,int Ny, int Nz)
+void Modelling::cuboid_shell(float* data_1,float3 center,float3 angles, float x_width,float y_width,float z_width,float thickness, int Nx,int Ny, int Nz, float dx,float dy, float dz)
 {
 	dim3 grids(ceil( (Nx*Ny*Nz)/ 1024.0),1,1);
     dim3 tids(1024,1,1);
 
-	implicit_cuboid_shell_kernel<<<grids,tids>>>(data_1,center,angles,x_width,y_width,z_width,thickness,Nx,Ny,Nz);
+	implicit_cuboid_shell_kernel<<<grids,tids>>>(data_1,center,angles,x_width,y_width,z_width,thickness,Nx,Ny,Nz,dx,dy,dz);
     cudaDeviceSynchronize();
 
 }
 
 
-__global__ void implicit_torus_kernel(float* data_1,float3 center,float3 angles,float torus_radius, float torus_circle_radius, int Nx,int Ny, int Nz)
+__global__ void implicit_torus_kernel(float* data_1,float3 center,float3 angles,float torus_radius, float torus_circle_radius, int Nx,int Ny, int Nz, float dx,float dy, float dz)
 {
     int tx = blockIdx.x*blockDim.x + threadIdx.x;
     int size = Nx*Ny*Nz;
@@ -504,10 +510,12 @@ __global__ void implicit_torus_kernel(float* data_1,float3 center,float3 angles,
 	float mean_z = (Nz-1)/2.0;
 
 	__syncthreads();
-	float x_1 = xx - mean_x;
-	float y_1 = yy - mean_y;
-	float z_1 = zz - mean_z;
-    float3 field_vec = {x_1 - center.x,y_1 - center.y ,z_1 - center.z};
+
+	float x_1 = ((xx - mean_x) ) * dx - center.x;
+	float y_1 = ((yy - mean_y) ) * dy - center.y;
+	float z_1 = ((zz - mean_z) ) * dz - center.z;
+
+    float3 field_vec = {x_1,y_1,z_1};
 
 	float3 vec_field;
 
@@ -540,18 +548,18 @@ __global__ void implicit_torus_kernel(float* data_1,float3 center,float3 angles,
 
 
 
-void Modelling::torus_with_center(float* data_1,float3 center,float3 angles,float torus_radius,float torus_circle_radius,int Nx,int Ny, int Nz)
+void Modelling::torus_with_center(float* data_1,float3 center,float3 angles,float torus_radius,float torus_circle_radius,int Nx,int Ny, int Nz, float dx,float dy, float dz)
 {
     dim3 grids(ceil( (Nx*Ny*Nz)/ 1024.0),1,1);
     dim3 tids(1024,1,1);
-    implicit_torus_kernel<<<grids,tids>>>(data_1,center,angles,torus_radius,torus_circle_radius,Nx,Ny,Nz);
+    implicit_torus_kernel<<<grids,tids>>>(data_1,center,angles,torus_radius,torus_circle_radius,Nx,Ny,Nz,dx,dy,dz);
     cudaDeviceSynchronize();
 
 }
 
 
 
-__global__ void implicit_cone_kernel(float* data_1,float3 center,float3 angles,float base_radius, float cone_height, int Nx,int Ny, int Nz)
+__global__ void implicit_cone_kernel(float* data_1,float3 center,float3 angles,float base_radius, float cone_height, int Nx,int Ny, int Nz,float dx,float dy, float dz)
 {
     int tx = blockIdx.x*blockDim.x + threadIdx.x;
     int size = Nx*Ny*Nz;
@@ -564,10 +572,12 @@ __global__ void implicit_cone_kernel(float* data_1,float3 center,float3 angles,f
 	float mean_z = (Nz-1)/2.0;
 
 	__syncthreads();
-	float x_1 = xx - mean_x;
-	float y_1 = yy - mean_y;
-	float z_1 = zz - mean_z;
-    float3 field_vec = {x_1 - center.x,y_1 - center.y ,z_1 - center.z};
+
+	float x_1 = ((xx - mean_x) ) * dx - center.x;
+	float y_1 = ((yy - mean_y) ) * dy - center.y;
+	float z_1 = ((zz - mean_z) ) * dz - center.z;
+
+    float3 field_vec = {x_1,y_1,z_1};
 
 	float3 vec_field;
 
@@ -605,11 +615,11 @@ __global__ void implicit_cone_kernel(float* data_1,float3 center,float3 angles,f
 
 
 
-void Modelling::cone_with_base_radius_height(float* data_1,float3 center,float3 angles,float base_radius,float cone_height,int Nx,int Ny, int Nz)
+void Modelling::cone_with_base_radius_height(float* data_1,float3 center,float3 angles,float base_radius,float cone_height,int Nx,int Ny, int Nz, float dx,float dy, float dz)
 {
     dim3 grids(ceil( (Nx*Ny*Nz)/ 1024.0),1,1);
     dim3 tids(1024,1,1);
-    implicit_cone_kernel<<<grids,tids>>>(data_1,center,angles,base_radius,cone_height,Nx,Ny,Nz);
+    implicit_cone_kernel<<<grids,tids>>>(data_1,center,angles,base_radius,cone_height,Nx,Ny,Nz,dx,dy,dz);
     cudaDeviceSynchronize();
 
 }

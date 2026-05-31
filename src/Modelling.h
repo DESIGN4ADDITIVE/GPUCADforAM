@@ -23,17 +23,17 @@ class Modelling
     
     void concentric_cylinder(float* data_1,float3 center,float radius_1,float thickness_radial, float thickness_axial, int Nx,int Ny, int Nz);
 
-    void distance_from_line(float* data_1,float3 center,float3 axis,float radius_1,float thickness_radial,float thickness_axial, int Nx,int Ny, int Nz, bool onetime);
+    void distance_from_line(float* data_1,float3 center,float3 axis,float radius_1,float thickness_radial,float thickness_axial, int Nx,int Ny, int Nz,float dx,float dy, float dz, bool onetime);
 
-    void sphere_with_center(float* data_1,float3 center,float radius_1,float thickness_wall,int Nx,int Ny, int Nz,bool onetime);
+    void sphere_with_center(float* data_1,float3 center,float radius_1,float thickness_wall,int Nx,int Ny, int Nz,float dx,float dy, float dz, bool onetime);
 
-    void cuboid(float* data_1,float3 center,float3 angles,float x_width, float y_width, float z_width,int Nx,int Ny, int Nz);
+    void cuboid(float* data_1,float3 center,float3 angles,float x_width, float y_width, float z_width,int Nx,int Ny, int Nz,float dx,float dy, float dz);
 
-    void cuboid_shell(float* data_1,float3 center,float3 angles, float x_width,float y_width,float z_width, float thickness, int Nx,int Ny, int Nz);
+    void cuboid_shell(float* data_1,float3 center,float3 angles, float x_width,float y_width,float z_width, float thickness, int Nx,int Ny, int Nz, float dx,float dy, float dz);
 
-    void torus_with_center(float* data_1,float3 center,float3 angles,float torus_radius,float torus_circle_radius,int Nx,int Ny, int Nz);
+    void torus_with_center(float* data_1,float3 center,float3 angles,float torus_radius,float torus_circle_radius,int Nx,int Ny, int Nz, float dx,float dy, float dz);
 
-    void cone_with_base_radius_height(float* data_1,float3 center,float3 angles,float base_radius,float cone_height,int Nx,int Ny, int Nz);
+    void cone_with_base_radius_height(float* data_1,float3 center,float3 angles,float base_radius,float cone_height,int Nx,int Ny, int Nz, float dx,float dy, float dz);
 
     void retain_boundary(float* data_1, float* data_2, float* data_3,int Nx,int Ny, int Nz);
 

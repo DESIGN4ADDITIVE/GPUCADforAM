@@ -75,6 +75,11 @@ __global__ void Reduction(float *d_DataIn, float *d_DataOut, int block_num)
 __global__ void  Update_den_GPU_kernel(REAL3 *d_u, REAL *d_den, REAL *active_element , grid_points *vol_topo ,REAL VolFrac, REAL *d_grad, float *d_volume, int NX, int NY, int NZ,const REAL lmid,const REAL move,const REAL MinDens,
 REAL *d_new_den,REAL *d_new_den_result)
 {
+  __shared__ float cc[1024];
+  for (int j=threadIdx.x; j<1024; j+= 1024*blockDim.x)  	
+	cc[j]=0.0;
+
+  __syncthreads();
 
   int tx = threadIdx.x;
   int index = tx + blockDim.x*blockIdx.x;
@@ -83,7 +88,7 @@ REAL *d_new_den,REAL *d_new_den_result)
   int xx = ((index%(NY*NX))%NY);
   int index2 = xx + (yy * NX )+ zz * (NX*NY);
   uint index3 = (2*xx) + ((2*yy) * (2*NX)) + ((2*zz)*((2*NX)*(2*NY)));
-  __shared__ float cc[1024];
+
   REAL a1,a2,MyGrad;
   REAL a3,a4 = 0.0;
 
@@ -596,7 +601,7 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL *active_ele
   checkCudaErrors(cudaMalloc((void **)&d_new_den, sizeof(REAL)*(NX*NY*NZ)));
   cudaMemset(d_new_den_result, 0.0, sizeof(REAL)*block_num);
   cudaMemset(d_new_den, 0.0, sizeof(REAL)*(NX*NY*NZ));
-
+  float sum;
   while(((l2-l1) > 1e-4) && (counter < 1e3))
   {
 
@@ -606,7 +611,7 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL *active_ele
     Update_den_GPU(d_u,d_den,active_element,vol_topo,VolFrac,d_grad,d_volume,NX,NY,NZ,lmid,move,MinDens,d_new_den,d_new_den_result,block_num);
 
 
-    float sum;
+    
     cudaMemcpy(&sum, d_new_den_result, sizeof(float), cudaMemcpyDeviceToHost);
 
 
@@ -621,7 +626,7 @@ void Optimisation_kernels::Update_s_one(REAL3 *d_u,REAL *d_den, REAL *active_ele
 
 
   }
-
+  
   cudaMemcpy(d_den,d_new_den,sizeof(REAL)*(NX*NY*NZ),cudaMemcpyDeviceToDevice);
 
   cudaMemcpy(d_volume,d_new_den,sizeof(REAL)*(NX*NY*NZ),cudaMemcpyDeviceToDevice);

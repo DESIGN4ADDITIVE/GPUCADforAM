@@ -664,6 +664,8 @@ __global__ void Reduction_sel(uint *d_DataIn, uint *d_DataOut, int block_num)
 	
 	sdata[j]=0;
 
+	__syncthreads();
+
 	unsigned int tid = threadIdx.x;
 
 	int index;
@@ -1310,11 +1312,16 @@ void Selection::raster_make_region(float isoval_fixed, float iso_dynamic, float 
 
 __global__ void constrained_vol_kernel(REAL *solid, grid_points *vol_topo, uint *d_sum_solid, float volfrac, int Nx , int Ny, int Nz)
 {
+	
+	__shared__ uint cc[1024];
+
+	for (int j=threadIdx.x; j<1024; j+= 32*blockDim.x)  	
+	cc[j]=0;
+
+	__syncthreads();
+	
 	int index = threadIdx.x + (blockDim.x*blockIdx.x);
 	int tx  = threadIdx.x;
-
-	__shared__ float cc[1024];
-
   	uint z = index / ((Nx) * (Ny));
     uint z_rem = index % ((Nx) * (Ny));
     uint y = (z_rem)/ ((Nx));
@@ -1330,11 +1337,11 @@ __global__ void constrained_vol_kernel(REAL *solid, grid_points *vol_topo, uint 
 		{
 			if(b == -1)
 			{
-				cc[tx] = 0.0;
+				cc[tx] = 0;
 			}
 			else
 			{
-				cc[tx] = volfrac;
+				cc[tx] = 1;
 			}
 		}
 		else
@@ -1353,7 +1360,7 @@ __global__ void constrained_vol_kernel(REAL *solid, grid_points *vol_topo, uint 
 	{
 		if(tx < stride)
 		{
-			float Result = cc[tx];
+			uint Result = cc[tx];
 			Result += cc[tx+stride];
 			cc[tx] = Result;
 

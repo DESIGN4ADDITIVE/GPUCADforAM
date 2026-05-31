@@ -315,7 +315,7 @@ ImguiApp::ImguiApp()
     ImGui::SeparatorText("Center");
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_x = 0.0;
-    ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("x1", &c_x, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.x = c_x;
@@ -323,7 +323,7 @@ ImguiApp::ImguiApp()
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_y = 0.0;
-    ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("y1", &c_y, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.y = c_y;
@@ -331,7 +331,7 @@ ImguiApp::ImguiApp()
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_z = 0.0;
-    ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("z1", &c_z, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.z = c_z;
@@ -345,7 +345,7 @@ ImguiApp::ImguiApp()
     static bool thik_ax = false;
     static float rad = 5.0f;
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    ImGui::SliderFloat("Sphere Radius", &rad,2, 100, "%.1f");
+    ImGui::SliderFloat("Sphere Radius", &rad,2, 100, "%.0f");
     rad1 = ImGui::IsItemActive();
 
     if(rad1)
@@ -358,7 +358,7 @@ ImguiApp::ImguiApp()
         ImGui::NewLine();
         static float thick = 2.0f;
         ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-        ImGui::SliderFloat("Wall Thickness ", &thick,1, 20, "%.1f");
+        ImGui::SliderFloat("Wall Thickness ", &thick,1, 20, "%.0f");
         thik = ImGui::IsItemActive();  
     
         if(thik )
@@ -377,7 +377,7 @@ ImguiApp::ImguiApp()
     ImGui::SeparatorText("Center");
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_x = 0.0;
-    ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("x1", &c_x, 0.5f, 5.0f, "%.1f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.x = c_x;
@@ -385,7 +385,7 @@ ImguiApp::ImguiApp()
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_y = 0.0;
-    ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("y1", &c_y, 0.5f, 5.0f, "%.1f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.y = c_y;
@@ -393,7 +393,7 @@ ImguiApp::ImguiApp()
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_z = 0.0;
-    ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("z1", &c_z, 0.5f, 5.0f, "%.1f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.z = c_z;
@@ -434,7 +434,7 @@ ImguiApp::ImguiApp()
     {
         static float thick = 2.0f;
         ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-        ImGui::SliderFloat("Thickness Radial", &thick,0, 150, "%.1f");
+        ImGui::SliderFloat("Thickness Radial", &thick,0, 150, "%.0f");
         thik = ImGui::IsItemActive(); 
         if(thik)
         {
@@ -452,7 +452,7 @@ ImguiApp::ImguiApp()
     ImGui::SeparatorText("Center");
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_x = 0.0;
-    ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("x1", &c_x, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.x = c_x;
@@ -460,7 +460,7 @@ ImguiApp::ImguiApp()
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_y = 0.0;
-    ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("y1", &c_y, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.y = c_y;
@@ -468,7 +468,7 @@ ImguiApp::ImguiApp()
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_z = 0.0;
-    ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("z1", &c_z, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.z = c_z;
@@ -479,22 +479,23 @@ ImguiApp::ImguiApp()
     static bool zz_yaw = false;
 
     ImGui::SeparatorText("Angle");
-    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
     static float x_roll = 0.0;
-    ImGui::SliderFloat("roll", &x_roll, -180.0f, 180.0f, "%.1f");
+    ImGui::SliderFloat("roll", &x_roll, -180.0f, 180.0f, "%.0f");
     xx_roll = ImGui::IsItemActive();
 
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
     static float y_pitch = 0.0;
-    ImGui::SliderFloat("pitch", &y_pitch, -180.0f, 180.0f, "%.1f");
+    ImGui::SliderFloat("pitch", &y_pitch, -180.0f, 180.0f, "%.0f");
     yy_pitch = ImGui::IsItemActive();
     
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
     static float z_yaw = 0.0;
-    ImGui::SliderFloat("yaw", &z_yaw, -180.0f, 180.0f, "%.1f");
+    ImGui::SliderFloat("yaw", &z_yaw, -180.0f, 180.0f, "%.0f");
     zz_yaw = ImGui::IsItemActive();
+
     if(xx_roll || yy_pitch || zz_yaw)
     {
         ImguiApp::angles.x = (x_roll/180)*3.14;
@@ -511,15 +512,15 @@ ImguiApp::ImguiApp()
     
     static float x_1 = 5.0f;
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    ImGui::SliderFloat("x_width", &x_1,1, 150, "%.1f");
+    ImGui::SliderFloat("x_width", &x_1,1, 150, "%.0f");
     x_wid = ImGui::IsItemActive();
     static float y_1 = 2.0f;
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    ImGui::SliderFloat("y_width ", &y_1,1, 150, "%.1f");
+    ImGui::SliderFloat("y_width ", &y_1,1, 150, "%.0f");
     y_wid = ImGui::IsItemActive();  
     static float z_1 = 4.0f;
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    ImGui::SliderFloat("z_width ", &z_1,1, 150, "%.1f");
+    ImGui::SliderFloat("z_width ", &z_1,1, 150, "%.0f");
     z_wid = ImGui::IsItemActive(); 
     if(x_wid || y_wid || z_wid )
     {
@@ -535,7 +536,7 @@ ImguiApp::ImguiApp()
         static bool cu_thick = false;
         static float c_t = 2.0f;
         ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-        ImGui::SliderFloat("thickness", &c_t,1, 50, "%.1f");
+        ImGui::SliderFloat("thickness", &c_t,1, 50, "%.0f");
         cu_thick = ImGui::IsItemActive();
         if(cu_thick)
         {
@@ -553,7 +554,7 @@ ImguiApp::ImguiApp()
     ImGui::SeparatorText("Torus Center");
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_x = 0.0;
-    ImGui::InputFloat("x1", &c_x, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("x1", &c_x, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.x = c_x;
@@ -561,7 +562,7 @@ ImguiApp::ImguiApp()
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_y = 0.0;
-    ImGui::InputFloat("y1", &c_y, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("y1", &c_y, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.y = c_y;
@@ -569,7 +570,7 @@ ImguiApp::ImguiApp()
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float c_z = 0.0;
-    ImGui::InputFloat("z1", &c_z, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("z1", &c_z, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.z = c_z;
@@ -582,21 +583,21 @@ ImguiApp::ImguiApp()
     static bool zz_yaw = false;
 
     ImGui::SeparatorText("Angle");
-    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
     static float x_roll = 0.0;
-    ImGui::SliderFloat("roll", &x_roll, -180.0f, 180.0f, "%.1f");
+    ImGui::SliderFloat("roll", &x_roll, -180.0f, 180.0f, "%.0f");
     xx_roll = ImGui::IsItemActive();
 
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
     static float y_pitch = 0.0;
-    ImGui::SliderFloat("pitch", &y_pitch, -180.0f, 180.0f, "%.1f");
+    ImGui::SliderFloat("pitch", &y_pitch, -180.0f, 180.0f, "%.0f");
     yy_pitch = ImGui::IsItemActive();
     
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
     static float z_yaw = 0.0;
-    ImGui::SliderFloat("yaw", &z_yaw, -180.0f, 180.0f, "%.1f");
+    ImGui::SliderFloat("yaw", &z_yaw, -180.0f, 180.0f, "%.0f");
     zz_yaw = ImGui::IsItemActive();
     if(xx_roll || yy_pitch || zz_yaw)
     {
@@ -611,11 +612,11 @@ ImguiApp::ImguiApp()
 
     static float Tor_rad = 5.0f;
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    ImGui::SliderFloat("Torus Radius", &Tor_rad,1, 100, "%.1f");
+    ImGui::SliderFloat("Torus Radius", &Tor_rad,1, 100, "%.0f");
     T_rad = ImGui::IsItemActive();
     static float Cir_rad = 2.0f;
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    ImGui::SliderFloat("Circle Radius ", &Cir_rad,1, 5, "%.1f");
+    ImGui::SliderFloat("Circle Radius ", &Cir_rad,1, 5, "%.0f");
     C_rad = ImGui::IsItemActive();  
     
     if(T_rad || C_rad )
@@ -633,7 +634,7 @@ ImguiApp::ImguiApp()
     ImGui::SeparatorText("Cone Center");
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float co_x = 0.0;
-    ImGui::InputFloat("x1", &co_x, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("x1", &co_x, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.x = co_x;
@@ -641,7 +642,7 @@ ImguiApp::ImguiApp()
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float co_y = 0.0;
-    ImGui::InputFloat("y1", &co_y, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("y1", &co_y, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.y = co_y;
@@ -649,7 +650,7 @@ ImguiApp::ImguiApp()
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float co_z = 0.0;
-    ImGui::InputFloat("z1", &co_z, 0.1f, 1.0f, "%.1f");
+    ImGui::InputFloat("z1", &co_z, 1.0f, 5.0f, "%.0f");
     if(ImGui::IsItemActive())
     {
         ImguiApp::center.z = co_z;
@@ -660,22 +661,24 @@ ImguiApp::ImguiApp()
     static bool cone_yaw = false;
 
     ImGui::SeparatorText("Angle");
-    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
     static float conx_roll = 0.0;
-    ImGui::SliderFloat("roll", &conx_roll, -180.0f, 180.0f, "%.1f");
+    ImGui::SliderFloat("roll", &conx_roll, -180.0f, 180.0f, "%.0f");
     cone_roll = ImGui::IsItemActive();
 
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    static float cony_pitch = 1.0;
-    ImGui::SliderFloat("pitch", &cony_pitch, -180.0f, 180.0f, "%.1f");
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
+    static float cony_pitch = 0.0;
+    ImGui::SliderFloat("pitch", &cony_pitch, -180.0f, 180.0f, "%.0f");
     cone_pitch = ImGui::IsItemActive();
     
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
     static float conz_yaw = 0.0;
-    ImGui::SliderFloat("yaw", &conz_yaw, -180.0f, 180.0f, "%.1f");
+    ImGui::SliderFloat("yaw", &conz_yaw, -180.0f, 180.0f, "%.0f");
+
     cone_yaw = ImGui::IsItemActive();
+
     if(cone_roll || cone_pitch || cone_yaw)
     {
         ImguiApp::angles.x = (conx_roll/180)*3.14;
@@ -689,11 +692,11 @@ ImguiApp::ImguiApp()
 
     static float cone_rad = 3.0f;
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    ImGui::SliderFloat("Base Radius", &cone_rad,1, 100, "%.1f");
+    ImGui::SliderFloat("Base Radius", &cone_rad,1, 100, "%.0f");
     co_rad = ImGui::IsItemActive();
     static float cone_hei = 6.0f;
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    ImGui::SliderFloat("Cone Height ", &cone_hei,1, 100, "%.1f");
+    ImGui::SliderFloat("Cone Height ", &cone_hei,1, 100, "%.0f");
     co_hei = ImGui::IsItemActive();  
     
     if(co_rad || co_hei )
@@ -1154,13 +1157,13 @@ void ImguiApp::show_view_settings(bool *view_setting, bool *shift, bool *reset, 
     ImGui::NewLine();
 
     static float f1_1 = 0.0f;
-    ImGui::SliderFloat("Point Size1", &f1_1, 0.0f, 10.0f, "%.1f");
+    ImGui::SliderFloat("Point Size1", &f1_1, 0.0f, 10.0f, "%.0f");
     static float f1_2 = 0.0f;
-    ImGui::SliderFloat("Point Size2", &f1_2, 0.0f, 10.0f, "%.1f");
+    ImGui::SliderFloat("Point Size2", &f1_2, 0.0f, 10.0f, "%.0f");
     static float f1_3 = 0.0f;
-    ImGui::SliderFloat("Point Size3", &f1_3, 0.0f, 10.0f, "%.1f");
+    ImGui::SliderFloat("Point Size3", &f1_3, 0.0f, 10.0f, "%.0f");
     static float f1_4 = 1.0;
-    ImGui::SliderFloat("Point Size4", &f1_4, 0.0f, 15.0f, "%.1f");
+    ImGui::SliderFloat("Point Size4", &f1_4, 0.0f, 15.0f, "%.0f");
 
     ImGui::Checkbox("Show 3D Mesh", show_mesh);
 
@@ -1843,7 +1846,7 @@ void ImguiApp::show_fea_settings()
     {
         ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
         static float fea_0 = 1.0f;
-        ImGui::InputFloat("Young's Modulus ", &fea_0, 1.0f, 10000000.0f,"%.2f");
+        ImGui::InputFloat("Young's Modulus ", &fea_0, 1.0f, 500.0f,"%.0f");
         Topopt_val::Youngs_Modulus = fea_0;
 
         ImGui::NewLine();
@@ -1931,7 +1934,7 @@ void ImguiApp::show_optimisation_settings()
     ImGui::NewLine();
 
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    static float op_1 = 0.3f;
+    static float op_1 = 0.4f;
     ImGui::InputFloat("Volume Fraction  ", &op_1,0.05f,0.95f,"%.2f");
     Topopt_val::VolumeFraction = op_1;
 
@@ -1951,7 +1954,7 @@ void ImguiApp::show_optimisation_settings()
     ImGui::NewLine();
 
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    static float op_3 = (ImguiApp::thermal) ? 0.001 : 0.07;
+    static float op_3 = 0.002;
     ImGui::InputFloat("Minimum Density  ", &op_3,0.001f,0.0f,"%.3f");
     Topopt_val::MinDens = op_3;
 

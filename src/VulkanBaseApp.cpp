@@ -258,7 +258,7 @@ void VulkanBaseApp::initWindow()
     VulkanBaseApp::screen_width = videoMode->width * 0.8;
     VulkanBaseApp::screen_height = videoMode->height *0.8;
 
-    ImguiApp::window_extent = {videoMode->width * 0.3f,videoMode->height * 0.6f};
+    ImguiApp::window_extent = {videoMode->width * 0.3f,videoMode->height * 0.7f};
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);

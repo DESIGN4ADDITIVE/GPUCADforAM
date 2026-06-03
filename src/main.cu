@@ -3009,7 +3009,9 @@ class Multitopo : public VulkanBaseApp, Modelling
         gettimeofday(&t1, 0);
 
         structure.GPUCompGrad(d_us,d_den, d_grads,Obj_s, Vol_s, pitch_bytes, grad_pitch_bytes, Topopt_val::pexp);
-
+        
+        getLastCudaError("GPU Compgrad  failed ");
+        
         cout << "After Iter "<<OptIter<<": Compliance = " << Obj_s  << " Vol = "<<Vol_s<<"\n"<< endl;
 
         gettimeofday(&t2, 0);
@@ -3088,6 +3090,8 @@ class Multitopo : public VulkanBaseApp, Modelling
       
         thermal.GPUCompGrad(d_us,d_den, d_grads, Obj_s, Vol_s, pitch_bytes, grad_pitch_bytes,Topopt_val::pexp);
         
+        getLastCudaError("GPU Compgrad failed");
+        
         gettimeofday(&t2, 0);
 
         tottime = (1000000.0*(t2.tv_sec-t1.tv_sec) + t2.tv_usec-t1.tv_usec)/1000.0;
@@ -3129,8 +3133,8 @@ class Multitopo : public VulkanBaseApp, Modelling
             printf("Time to generate MeshFIlter:  %3.1f ms \n\n", tottime);
 
             gettimeofday(&t1, 0);
-
-            opt_kernel.Update_s_one(d_us,d_den,d_solid,vol_topo,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_s,&solid_voxels,grad_pitchX,NumX,NumY,NumZ);
+ 
+            opt_kernel.Update_s_one(d_den,d_solid,vol_topo,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_s,&solid_voxels,grad_pitchX,NumX,NumY,NumZ);
 
             gettimeofday(&t2, 0);
 
@@ -3242,7 +3246,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             ///////////////////////////////////////////////////////////////////////////////
             gettimeofday(&t1, 0);
 
-            opt_kernel.Update_s_one(d_us,d_den,d_solid,vol_topo,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_t,&solid_voxels,grad_pitchX,NumX,NumY,NumZ);
+            opt_kernel.Update_s_one(d_den,d_solid,vol_topo,Topopt_val::VolumeFraction,Topopt_val::MinDens,d_grads,d_volume_t,&solid_voxels,grad_pitchX,NumX,NumY,NumZ);
 
             gettimeofday(&t2, 0);
 

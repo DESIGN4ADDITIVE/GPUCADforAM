@@ -578,7 +578,13 @@ __global__ void patch_topo_field_kernel(float *d_vec1, int Nx, int Ny, int Nz, f
 
     float k;
 
-	if(tx < ((Nx-1) * (Ny - 1) * (Nz - 1)))
+    uint z = tx/(Nx * Ny);
+
+    uint y = (tx/(Nx * Ny))/Ny;
+
+    uint x = (tx/(Nx * Ny))%Ny;
+
+	if((x < (Nx-1)) && (y < (Ny - 1)) && (z < (Nz - 1)))
 	{
         
 
@@ -600,6 +606,10 @@ __global__ void patch_topo_field_kernel(float *d_vec1, int Nx, int Ny, int Nz, f
         }
 	
 
+    }
+    else if(tx < (Nx * Ny * Nz))
+    {
+        d_vec1[tx] = 0.0;
     }
 
 

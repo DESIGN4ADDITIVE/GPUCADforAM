@@ -34,7 +34,7 @@ class Selection : public MarchingCubeCuda
 
     void apply_to_lower(REAL *d_selection, REAL *d_selection2, grid_points *d_vol_one, int Nx, int Ny, int Nz, uint3 gridSizeMask, uint3 gridSizeShift, float isoval);
 
-    void raster_region_update(float isoval_fixed_region,  float *raster, grid_points *vol_topo, grid_points *vol_one, int Nx,int Ny, int Nz, bool show_domain);
+    // void raster_region_update(float isoval_fixed_region,  float *raster, grid_points *vol_topo, grid_points *vol_one, int Nx,int Ny, int Nz, bool show_domain);
 
     void instanced_pos(float *storage_buffer, uint *facets_check, uint *facets_check_occupied, uint active_facets, InstanceData *d_instance_buffer, triangle_metadata *triangle_data);
 

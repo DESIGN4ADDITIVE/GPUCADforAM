@@ -729,367 +729,367 @@ bool obj_difference, bool obj_intersect)
 }
 
 
-__global__ void update_raster_fixed_region_kernel(float isoval_fixed_region,float *raster, grid_points *vol_topo, grid_points *vol_one, int Nx,int Ny, int Nz, bool show_domain)
-{
-	int ind =  (blockDim.x * blockIdx.x) + threadIdx.x;
-	uint3 gridPos = calcGridPos_sel(ind,make_uint3(1,Nx,Ny*Nx));
-	uint3 gridSize = make_uint3(Nx * 2,  Ny * 2,Nz * 2);
+// __global__ void update_raster_fixed_region_kernel(float isoval_fixed_region,float *raster, grid_points *vol_topo, grid_points *vol_one, int Nx,int Ny, int Nz, bool show_domain)
+// {
+// 	int ind =  (blockDim.x * blockIdx.x) + threadIdx.x;
+// 	uint3 gridPos = calcGridPos_sel(ind,make_uint3(1,Nx,Ny*Nx));
+// 	uint3 gridSize = make_uint3(Nx * 2,  Ny * 2,Nz * 2);
 
-	if((gridPos.x < Nx) && (gridPos.y < Ny) && (gridPos.z < Nz))
-	{
+// 	if((gridPos.x < Nx) && (gridPos.y < Ny) && (gridPos.z < Nz))
+// 	{
 
-		uint3 gridPosone = gridPos * 2;
+// 		uint3 gridPosone = gridPos * 2;
 
-		int r_val = 0.0;
+// 		int r_val = 0.0;
 
-		float a,b,c,d,e,f,g;
+// 		float a,b,c,d,e,f,g;
 	
-		a = b = c = d = e = f = g = 0.0;
+// 		a = b = c = d = e = f = g = 0.0;
 
-		float f_fixed[7];
-		f_fixed[0] = sampleVolume_hgrid_val(vol_topo, gridPosone, gridSize);
-		f_fixed[1] = (int(gridPos.x - 1) >= 0 ) ? sampleVolume_hgrid_val(vol_topo, gridPosone - make_uint3(1,0,0), gridSize) : nanf("") ;
-		f_fixed[2] = ((gridPos.x + 1) < Nx) ? sampleVolume_hgrid_val(vol_topo, gridPosone + make_uint3(1,0,0), gridSize) : nanf("") ;
-		f_fixed[3] = (int(gridPos.y - 1) >= 0 ) ? sampleVolume_hgrid_val(vol_topo, gridPosone - make_uint3(0,1,0), gridSize) : nanf("") ;
-		f_fixed[4] = ((gridPos.y + 1) < Ny) ? sampleVolume_hgrid_val(vol_topo, gridPosone + make_uint3(0,1,0), gridSize) : nanf("") ;
-		f_fixed[5] = (int(gridPos.z - 1) >= 0)  ? sampleVolume_hgrid_val(vol_topo, gridPosone - make_uint3(0,0,1), gridSize) : nanf("") ;
-		f_fixed[6] = ((gridPos.z + 1) < Nz) ? sampleVolume_hgrid_val(vol_topo, gridPosone + make_uint3(0,0,1), gridSize) : nanf("") ;
+// 		float f_fixed[7];
+// 		f_fixed[0] = sampleVolume_hgrid_val(vol_topo, gridPosone, gridSize);
+// 		f_fixed[1] = (int(gridPos.x - 1) >= 0 ) ? sampleVolume_hgrid_val(vol_topo, gridPosone - make_uint3(1,0,0), gridSize) : nanf("") ;
+// 		f_fixed[2] = ((gridPos.x + 1) < Nx) ? sampleVolume_hgrid_val(vol_topo, gridPosone + make_uint3(1,0,0), gridSize) : nanf("") ;
+// 		f_fixed[3] = (int(gridPos.y - 1) >= 0 ) ? sampleVolume_hgrid_val(vol_topo, gridPosone - make_uint3(0,1,0), gridSize) : nanf("") ;
+// 		f_fixed[4] = ((gridPos.y + 1) < Ny) ? sampleVolume_hgrid_val(vol_topo, gridPosone + make_uint3(0,1,0), gridSize) : nanf("") ;
+// 		f_fixed[5] = (int(gridPos.z - 1) >= 0)  ? sampleVolume_hgrid_val(vol_topo, gridPosone - make_uint3(0,0,1), gridSize) : nanf("") ;
+// 		f_fixed[6] = ((gridPos.z + 1) < Nz) ? sampleVolume_hgrid_val(vol_topo, gridPosone + make_uint3(0,0,1), gridSize) : nanf("") ;
 			
 		
 		
-		float f_free[7];
-		f_free[0] = sampleVolume_hgrid_val(vol_one, gridPosone, gridSize);
-		f_free[1] = (int(gridPos.x - 1) >= 0 ) ? sampleVolume_hgrid_val(vol_one, gridPosone - make_uint3(1,0,0), gridSize) : nanf("") ;
-		f_free[2] = ((gridPos.x + 1) < Nx) ? sampleVolume_hgrid_val(vol_one, gridPosone + make_uint3(1,0,0), gridSize) : nanf("") ;
-		f_free[3] = (int(gridPos.y - 1) >= 0 ) ? sampleVolume_hgrid_val(vol_one, gridPosone - make_uint3(0,1,0), gridSize) : nanf("") ;
-		f_free[4] = ((gridPos.y + 1) < Ny) ? sampleVolume_hgrid_val(vol_one, gridPosone + make_uint3(0,1,0), gridSize) : nanf("") ;
-		f_free[5] = (int(gridPos.z - 1) >= 0)  ? sampleVolume_hgrid_val(vol_one, gridPosone - make_uint3(0,0,1), gridSize) : nanf("") ;
-		f_free[6] = ((gridPos.z + 1) < Nz) ? sampleVolume_hgrid_val(vol_one, gridPosone + make_uint3(0,0,1), gridSize) : nanf("") ;
+// 		float f_free[7];
+// 		f_free[0] = sampleVolume_hgrid_val(vol_one, gridPosone, gridSize);
+// 		f_free[1] = (int(gridPos.x - 1) >= 0 ) ? sampleVolume_hgrid_val(vol_one, gridPosone - make_uint3(1,0,0), gridSize) : nanf("") ;
+// 		f_free[2] = ((gridPos.x + 1) < Nx) ? sampleVolume_hgrid_val(vol_one, gridPosone + make_uint3(1,0,0), gridSize) : nanf("") ;
+// 		f_free[3] = (int(gridPos.y - 1) >= 0 ) ? sampleVolume_hgrid_val(vol_one, gridPosone - make_uint3(0,1,0), gridSize) : nanf("") ;
+// 		f_free[4] = ((gridPos.y + 1) < Ny) ? sampleVolume_hgrid_val(vol_one, gridPosone + make_uint3(0,1,0), gridSize) : nanf("") ;
+// 		f_free[5] = (int(gridPos.z - 1) >= 0)  ? sampleVolume_hgrid_val(vol_one, gridPosone - make_uint3(0,0,1), gridSize) : nanf("") ;
+// 		f_free[6] = ((gridPos.z + 1) < Nz) ? sampleVolume_hgrid_val(vol_one, gridPosone + make_uint3(0,0,1), gridSize) : nanf("") ;
 		
 
-		if(f_fixed[1] != nanf("") )
-		{
-			r_val = ((f_fixed[1] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1 : ((f_fixed[1] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 2 : 0;
+// 		if(f_fixed[1] != nanf("") )
+// 		{
+// 			r_val = ((f_fixed[1] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1 : ((f_fixed[1] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 2 : 0;
 
-			if(r_val == 1)
-			{
-				a = 1.0;
+// 			if(r_val == 1)
+// 			{
+// 				a = 1.0;
 				
-			}
-			else if (r_val == 2)
-			{
-				b = 1.0;
+// 			}
+// 			else if (r_val == 2)
+// 			{
+// 				b = 1.0;
 				
-			}
+// 			}
 
-			if((r_val == 0) && show_domain)
-			{
-				if(f_free[1] != nanf("") )
-				{
-					r_val = ((f_free[1] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1 : ((f_free[1] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 2 : 0;
+// 			if((r_val == 0) && show_domain)
+// 			{
+// 				if(f_free[1] != nanf("") )
+// 				{
+// 					r_val = ((f_free[1] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1 : ((f_free[1] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 2 : 0;
 				
-					if(r_val == 1)
-					{
-						a = 1.0;
+// 					if(r_val == 1)
+// 					{
+// 						a = 1.0;
 
-					}
-					else if (r_val == 2)
-					{
-						b = 1.0;
+// 					}
+// 					else if (r_val == 2)
+// 					{
+// 						b = 1.0;
 						
-					}
+// 					}
 				
-				}
+// 				}
 		
-			}
+// 			}
 
-		}
+// 		}
 
-		if((f_fixed[2] != nanf("")))
-		{
-			r_val = ((f_fixed[2] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1 : ((f_fixed[2] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 3 : 0 ;
+// 		if((f_fixed[2] != nanf("")))
+// 		{
+// 			r_val = ((f_fixed[2] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1 : ((f_fixed[2] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 3 : 0 ;
 
-			if(r_val == 1)
-			{
-				a = 1.0;
+// 			if(r_val == 1)
+// 			{
+// 				a = 1.0;
 			
-			}
-			else if (r_val == 3)
-			{
+// 			}
+// 			else if (r_val == 3)
+// 			{
 				
-				c = 1.0;
-			}
+// 				c = 1.0;
+// 			}
 
-			if((r_val == 0) && show_domain)
-			{
-				if((f_free[2] != nanf("")))
-				{
-					r_val = ((f_free[2] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1 : ((f_free[2] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 3 : 0 ;
+// 			if((r_val == 0) && show_domain)
+// 			{
+// 				if((f_free[2] != nanf("")))
+// 				{
+// 					r_val = ((f_free[2] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1 : ((f_free[2] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 3 : 0 ;
 
-					if(r_val == 1)
-					{
-						a = 1.0;
+// 					if(r_val == 1)
+// 					{
+// 						a = 1.0;
 						
-					}
-					else if (r_val == 3)
-					{
+// 					}
+// 					else if (r_val == 3)
+// 					{
 						
-						c = 1.0;
-					}
-				}
-			}
+// 						c = 1.0;
+// 					}
+// 				}
+// 			}
 		
 		
-		}
+// 		}
 
-		if((f_fixed[3] != nanf("")))
-		{
-			r_val = ((f_fixed[3] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1 : ((f_fixed[3] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 4 : 0 ;
+// 		if((f_fixed[3] != nanf("")))
+// 		{
+// 			r_val = ((f_fixed[3] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1 : ((f_fixed[3] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 4 : 0 ;
 		
-			if(r_val == 1)
-			{
-				a = 1.0;
+// 			if(r_val == 1)
+// 			{
+// 				a = 1.0;
 				
-			}
-			else if (r_val == 4)
-			{
-				d = 1.0;
+// 			}
+// 			else if (r_val == 4)
+// 			{
+// 				d = 1.0;
 			
-			}
+// 			}
 
-			if((r_val == 0) && show_domain)
-			{
-				if((f_free[3] != nanf("")))
-				{
-					r_val = ((f_free[3] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1 : ((f_free[3] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 4 : 0 ;
+// 			if((r_val == 0) && show_domain)
+// 			{
+// 				if((f_free[3] != nanf("")))
+// 				{
+// 					r_val = ((f_free[3] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1 : ((f_free[3] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 4 : 0 ;
 			
-					if(r_val == 1)
-					{
-						a = 1.0;
+// 					if(r_val == 1)
+// 					{
+// 						a = 1.0;
 						
-					}
-					else if (r_val == 4)
-					{
-						d = 1.0;
+// 					}
+// 					else if (r_val == 4)
+// 					{
+// 						d = 1.0;
 						
-					}
+// 					}
 
-				}
-			}
+// 				}
+// 			}
 		
-		}
+// 		}
 
-		if((f_fixed[4] != nanf("")))
-		{
-			r_val = ((f_fixed[4] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1 : ((f_fixed[4] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 5 : 0 ;
+// 		if((f_fixed[4] != nanf("")))
+// 		{
+// 			r_val = ((f_fixed[4] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1 : ((f_fixed[4] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 5 : 0 ;
 		
 		
-			if(r_val == 1)
-			{
-				a = 1.0;
+// 			if(r_val == 1)
+// 			{
+// 				a = 1.0;
 				
-			}
-			else if (r_val == 5)
-			{
-				e = 1.0;
-			}
+// 			}
+// 			else if (r_val == 5)
+// 			{
+// 				e = 1.0;
+// 			}
 
-			if((r_val == 0) && show_domain)
-			{
-				if((f_free[4] != nanf("")))
-				{
-					r_val = ((f_free[4] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1 : ((f_free[4] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 5 : 0 ;
+// 			if((r_val == 0) && show_domain)
+// 			{
+// 				if((f_free[4] != nanf("")))
+// 				{
+// 					r_val = ((f_free[4] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1 : ((f_free[4] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 5 : 0 ;
 
 
-					if(r_val == 1)
-					{
-						a = 1.0;
+// 					if(r_val == 1)
+// 					{
+// 						a = 1.0;
 						
-					}
-					else if (r_val == 5)
-					{
-						e = 1.0;
-					}
-				}
+// 					}
+// 					else if (r_val == 5)
+// 					{
+// 						e = 1.0;
+// 					}
+// 				}
 
-			}	
+// 			}	
 		
 		
-		}
+// 		}
 
 
 
-		if((f_fixed[5] != nanf("")))
-		{
-			r_val = ((f_fixed[5] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1.0 : ((f_fixed[5] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 6 : 0 ;
+// 		if((f_fixed[5] != nanf("")))
+// 		{
+// 			r_val = ((f_fixed[5] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1.0 : ((f_fixed[5] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 6 : 0 ;
 
 		
-			if(r_val == 1)
-			{
-				a = 1.0;
+// 			if(r_val == 1)
+// 			{
+// 				a = 1.0;
 				
-			}
-			else if (r_val == 6)
-			{
-				f = 1.0;
+// 			}
+// 			else if (r_val == 6)
+// 			{
+// 				f = 1.0;
 			
-			}
-			if((r_val == 0) && show_domain)
-			{
-				if((f_free[5] != nanf("")))
-				{
-					r_val = ((f_free[5] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1.0 : ((f_free[5] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 6 : 0 ;
+// 			}
+// 			if((r_val == 0) && show_domain)
+// 			{
+// 				if((f_free[5] != nanf("")))
+// 				{
+// 					r_val = ((f_free[5] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1.0 : ((f_free[5] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 6 : 0 ;
 
 				
-					if(r_val == 1)
-					{
-						a = 1.0;
+// 					if(r_val == 1)
+// 					{
+// 						a = 1.0;
 						
-					}
-					else if (r_val == 6)
-					{
-						f = 1.0;
+// 					}
+// 					else if (r_val == 6)
+// 					{
+// 						f = 1.0;
 						
-					}
+// 					}
 
-				}
-			}
+// 				}
+// 			}
 		
-		}
+// 		}
 
 		
 
-		if((f_fixed[6] != nanf("")))
-		{
-			r_val = ((f_fixed[6] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1 : ((f_fixed[6] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 7 : 0 ;
+// 		if((f_fixed[6] != nanf("")))
+// 		{
+// 			r_val = ((f_fixed[6] < isoval_fixed_region) && (f_fixed[0] >= isoval_fixed_region)) ? 1 : ((f_fixed[6] >= isoval_fixed_region) && (f_fixed[0] < isoval_fixed_region)) ? 7 : 0 ;
 
 
-			if(r_val == 1)
-			{
-				a = 1.0;
+// 			if(r_val == 1)
+// 			{
+// 				a = 1.0;
 				
-			}
-			else if (r_val == 7)
-			{
-				g = 1.0;
-			}
+// 			}
+// 			else if (r_val == 7)
+// 			{
+// 				g = 1.0;
+// 			}
 
 
-			if((r_val == 0) && show_domain)
-			{
+// 			if((r_val == 0) && show_domain)
+// 			{
 
-				if((f_free[6] != nanf("")))
-				{
-					r_val = ((f_free[6] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1 : ((f_free[6] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 7 : 0 ;
+// 				if((f_free[6] != nanf("")))
+// 				{
+// 					r_val = ((f_free[6] < isoval_fixed_region) && (f_free[0] >= isoval_fixed_region)) ? 1 : ((f_free[6] >= isoval_fixed_region) && (f_free[0] < isoval_fixed_region)) ? 7 : 0 ;
 
 
-					if(r_val == 1)
-					{
-						a = 1.0;
+// 					if(r_val == 1)
+// 					{
+// 						a = 1.0;
 						
-					}
-					else if (r_val == 7)
-					{
-						g = 1.0;
-					}
+// 					}
+// 					else if (r_val == 7)
+// 					{
+// 						g = 1.0;
+// 					}
 						
 				
-				}	
-			}
+// 				}	
+// 			}
 		
 		
-		}
+// 		}
 
 	
 
-		__syncthreads();	
+// 		__syncthreads();	
 
-		if(r_val == 0)
-		{
+// 		if(r_val == 0)
+// 		{
 			
-			float f_fixed = sampleVolume_hgrid_val(vol_topo, gridPosone, gridSize);
-			float f_free = sampleVolume_hgrid_val(vol_one, gridPosone, gridSize);
-			if((f_fixed < isoval_fixed_region ) )
-			{
-				a = 0.625;
+// 			float f_fixed = sampleVolume_hgrid_val(vol_topo, gridPosone, gridSize);
+// 			float f_free = sampleVolume_hgrid_val(vol_one, gridPosone, gridSize);
+// 			if((f_fixed < isoval_fixed_region ) )
+// 			{
+// 				a = 0.625;
 
 				
-			}
-			if(show_domain && (f_free < isoval_fixed_region ))
-			{
-				a = 0.625;
+// 			}
+// 			if(show_domain && (f_free < isoval_fixed_region ))
+// 			{
+// 				a = 0.625;
 
 				
-			}
+// 			}
 			
-		}
+// 		}
 
-		__syncthreads();
+// 		__syncthreads();
 
-		if(a > 0)
-		{
-			raster[ind] = a;
-		}
+// 		if(a > 0)
+// 		{
+// 			raster[ind] = a;
+// 		}
 
-		__syncthreads();
+// 		__syncthreads();
 
-		if((b > 0) && (gridPos.x > 0) )
-		{
-			raster[(gridPos.x - 1) +(gridPos.y * Nx) + (gridPos.z * Nx * Ny)] = b;	
-		}
+// 		if((b > 0) && (gridPos.x > 0) )
+// 		{
+// 			raster[(gridPos.x - 1) +(gridPos.y * Nx) + (gridPos.z * Nx * Ny)] = b;	
+// 		}
 
-		__syncthreads();
+// 		__syncthreads();
 		
-		if((c > 0) && (gridPos.x < (Nx - 1)))
-		{
-			raster[(gridPos.x + 1) +(gridPos.y * Nx) + (gridPos.z * Nx * Ny)] = c;
-		}
+// 		if((c > 0) && (gridPos.x < (Nx - 1)))
+// 		{
+// 			raster[(gridPos.x + 1) +(gridPos.y * Nx) + (gridPos.z * Nx * Ny)] = c;
+// 		}
 
-		__syncthreads();
+// 		__syncthreads();
 
-		if((d > 0) && (gridPos.y > 0))
-		{
-			raster[(gridPos.x) +((gridPos.y - 1) * Nx) + (gridPos.z * Nx * Ny)] = d;
-		}
+// 		if((d > 0) && (gridPos.y > 0))
+// 		{
+// 			raster[(gridPos.x) +((gridPos.y - 1) * Nx) + (gridPos.z * Nx * Ny)] = d;
+// 		}
 
-		__syncthreads();
+// 		__syncthreads();
 
-		if((e > 0) && (gridPos.y < (Ny - 1)))
-		{
-			raster[(gridPos.x) +((gridPos.y + 1) * Nx) + (gridPos.z * Nx * Ny)] = e;
-		}
+// 		if((e > 0) && (gridPos.y < (Ny - 1)))
+// 		{
+// 			raster[(gridPos.x) +((gridPos.y + 1) * Nx) + (gridPos.z * Nx * Ny)] = e;
+// 		}
 
-		__syncthreads();
+// 		__syncthreads();
 
-		if((f > 0) && (gridPos.z > 0))
-		{
-			raster[(gridPos.x) +((gridPos.y) * Nx) + ((gridPos.z - 1) * Nx * Ny)] = f;
-		}
+// 		if((f > 0) && (gridPos.z > 0))
+// 		{
+// 			raster[(gridPos.x) +((gridPos.y) * Nx) + ((gridPos.z - 1) * Nx * Ny)] = f;
+// 		}
 
-		__syncthreads();
+// 		__syncthreads();
 
-		if((g > 0) && (gridPos.z < (Nz - 1)))
-		{
-			raster[(gridPos.x) +((gridPos.y) * Nx) + ((gridPos.z + 1) * Nx * Ny)] = g;
-		}
+// 		if((g > 0) && (gridPos.z < (Nz - 1)))
+// 		{
+// 			raster[(gridPos.x) +((gridPos.y) * Nx) + ((gridPos.z + 1) * Nx * Ny)] = g;
+// 		}
 
-		__syncthreads();
+// 		__syncthreads();
 
-	}
+// 	}
 
-}
+// }
 
 
-void Selection::raster_region_update(float isoval_fixed_region,  float *raster, grid_points *vol_topo,grid_points *vol_one, int Nx,int Ny, int Nz, bool show_domain)
-{
-	dim3 grids(ceil((Nx*Ny*Nz)/float(1024)),1,1);
-	dim3 tids(1024,1,1);
+// void Selection::raster_region_update(float isoval_fixed_region,  float *raster, grid_points *vol_topo,grid_points *vol_one, int Nx,int Ny, int Nz, bool show_domain)
+// {
+// 	dim3 grids(ceil((Nx*Ny*Nz)/float(1024)),1,1);
+// 	dim3 tids(1024,1,1);
 
-	update_raster_fixed_region_kernel<<<grids,tids>>>(isoval_fixed_region,raster, vol_topo, vol_one, Nx, Ny, Nz,show_domain);
-	cudaDeviceSynchronize();
+// 	update_raster_fixed_region_kernel<<<grids,tids>>>(isoval_fixed_region,raster, vol_topo, vol_one, Nx, Ny, Nz,show_domain);
+// 	cudaDeviceSynchronize();
 
-	getLastCudaError("Raster copy failed");
-}
+// 	getLastCudaError("Raster copy failed");
+// }
 
 __global__ void update_make_region_kernel(float isoval_fixed, float iso_dynamic, float iso1, float iso2,float *raster,float *d_solid, grid_points *vol_one, float *boundary, float *lattice_field,float *fix_lat_field, bool fixed, bool dynamic,int Nx,int Ny, int Nz)
 {
@@ -1335,14 +1335,8 @@ __global__ void constrained_vol_kernel(REAL *solid, grid_points *vol_topo, uint 
 		b = int(vol_topo[index2].val);
 		if((a == 1) || (a == 0.5))
 		{
-			if(b == -1)
-			{
-				cc[tx] = 0;
-			}
-			else
-			{
-				cc[tx] = 1;
-			}
+			cc[tx] = 1;
+		
 		}
 		else
 		{

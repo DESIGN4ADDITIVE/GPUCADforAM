@@ -56,14 +56,20 @@ void main(void)
 
 		vec3 Pos_scale;
 
+		vec3 lightcolor ;
+
 		if(instVal[i] == 1.0)
 		{
+			lightcolor = vec3(1.0,0.550,0.0);
+			
 			dir_force = normalize(force_dir.xyz);
 
 			Pos_scale = Pos[i].xyz * Scale_load.xyz;
 		}
 		if(instVal[i] == -1.0)
 		{
+			lightcolor = vec3(1.0,0.0,1.0);
+
 			dir_force = norm;
 
 			Pos_scale = Pos[i].xyz * Scale_support.xyz;
@@ -96,7 +102,7 @@ void main(void)
 
 		vec3 lightvector = normalize(eyes.xyz - pos.xyz);
 		
-		vec3 lightcolor = vec3(1.0,1.0,1.0);
+		
 	
 		float amg = abs(dot(lightvector.xyz,n_normal.xyz));
 		

@@ -88,18 +88,16 @@ REAL *d_new_den,REAL *d_new_den_result)
   int xx = ((index%(NY*NX))%NY);
 
   int index2 = xx + (yy * NX )+ zz * (NX*NY);
-  uint index3 = (2*xx) + ((2*yy) * (2*NX)) + ((2*zz)*((2*NX)*(2*NY)));
+  
 
   REAL a1,a2,MyGrad;
   REAL a3,a4 = 0.0;
-
-  int a5 = 0;
   
   a1 = d_grad[index2];
   a2 = d_den[index2];
 
   a4 = active_element[index2];
-  a5 = vol_topo[index3].val;
+
 
   if(a4 > 0)
   {

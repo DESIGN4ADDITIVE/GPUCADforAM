@@ -1326,13 +1326,13 @@ __global__ void constrained_vol_kernel(REAL *solid, grid_points *vol_topo, uint 
     uint z_rem = index % ((Nx) * (Ny));
     uint y = (z_rem)/ ((Nx));
     uint x = (z_rem) % ((Nx));
-	uint index2 = (2*x) + ((2*y) * (2*Nx)) + ((2*z)*((2*Nx)*(2*Ny)));
+
 	float a = 0;
-	int b = 0;
+
 	if((x < (Nx - 1)) && (y < (Ny - 1)) && (z < (Nz -1 )))
 	{
 		a = solid[index];
-		b = int(vol_topo[index2].val);
+		
 		if((a == 1) || (a == 0.5))
 		{
 			cc[tx] = 1;

@@ -1,7 +1,7 @@
 #version 450
 
 #extension GL_ARB_viewport_array : enable
-#extension GL_EXT_debug_printf : enable
+// #extension GL_EXT_debug_printf : enable
 
 layout (triangles) in;
 layout (triangle_strip, max_vertices = 3) out;//triangle_strip

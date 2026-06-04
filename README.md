@@ -49,6 +49,10 @@ For more details please check DEPENDENCIES.md file.
 
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/_qA05n181Pw/0.jpg)](http://www.youtube.com/watch?v=_qA05n181Pw "GPUCADforAM")
 
+## Demo - Structural Optimisation
+
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/m5oydEWScqc/0.jpg)](http://www.youtube.com/watch?v=m5oydEWScqc "GPUCADforAM")
+
 ## Demo - Unit Lattice generation
 
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/_DCmOFsKEww/0.jpg)](http://www.youtube.com/watch?v=_DCmOFsKEww "GPUCADforAM")

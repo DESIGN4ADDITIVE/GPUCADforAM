@@ -35,6 +35,10 @@ class Modelling
 
     void cone_with_base_radius_height(float* data_1,float3 center,float3 angles,float base_radius,float cone_height,int Nx,int Ny, int Nz, float dx,float dy, float dz);
 
+    void cone_frustum(float* data_1,float3 center,float3 angles,float top_radius, float bottom_radius,float cone_frustum_height,int Nx,int Ny, int Nz, float dx,float dy, float dz);
+
+    void pyramid_frustum(float* data_1,float3 center,float3 angles, float x_width_base, float x_width_top,float y_height,float z_width_base, float z_width_top, int Nx,int Ny, int Nz, float dx,float dy, float dz);
+    
     void retain_boundary(float* data_1, float* data_2, float* data_3,int Nx,int Ny, int Nz);
 
     void GPU_buffer_normalise_four(float *d_vec1,float *d_vec2,float *d_vec3, size_t size, int Nx, int Ny, int Nz, float isoval_1);

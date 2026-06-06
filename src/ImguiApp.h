@@ -210,6 +210,8 @@ class ImguiApp
     static bool sphere_shell_selected;
     static bool torus_selected ;
     static bool cone_selected ;
+    static bool cone_frustum_selected;
+    static bool pyramid_frustum_selected;
 
     static bool obj_union;
     static bool obj_diff;
@@ -232,6 +234,16 @@ class ImguiApp
 
     static float cone_height;
     static float base_radius;
+
+    static float top_radius;
+    static float bottom_radius;
+    static float cone_frustum_height;
+
+    static float x_width_base;
+    static float x_width_top;
+    static float z_width_base;
+    static float z_width_top;
+    static float pyramid_frustum_height;
 
     static bool lattice_buffer_created;
     static bool boundary_buffers;

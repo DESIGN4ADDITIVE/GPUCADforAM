@@ -56,6 +56,19 @@ float ImguiApp::torus_circle_radius = 2.0;
 float ImguiApp::cone_height = 6;
 float ImguiApp::base_radius = 3;
 
+
+float ImguiApp::top_radius = 3;
+float ImguiApp::bottom_radius = 6;
+float ImguiApp::cone_frustum_height = 8;
+
+float ImguiApp::x_width_base = 8;
+float ImguiApp::x_width_top = 4;
+float ImguiApp::z_width_top = 3;
+float ImguiApp::z_width_base = 6;
+float ImguiApp::pyramid_frustum_height = 8;
+
+
+
 int ImguiApp::period_type = 0;
 
 float ImguiApp::period_of_grating = 30.0;
@@ -97,6 +110,8 @@ bool ImguiApp::sphere_selected = false;
 bool ImguiApp::sphere_shell_selected = false;
 bool ImguiApp::torus_selected = false;
 bool ImguiApp::cone_selected = false;
+bool ImguiApp::cone_frustum_selected = false;
+bool ImguiApp::pyramid_frustum_selected = false;
 //////////////////////////////////////////////
 bool ImguiApp::obj_union = true;
 bool ImguiApp::obj_diff = false;
@@ -257,6 +272,8 @@ ImguiApp::ImguiApp()
     &sphere_shell_selected,
     &torus_selected,
     &cone_selected,
+    &cone_frustum_selected,
+    &pyramid_frustum_selected,
     &view_settings,
     &grid_settings,
     &background_color,
@@ -703,6 +720,211 @@ ImguiApp::ImguiApp()
     {
         ImguiApp::base_radius = cone_rad;
         ImguiApp::cone_height = cone_hei;
+    }
+
+ }
+
+
+ void cone_frustum_settings()
+ {
+
+    ImGui::SeparatorText("Cone Frustum Center");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float co_x = 0.0;
+    ImGui::InputFloat("x1", &co_x, 1.0f, 5.0f, "%.0f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.x = co_x;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float co_y = 0.0;
+    ImGui::InputFloat("y1", &co_y, 1.0f, 5.0f, "%.0f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.y = co_y;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float co_z = 0.0;
+    ImGui::InputFloat("z1", &co_z, 1.0f, 5.0f, "%.0f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.z = co_z;
+    }
+
+    static bool cone_roll = false;
+    static bool cone_pitch = false;
+    static bool cone_yaw = false;
+
+    ImGui::SeparatorText("Angle");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
+    static float conx_roll = 0.0;
+    ImGui::SliderFloat("roll", &conx_roll, -180.0f, 180.0f, "%.0f");
+    cone_roll = ImGui::IsItemActive();
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
+    static float cony_pitch = 0.0;
+    ImGui::SliderFloat("pitch", &cony_pitch, -180.0f, 180.0f, "%.0f");
+    cone_pitch = ImGui::IsItemActive();
+    
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
+    static float conz_yaw = 0.0;
+    ImGui::SliderFloat("yaw", &conz_yaw, -180.0f, 180.0f, "%.0f");
+
+    cone_yaw = ImGui::IsItemActive();
+
+    if(cone_roll || cone_pitch || cone_yaw)
+    {
+        ImguiApp::angles.x = (conx_roll/180)*3.14;
+        ImguiApp::angles.y = (cony_pitch/180)*3.14;
+        ImguiApp::angles.z = (conz_yaw/180)*3.14;
+    }
+
+    ImGui::SeparatorText("Radius & Height");
+    static bool co_rad_bottom = false;
+    static bool co_rad_top = false;
+    static bool co_hei = false;
+
+    static float cone_rad_top = 3.0f;
+    static float cone_rad_bottom = 6.0f;
+
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Top Radius", &cone_rad_top,1, 100, "%.0f");
+    co_rad_top = ImGui::IsItemActive();
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Bottom Radius", &cone_rad_bottom,1, 100, "%.0f");
+    co_rad_bottom = ImGui::IsItemActive();
+
+    ImGui::NewLine();
+    static float cone_hei = 6.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Cone Frustum Height ", &cone_hei,1, 100, "%.0f");
+    co_hei = ImGui::IsItemActive();  
+    
+    if(co_rad_bottom || co_hei || co_rad_top)
+    {
+        ImguiApp::top_radius = cone_rad_top;
+        ImguiApp::bottom_radius = cone_rad_bottom;
+        ImguiApp::cone_frustum_height = cone_hei;
+    }
+
+ }
+
+
+  void pyramid_frustum_settings()
+ {
+
+    ImGui::SeparatorText("Pyramid Frustum Center");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float co_x = 0.0;
+    ImGui::InputFloat("x1", &co_x, 1.0f, 5.0f, "%.0f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.x = co_x;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float co_y = 0.0;
+    ImGui::InputFloat("y1", &co_y, 1.0f, 5.0f, "%.0f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.y = co_y;
+    }
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static float co_z = 0.0;
+    ImGui::InputFloat("z1", &co_z, 1.0f, 5.0f, "%.0f");
+    if(ImGui::IsItemActive())
+    {
+        ImguiApp::center.z = co_z;
+    }
+
+    static bool cone_roll = false;
+    static bool cone_pitch = false;
+    static bool cone_yaw = false;
+
+    ImGui::SeparatorText("Angle");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
+    static float conx_roll = 0.0;
+    ImGui::SliderFloat("roll", &conx_roll, -180.0f, 180.0f, "%.0f");
+    cone_roll = ImGui::IsItemActive();
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
+    static float cony_pitch = 0.0;
+    ImGui::SliderFloat("pitch", &cony_pitch, -180.0f, 180.0f, "%.0f");
+    cone_pitch = ImGui::IsItemActive();
+    
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.57);
+    static float conz_yaw = 0.0;
+    ImGui::SliderFloat("yaw", &conz_yaw, -180.0f, 180.0f, "%.0f");
+
+    cone_yaw = ImGui::IsItemActive();
+
+    if(cone_roll || cone_pitch || cone_yaw)
+    {
+        ImguiApp::angles.x = (conx_roll/180)*3.14;
+        ImguiApp::angles.y = (cony_pitch/180)*3.14;
+        ImguiApp::angles.z = (conz_yaw/180)*3.14;
+    }
+
+    ImGui::SeparatorText("Width & Height");
+    static bool py_x_base = false;
+    static bool py_x_top = false;
+
+    static bool py_z_base = false;
+    static bool py_z_top = false;
+
+    static bool py_hei = false;
+
+    static float py_x_wid_top = 4.0f;
+    static float py_x_wid_base = 8.0f;
+
+    static float py_z_wid_top = 3.0f;
+    static float py_z_wid_base = 6.0f;
+
+    static float py_y_height = 8.0f;
+
+    
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("X top ", &py_x_wid_top,1, 100, "%.0f");
+    py_x_top = ImGui::IsItemActive();
+    
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("X base ", &py_x_wid_base,1, 100, "%.0f");
+    py_x_base = ImGui::IsItemActive();
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Z top ", &py_z_wid_top,1, 100, "%.0f");
+    py_z_top = ImGui::IsItemActive();
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Z base ", &py_z_wid_base,1, 100, "%.0f");
+    py_z_base = ImGui::IsItemActive();
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    ImGui::SliderFloat("Y Height ", &py_y_height,1, 100, "%.0f");
+    py_hei = ImGui::IsItemActive();  
+    
+    if(py_x_base || py_x_top || py_z_base || py_z_top || py_hei)
+    {
+        ImguiApp::x_width_base = py_x_wid_base;
+        ImguiApp::x_width_top = py_x_wid_top;
+        ImguiApp::z_width_base = py_z_wid_base;
+        ImguiApp::z_width_top = py_z_wid_top;
+
+        ImguiApp::pyramid_frustum_height = py_y_height;
     }
 
  }
@@ -1543,6 +1765,16 @@ void ImguiApp::show_selected_primitive()
         ImGui::Begin("CONE PARAMETERS",&ImguiApp::cone_selected);
     }
 
+    if(ImguiApp::cone_frustum_selected)
+    {
+        ImGui::Begin("CONE FRUSTUM PARAMETERS",&ImguiApp::cone_frustum_selected);
+    }
+
+    if(ImguiApp::pyramid_frustum_selected)
+    {
+        ImGui::Begin("PYRAMID FRUSTUM PARAMETERS",&ImguiApp::pyramid_frustum_selected);
+    }
+
     ImGui::SetWindowPos(ImVec2(5,50));
     ImGui::SetWindowSize(window_extent);
     ImGui::SetWindowCollapsed(true,2);
@@ -1571,6 +1803,15 @@ void ImguiApp::show_selected_primitive()
     if(ImguiApp::cone_selected)
     {
         cone_settings();
+    }
+    if(ImguiApp::cone_frustum_selected)
+    {
+        cone_frustum_settings();
+    }
+
+    if(ImguiApp::pyramid_frustum_selected)
+    {
+        pyramid_frustum_settings();
     }
 
     if(ImguiApp::boundary_buffers)

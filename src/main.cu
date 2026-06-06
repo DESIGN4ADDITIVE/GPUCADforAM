@@ -3423,7 +3423,20 @@ class Multitopo : public VulkanBaseApp, Modelling
             
                 compute_iso = true;
             }
-            
+            if(cone_frustum_selected)
+            {
+
+                cone_frustum(d_boundary,center,angles,top_radius, bottom_radius,cone_frustum_height,NumX2,NumY2, NumZ2, dx2, dy2, dz2);
+
+                compute_iso = true;
+            }
+
+            if(pyramid_frustum_selected)
+            {
+                pyramid_frustum(d_boundary,center,angles,x_width_base,x_width_top,pyramid_frustum_height,z_width_base,z_width_top,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
+
+                compute_iso = true;
+            }
         
 
             if(compute_iso)

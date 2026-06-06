@@ -2407,6 +2407,24 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
                         ImGui::EndMenu();
                     }
 
+                    if (ImGui::BeginMenu("Cone Frustum"))
+                    {
+                        ImguiApp::make_inactive(window_bools,&cone_frustum_selected);
+
+                        ImGui::MenuItem("Cone Frustum Parameters",NULL,&cone_frustum_selected);
+                        
+                        ImGui::EndMenu();
+                    }
+
+                    if (ImGui::BeginMenu("Pyramid Frustum"))
+                    {
+                        ImguiApp::make_inactive(window_bools,&pyramid_frustum_selected);
+
+                        ImGui::MenuItem("Pyramid Frustum Parameters",NULL,&pyramid_frustum_selected);
+                        
+                        ImGui::EndMenu();
+                    }
+
                     ImGui::EndMenu();
                 }
             }
@@ -2611,6 +2629,16 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
         }
 
         if(cone_selected)
+        {
+            ImguiApp::show_selected_primitive();
+        }
+
+        if(cone_frustum_selected)
+        {
+            ImguiApp::show_selected_primitive();
+        }
+
+        if(pyramid_frustum_selected)
         {
             ImguiApp::show_selected_primitive();
         }

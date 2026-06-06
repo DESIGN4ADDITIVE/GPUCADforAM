@@ -407,11 +407,11 @@ __global__ void implicit_cuboid_kernel(float* data_1,float3 center,float3 angles
 
 
 	float fld_1 = field_vec.x*pl_x.x +field_vec.y*pl_x.y + field_vec.z*pl_x.z ;
-	fld_1 = max(fld_1 - x_wid,(fld_1 + x_wid)*-1.0);
+	fld_1 = fabs(fld_1) - x_wid;
 	float fld_2 = field_vec.x*pl_y.x +field_vec.y*pl_y.y + field_vec.z*pl_y.z;
-	fld_2 = max(fld_2 - y_wid,(fld_2 + y_wid)*-1.0);
+	fld_2 = fabs(fld_2) - y_wid ;
 	float fld_3 = field_vec.x*pl_z.x +field_vec.y*pl_z.y + field_vec.z*pl_z.z;
-	fld_3 = max(fld_3 - z_wid,(fld_3 + z_wid)*-1.0);
+	fld_3 = fabs(fld_3) - z_wid;
 
 	float fld = max(max(fld_1,fld_2),fld_3);
 
@@ -467,16 +467,16 @@ __global__ void implicit_cuboid_shell_kernel(float* data_1,float3 center,float3 
 
 
 	float fld_1 = field_vec.x*pl_x.x +field_vec.y*pl_x.y + field_vec.z*pl_x.z ;
-	float fld_11 = abs(fld_1) - x_wid;
-	float fld_12 = abs(fld_1) - (x_wid - thickness);
+	float fld_11 = fabs(fld_1) - x_wid;
+	float fld_12 = fabs(fld_1) - (x_wid - thickness);
 	
 	float fld_2 = field_vec.x*pl_y.x +field_vec.y*pl_y.y + field_vec.z*pl_y.z;
-	float fld_21 = abs(fld_2) - y_wid;
-	float fld_22 = abs(fld_2) - (y_wid - thickness);
+	float fld_21 = fabs(fld_2) - y_wid;
+	float fld_22 = fabs(fld_2) - (y_wid - thickness);
 
 
 	float fld_3 = field_vec.x*pl_z.x +field_vec.y*pl_z.y + field_vec.z*pl_z.z;
-	fld_3 = abs(fld_3) - z_wid;
+	fld_3 = fabs(fld_3) - z_wid;
 
 
 	float fld = max(max(max(fld_11,fld_21),(max(fld_12,fld_22))*-1.0),fld_3);
@@ -496,6 +496,74 @@ void Modelling::cuboid_shell(float* data_1,float3 center,float3 angles, float x_
 
 }
 
+
+__global__ void implicit_pyramid_frustum_kernel(float* data_1,float3 center,float3 angles,float x_width_base,float x_width_top,float y_height,float z_width_base, float z_width_top, int Nx, int Ny, int Nz, float dx,float dy, float dz)
+{
+
+	int tx = blockIdx.x*blockDim.x + threadIdx.x;
+
+    int zz = tx/(Nx*Ny);
+    int yy = (tx%(Nx*Ny))/Ny;
+    int xx = tx%Nx;
+
+	float mean_x = (Nx-1)/2.0;
+	float mean_y = (Ny-1)/2.0;
+	float mean_z = (Nz-1)/2.0;
+
+	float x_wid_base = x_width_base/2.0;
+	float x_wid_top = x_width_top/2.0;
+
+	
+	float z_wid_base = z_width_base/2.0;
+	float z_wid_top = z_width_top/2.0;
+
+
+	__syncthreads();
+	
+	float x_1 = ((xx - mean_x) ) * dx - center.x;
+	float y_1 = ((yy - mean_y) ) * dy - center.y;
+	float z_1 = ((zz - mean_z) ) * dz - center.z;
+
+    float3 field_vec = {x_1,y_1,z_1};
+
+	float3 pl_x = {(cosf(angles.z) * cosf(angles.y)),(cosf(angles.z) * sinf(angles.y) * sinf(angles.x)) - (sinf(angles.z) * cosf(angles.x)),(cosf(angles.z) * sinf(angles.y) * cosf(angles.x)) + (sinf(angles.z) * sinf(angles.x))};
+
+	float3 pl_y = {((sinf(angles.z)) * cosf(angles.y)) ,
+	(sinf(angles.z) * sinf(angles.y) * sinf(angles.x)) + (cosf(angles.z) * cosf(angles.x)),(sinf(angles.z) * sinf(angles.y) * cosf(angles.x)) - (cosf(angles.z) * sinf(angles.x)) };
+
+	float3 pl_z = {(-1.0f * sinf(angles.y)),
+	cosf(angles.y) * sinf(angles.x), cosf(angles.y) * cosf(angles.x)};
+
+
+	float fld_1 = field_vec.x*pl_x.x +field_vec.y*pl_x.y + field_vec.z*pl_x.z ;
+	float fld_2 = field_vec.x*pl_y.x +field_vec.y*pl_y.y + field_vec.z*pl_y.z;
+	float fld_3 = field_vec.x*pl_z.x +field_vec.y*pl_z.y + field_vec.z*pl_z.z;
+
+	float ratio = ((y_height - fld_2) / y_height);
+
+	float x_wid = ( ratio * (x_wid_base - x_wid_top)) + x_wid_top;
+	fld_1 = fabs(fld_1) - x_wid;
+
+	fld_2 = fabs(fld_2 - (y_height/2)) - ((y_height)/2);
+	
+	float z_wid = (ratio * (z_wid_base - z_wid_top)) + z_wid_top;
+	fld_3 = fabs(fld_3) - z_wid;
+
+	float fld = max(max(fld_1,fld_2),fld_3);
+
+	data_1[tx] = fld;
+
+}
+
+void Modelling::pyramid_frustum(float* data_1,float3 center,float3 angles, float x_width_base, float x_width_top,float y_height,float z_width_base, float z_width_top, int Nx,int Ny, int Nz, float dx,float dy, float dz)
+{
+	dim3 grids(ceil( (Nx*Ny*Nz)/ 1024.0),1,1);
+    dim3 tids(1024,1,1);
+
+	implicit_pyramid_frustum_kernel<<<grids,tids>>>(data_1,center,angles,x_width_base, x_width_top,y_height,z_width_base,z_width_top,Nx,Ny,Nz, dx,dy,dz);
+    cudaDeviceSynchronize();
+
+}
 
 __global__ void implicit_torus_kernel(float* data_1,float3 center,float3 angles,float torus_radius, float torus_circle_radius, int Nx,int Ny, int Nz, float dx,float dy, float dz)
 {
@@ -604,8 +672,8 @@ __global__ void implicit_cone_kernel(float* data_1,float3 center,float3 angles,f
 		/////////////////////////////////////////////////////////////////////
 
 
-		float g = (field_vec.x*pl_y.x + field_vec.y*pl_y.y + field_vec.z*pl_y.z);
-		float h = max(((g-(cone_height/2.0)) - (cone_height/2.0)) *100,((g-(cone_height/2.0)) + (cone_height/2.0)) *100 * -1.0);
+		float g = (vec_field.y -(cone_height/2.0));
+		float h = max((g - (cone_height/2.0)) *100,(g + (cone_height/2.0)) *100 * -1.0);
 		float fld_1 = ((powf((vec_field.x),2) + powf((vec_field.z),2))*fld_2) - powf((vec_field.y - cone_height),2);
 		
 		data_1[tx] = max(fld_1,h);
@@ -620,6 +688,73 @@ void Modelling::cone_with_base_radius_height(float* data_1,float3 center,float3 
     dim3 grids(ceil( (Nx*Ny*Nz)/ 1024.0),1,1);
     dim3 tids(1024,1,1);
     implicit_cone_kernel<<<grids,tids>>>(data_1,center,angles,base_radius,cone_height,Nx,Ny,Nz,dx,dy,dz);
+    cudaDeviceSynchronize();
+
+}
+
+
+
+__global__ void implicit_cone_frustum_kernel(float* data_1,float3 center,float3 angles,float top_radius, float bottom_radius, float cone_frustum_height, int Nx,int Ny, int Nz,float dx,float dy, float dz)
+{
+    int tx = blockIdx.x*blockDim.x + threadIdx.x;
+    int size = Nx*Ny*Nz;
+    int zz = tx/(Nx*Ny);
+    int yy = (tx%(Nx*Ny))/Ny;
+    int xx = tx%Nx;
+  
+	float mean_x = (Nx-1)/2.0;
+	float mean_y = (Ny-1)/2.0;
+	float mean_z = (Nz-1)/2.0;
+
+	__syncthreads();
+
+	float x_1 = ((xx - mean_x) ) * dx - center.x;
+	float y_1 = ((yy - mean_y) ) * dy - center.y;
+	float z_1 = ((zz - mean_z) ) * dz - center.z;
+
+    float3 field_vec = {x_1,y_1,z_1};
+
+	float3 vec_field;
+
+
+
+    if(tx < size)
+    {
+
+		
+
+		///////////////////////////////////////////////////////////////
+		float3 pl_x = {(cosf(angles.z) * cosf(angles.y)),(cosf(angles.z) * sinf(angles.y) * sinf(angles.x)) - (sinf(angles.z) * cosf(angles.x)),(cosf(angles.z) * sinf(angles.y) * cosf(angles.x)) + (sinf(angles.z) * sinf(angles.x))};
+
+		float3 pl_y = {((sinf(angles.z)) * cosf(angles.y)) ,
+		(sinf(angles.z) * sinf(angles.y) * sinf(angles.x)) + (cosf(angles.z) * cosf(angles.x)),(sinf(angles.z) * sinf(angles.y) * cosf(angles.x)) - (cosf(angles.z) * sinf(angles.x)) };
+
+		float3 pl_z = {(-1.0f * sinf(angles.y)),
+		cosf(angles.y) * sinf(angles.x), cosf(angles.y) * cosf(angles.x)};
+
+		vec_field.x = field_vec.x*pl_x.x +field_vec.y*pl_x.y + field_vec.z*pl_x.z ;
+		vec_field.y = field_vec.x*pl_y.x +field_vec.y*pl_y.y + field_vec.z*pl_y.z ;
+		vec_field.z = field_vec.x*pl_z.x +field_vec.y*pl_z.y + field_vec.z*pl_z.z ;
+		/////////////////////////////////////////////////////////////////////
+
+
+		float r_diff = ((cone_frustum_height - vec_field.y)/cone_frustum_height) * (bottom_radius - top_radius) ;
+		float g = (vec_field.y -(cone_frustum_height/2.0));
+		float h = max((g - (cone_frustum_height/2.0)) *100,(g + (cone_frustum_height/2.0)) *100 * -1.0);
+		float fld_1 = ((powf((vec_field.x),2) + powf((vec_field.z),2))) - pow((r_diff + top_radius),2);
+		
+		data_1[tx] = max(fld_1,h);
+    }
+
+}
+
+
+
+void Modelling::cone_frustum(float* data_1,float3 center,float3 angles,float top_radius, float bottom_radius,float cone_frustum_height,int Nx,int Ny, int Nz, float dx,float dy, float dz)
+{
+    dim3 grids(ceil( (Nx*Ny*Nz)/ 1024.0),1,1);
+    dim3 tids(1024,1,1);
+    implicit_cone_frustum_kernel<<<grids,tids>>>(data_1,center,angles,top_radius,bottom_radius,cone_frustum_height,Nx,Ny,Nz,dx,dy,dz);
     cudaDeviceSynchronize();
 
 }

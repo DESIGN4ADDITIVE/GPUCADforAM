@@ -7,7 +7,10 @@ Uses mathematical equation to create field. Using Isosurface Extraction (Marchin
 
 ## Topology Optimisation
 
-Finding the optimal material layout based the physics of the process.
+Finding the optimal material layout based on the physics of the process.
+
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/ZD8yHY7V3Yw/0.jpg)](http://www.youtube.com/watch?v=ZD8yHY7V3Yw "GPUCADforAM")
+
 
 ## Spatially Varying Lattice
 

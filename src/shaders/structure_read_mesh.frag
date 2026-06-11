@@ -51,65 +51,38 @@ void main()
         vec4 colorr = subpassLoad(inputColor).rgba;
         float ch_depth = subpassLoad(inputDepth).r;
 
-
-        if(make_region > 0)
+        if(gl_FragCoord.z == ch_depth)
         {
                 outColor = fragColor;
 
-                if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
+                if(analysis == 0)
                 {
-
-                        val[prim_id] = -1.0;
-
-                }
-
-                else if ((mouse_click == 1) && (support == 1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
-                {
-                        val[prim_id] = 1.0;
-                }
-
-
-                else if ((mouse_click == -1) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
-                {
-                        val[prim_id] = 0.0;
-                }
-
+                        if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
+                        {
                 
-        }
+                                val[prim_id] = -1.0;
+                        
+                        }
 
+                        else if ((mouse_click == 1) && (support == 1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
+                        {
+                                val[prim_id] = 1.0;
+                        }
+
+                        
+                        else if ((mouse_click == -1) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
+                        {
+                                val[prim_id] = 0.0;
+                        }
+                }
+                        
+                
+                
+
+        }
         else
         {
-                if(gl_FragCoord.z == ch_depth)
-                {
-
-                        outColor = fragColor;
-
-                        if(analysis == 0)
-                        {
-                                if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
-                                {
-                        
-                                        val[prim_id] = -1.0;
-                                
-                                }
-
-                                else if ((mouse_click == 1) && (support == 1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
-                                {
-                                        val[prim_id] = 1.0;
-                                }
-
-                                
-                                else if ((mouse_click == -1) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d))
-                                {
-                                        val[prim_id] = 0.0;
-                                }
-                        }
-                      
-                }
-                else
-                {
-                        discard;
-                }
+                discard;
         }
 
 }

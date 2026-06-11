@@ -27,17 +27,17 @@ void Isosurface::copy_parameter( uint *voxel_verts, float isoValue,
     }
 
 
-void Isosurface::copy_regions( uint *voxel_verts, float isoValue,
-uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize,uint numVoxels,grid_points *vol_topo,
-grid_points *vol_one, float* vol_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2, bool obj_union, bool obj_diff, bool obj_intersect)
+void Isosurface::copy_regions( float isoValue,
+uint3 gridSize,grid_points *vol_topo,
+grid_points *vol_one, float* vol_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2, int Nx, int Ny, int Nz)
 
 {
         
-    dim3 grid(ceil(numVoxels/float(1024)), 1, 1);
+    dim3 grid(ceil((Nx * Ny * Nz)/float(1024)), 1, 1);
     dim3 threads(1024,1,1);
 
-    classify_copy_regions(grid,threads,voxel_verts,vol_topo,vol_one,vol_two, vol_lattice, fixed, dynamic, iso1, iso2,
-                        gridSize, gridSizeShift, gridSizeMask,numVoxels,voxelSize,isoValue,obj_union, obj_diff, obj_intersect);
+    classify_copy_regions(grid,threads,vol_topo,vol_one,vol_two, vol_lattice, fixed, dynamic, iso1, iso2,
+                        gridSize,isoValue,Nx,Ny,Nz);
     
 }
 
@@ -142,13 +142,6 @@ void Isosurface::computeIsosurface(float *vol, uint3 raster_grid, float4* pos , 
         dim3 grid(ceil(numVoxels/float(1024)), 1, 1);
         dim3 threads(1024,1,1);
       
-        if (grid.x > 65535)
-        {
-            grid.y = grid.x / 32768;
-            grid.x = 32768;
-        }
-        
-        
         classify_solid_voxels(grid,threads,primitive_fixed,gridSize, gridSizeShift, gridSizeMask,numVoxels,voxelSize, isoValue, d_solid_field);
       
 
@@ -505,7 +498,7 @@ __global__ void patch_grid_kernel(float *d_vec1, int Nx, int Ny, int Nz, float i
     int tx = blockIdx.x * blockDim.x + threadIdx.x; 
 
 	int xx = tx%Nx;
-	int yy = (tx%(Nx*Ny))/Ny;
+	int yy = (tx%(Nx*Ny))/Nx;
 	int zz = tx/(Nx*Ny);
 
     float k;
@@ -551,8 +544,25 @@ uint3 calcGridPos_field(uint i, uint3 gridSizeShift, uint3 gridSizeMask)
     
     uint z_quo = i / gridSizeShift.z;
     uint z_rem = i % gridSizeShift.z;
-    uint y_quo = (z_rem)/gridSizeShift.y;
-    uint x_rem = (z_rem) % gridSizeShift.y;
+    uint y_quo = (z_rem)/gridSizeMask.x;
+    uint x_rem = (z_rem) % gridSizeMask.x;
+
+    gridPos.x = x_rem;
+    gridPos.y = y_quo;
+    gridPos.z = z_quo; 
+
+    return gridPos;
+}
+
+__device__
+uint3 calcGridPos_field_pos(uint i, uint3 gridSize)
+{
+    uint3 gridPos;
+    
+    uint z_quo = i / gridSize.z;
+    uint z_rem = i % gridSize.z;
+    uint y_quo = (z_rem)/gridSize.x;
+    uint x_rem = (z_rem) % gridSize.x;
 
     gridPos.x = x_rem;
     gridPos.y = y_quo;
@@ -571,45 +581,46 @@ void fillVolume(float *data, uint3 p, uint3 gridSize, float minDens)
     data[i] = minDens;
 }
 
+__device__
+float hgrid_val(grid_points *data, uint3 p, uint3 gridSize)
+{
 
-__global__ void patch_topo_field_kernel(float *d_vec1, int Nx, int Ny, int Nz, float isoval, float *solid_field, float minDens, uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask)
+    uint i = (p.z*gridSize.x*gridSize.y) + (p.y*gridSize.x) + p.x;
+    return (float) data[i].val;
+}
+
+
+
+__global__ void patch_topo_field_kernel(float *d_vec1, int Nx, int Ny, int Nz, grid_points *vol_one)
 {
     int tx = blockIdx.x * blockDim.x + threadIdx.x; 
 
     float k;
 
-    uint z = tx/(Nx * Ny);
 
-    uint y = (tx/(Nx * Ny))/Ny;
+    uint3 gridPos;
 
-    uint x = (tx/(Nx * Ny))%Ny;
 
-	if((x < (Nx-1)) && (y < (Ny - 1)) && (z < (Nz - 1)))
-	{
-        
+    gridPos.x = tx/(Nx * Ny);
 
-		k = solid_field[tx];
+    gridPos.y = (tx/(Nx * Ny))/Nx;
 
-        if(k < 1)
-        {
-            uint3 gridPos = calcGridPos_field(tx, gridSizeShift, gridSizeMask);
+    gridPos.z = (tx/(Nx * Ny))%Nx;
 
-            fillVolume(d_vec1, gridPos, gridSize, minDens);
-            fillVolume(d_vec1, gridPos + make_uint3(1, 0, 0), gridSize,minDens);
-            fillVolume(d_vec1, gridPos + make_uint3(1, 1, 0), gridSize,minDens);
-            fillVolume(d_vec1, gridPos + make_uint3(0, 1, 0), gridSize,minDens);
-            fillVolume(d_vec1, gridPos + make_uint3(0, 0, 1), gridSize,minDens);
-            fillVolume(d_vec1, gridPos + make_uint3(1, 0, 1), gridSize,minDens);
-            fillVolume(d_vec1, gridPos + make_uint3(1, 1, 1), gridSize,minDens);
-            fillVolume(d_vec1, gridPos + make_uint3(0, 1, 1), gridSize,minDens);
 
-        }
-	
 
-    }
-    else if(tx < (Nx * Ny * Nz))
+    if((gridPos.x < (Nx)) && (gridPos.y < (Ny)) && (gridPos.z < (Nz)))
     {
-        d_vec1[tx] = 0.0;
+      
+        k = vol_one[tx].val;
+
+        if( k == 1 )
+        {
+            d_vec1[tx] = 0;
+
+ 
+        }
+
     }
 
 
@@ -618,13 +629,13 @@ __global__ void patch_topo_field_kernel(float *d_vec1, int Nx, int Ny, int Nz, f
 
 
 
-void Isosurface::patch_topo_field(float *d_vec1 , int Nx, int Ny, int Nz, float isoval ,float *solid_field,float minDens, uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask)
+void Isosurface::patch_topo_field(float *d_vec1 , int Nx, int Ny, int Nz, grid_points *vol_one)
 {
     dim3 grids(ceil((Nx*Ny*Nz)/float(1024)),1,1);
 
 	dim3 tids(1024,1,1);
 
-    patch_topo_field_kernel<<<grids,tids>>>(d_vec1,Nx,Ny,Nz,isoval,solid_field,minDens,gridSize,gridSizeShift,gridSizeMask);
+    patch_topo_field_kernel<<<grids,tids>>>(d_vec1,Nx,Ny,Nz,vol_one);
 
     cudaDeviceSynchronize();
 

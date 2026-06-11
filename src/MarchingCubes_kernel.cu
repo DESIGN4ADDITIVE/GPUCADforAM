@@ -86,7 +86,7 @@ float sampleVolume(float *data, uint3 p, uint3 gridSize)
 }
 
 __device__
-int sampleVolume_2(grid_points *data, uint3 p, uint3 gridSize, int j)
+int sampleVolume_2(grid_points *data, uint3 p, uint3 gridSize)
 {
     p.x = min(p.x, gridSize.x);
     p.y = min(p.y, gridSize.y);
@@ -112,10 +112,11 @@ uint3 calcGridPos(uint i, uint3 gridSizeShift, uint3 gridSizeMask)
 {
     uint3 gridPos;
     
-    uint z_quo = i / gridSizeShift.z;
-    uint z_rem = i % gridSizeShift.z;
-    uint y_quo = (z_rem)/gridSizeShift.y;
-    uint x_rem = (z_rem) % gridSizeShift.y;
+    uint z_quo = i / (gridSizeShift.z);
+    uint z_rem = i % (gridSizeShift.z);
+    uint y_quo = (z_rem)/gridSizeMask.x;
+    uint x_rem = (z_rem) % gridSizeMask.x;
+
 
     gridPos.x = x_rem;
     gridPos.y = y_quo;
@@ -132,8 +133,8 @@ uint3 calcGridPos_one(uint i, uint3 gridSize)
     
     uint z_quo = i / (gridSize.x * gridSize.y);
     uint z_rem = i % (gridSize.x * gridSize.y);
-    uint y_quo = (z_rem)/gridSize.y;
-    uint x_rem = (z_rem) % gridSize.y;
+    uint y_quo = (z_rem)/gridSize.x;
+    uint x_rem = (z_rem) % gridSize.x;
 
     gridPos.x = x_rem;
     gridPos.y = y_quo;
@@ -446,7 +447,7 @@ void MarchingCubeCuda::classify_copy_Voxel_lattice(dim3 grid, dim3 threads,  uin
                                      numVoxels, voxelSize, isoValue, numVertsTex_s, obj_union, obj_diff, obj_intersect);
     cudaDeviceSynchronize();
 
-    getLastCudaError("classifyVoxel failed");
+    getLastCudaError("classify_copy_Voxel failed");
 
    
 }
@@ -454,9 +455,8 @@ void MarchingCubeCuda::classify_copy_Voxel_lattice(dim3 grid, dim3 threads,  uin
 
 
 __global__ void
-classify_copy_region_kernel( uint *voxel_verts,  grid_points *vol_topo,grid_points *vol_one, float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
-              uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
-              float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex, bool obj_union, bool obj_diff, bool obj_intersect)
+classify_copy_region_kernel( grid_points *vol_topo,grid_points *vol_one, float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
+              uint3 gridSize, float isoValue, int Nx, int Ny, int Nz)
 {
     uint blockId = __mul24(blockIdx.y, gridDim.x) + blockIdx.x;
 
@@ -494,7 +494,7 @@ classify_copy_region_kernel( uint *voxel_verts,  grid_points *vol_topo,grid_poin
         }
         else
         {
-            if((uint(v < (isoVal)) && uint(vox_points.val < (isoVal)) )| uint(vox_topo.val < (isoVal)))
+            if((uint(v < (isoVal)) && uint(vox_points.val < (isoVal)) ) | uint(vox_topo.val < (isoVal)))
             {
                 vox_topo.val = -1;
             }
@@ -840,18 +840,16 @@ classify_copy_region_kernel( uint *voxel_verts,  grid_points *vol_topo,grid_poin
 }
 
 
-void MarchingCubeCuda::classify_copy_regions(dim3 grid, dim3 threads,  uint *voxel_verts, grid_points *vol_topo,grid_points *vol_one,float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
-                     uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
-                     float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect)
+void MarchingCubeCuda::classify_copy_regions(dim3 grid, dim3 threads, grid_points *vol_topo,grid_points *vol_one,float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
+                     uint3 gridSize, float isoValue,int Nx, int Ny, int Nz)
 {
 
  
-    classify_copy_region_kernel<<<grid, threads>>>( voxel_verts,vol_topo, vol_one, volume_two,vol_lattice,fixed, dynamic,iso1, iso2,
-                                     gridSize, gridSizeShift, gridSizeMask,
-                                     numVoxels, voxelSize, isoValue, numVertsTex_s, obj_union, obj_diff, obj_intersect);
+    classify_copy_region_kernel<<<grid, threads>>>( vol_topo, vol_one, volume_two,vol_lattice,fixed, dynamic,iso1, iso2,
+                                     gridSize, isoValue, Nx, Ny, Nz);
     cudaDeviceSynchronize();
 
-    getLastCudaError("classifyVoxel failed");
+    getLastCudaError("classify_copy_region failed");
 
    
 }
@@ -870,7 +868,7 @@ classifyVoxel(float *vol,uint3 raster_grid, uint *voxelVerts, uint *voxelOccupie
     if (i < numVoxels)
     {
         uint3 gridPos = calcGridPos(i, gridSizeShift, gridSizeMask);
-    
+      
         float field_1[8];
         
         float field_2[8];
@@ -878,14 +876,14 @@ classifyVoxel(float *vol,uint3 raster_grid, uint *voxelVerts, uint *voxelOccupie
         float field_3[8];
 
 
-        field_1[0] = sampleVolume_2(primitive_fixed, gridPos, gridSize,i);
-        field_1[1] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 0), gridSize,i);
-        field_1[2] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 0), gridSize,i);
-        field_1[3] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 0), gridSize,i);
-        field_1[4] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 0, 1), gridSize,i);
-        field_1[5] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 1), gridSize,i);
-        field_1[6] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 1), gridSize,i);
-        field_1[7] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 1), gridSize,i);
+        field_1[0] = sampleVolume_2(primitive_fixed, gridPos, gridSize);
+        field_1[1] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 0), gridSize);
+        field_1[2] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 0), gridSize);
+        field_1[3] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 0), gridSize);
+        field_1[4] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 0, 1), gridSize);
+        field_1[5] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 1), gridSize);
+        field_1[6] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 1), gridSize);
+        field_1[7] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 1), gridSize);
 
         field_2[0] = sampleVolume(primitive_dynamic, gridPos, gridSize);
         field_2[1] = sampleVolume(primitive_dynamic, gridPos + make_uint3(1, 0, 0), gridSize);
@@ -1088,20 +1086,21 @@ classify_solid_voxels_kernel( grid_points  *primitive_fixed,
         float field_1[8];
         
    
-        field_1[0] = sampleVolume_2(primitive_fixed, gridPos, gridSize,i);
-        field_1[1] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 0), gridSize,i);
-        field_1[2] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 0), gridSize,i);
-        field_1[3] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 0), gridSize,i);
-        field_1[4] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 0, 1), gridSize,i);
-        field_1[5] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 1), gridSize,i);
-        field_1[6] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 1), gridSize,i);
-        field_1[7] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 1), gridSize,i);
+        field_1[0] = sampleVolume_2(primitive_fixed, gridPos, gridSize);
+        field_1[1] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 0), gridSize);
+        field_1[2] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 0), gridSize);
+        field_1[3] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 0), gridSize);
+        field_1[4] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 0, 1), gridSize);
+        field_1[5] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 1), gridSize);
+        field_1[6] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 1), gridSize);
+        field_1[7] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 1), gridSize);
 
 
 
         float isoVal = isoValue;
      
         uint cubeindex;
+        uint s_val = 0;
 
 
         cubeindex =  (uint(field_1[0] < isoVal));
@@ -1113,10 +1112,20 @@ classify_solid_voxels_kernel( grid_points  *primitive_fixed,
         cubeindex += (uint(field_1[6] < isoVal)) *64;
         cubeindex += (uint(field_1[7] < isoVal)) *128;
 
-  
-        float a = (cubeindex == 0) ? 0.0 : (cubeindex == 255) ? 1.0 : 0.5;
+        if((cubeindex < 255) && (cubeindex > 0))
+        {
+            s_val = 2;
+        }
+        else if(cubeindex == 255)
+        {
+            s_val = 1;
+        }
+        else
+        {
+            s_val = 0;
+        }
 
-        d_solid_field[i] = a;
+        d_solid_field[i] = s_val;
 
 
     }
@@ -1162,24 +1171,24 @@ classifyVoxel_region_kernel( uint *voxelVerts, uint *voxelOccupied, grid_points 
         float field_0[8];
 
 
-        field_0[0] = sampleVolume_2(vol_topo, gridPos, gridSize,i);
-        field_0[1] = sampleVolume_2(vol_topo, gridPos + make_uint3(1, 0, 0), gridSize,i);
-        field_0[2] = sampleVolume_2(vol_topo, gridPos + make_uint3(1, 1, 0), gridSize,i);
-        field_0[3] = sampleVolume_2(vol_topo, gridPos + make_uint3(0, 1, 0), gridSize,i);
-        field_0[4] = sampleVolume_2(vol_topo, gridPos + make_uint3(0, 0, 1), gridSize,i);
-        field_0[5] = sampleVolume_2(vol_topo, gridPos + make_uint3(1, 0, 1), gridSize,i);
-        field_0[6] = sampleVolume_2(vol_topo, gridPos + make_uint3(1, 1, 1), gridSize,i);
-        field_0[7] = sampleVolume_2(vol_topo, gridPos + make_uint3(0, 1, 1), gridSize,i);
+        field_0[0] = sampleVolume_2(vol_topo, gridPos, gridSize);
+        field_0[1] = sampleVolume_2(vol_topo, gridPos + make_uint3(1, 0, 0), gridSize);
+        field_0[2] = sampleVolume_2(vol_topo, gridPos + make_uint3(1, 1, 0), gridSize);
+        field_0[3] = sampleVolume_2(vol_topo, gridPos + make_uint3(0, 1, 0), gridSize);
+        field_0[4] = sampleVolume_2(vol_topo, gridPos + make_uint3(0, 0, 1), gridSize);
+        field_0[5] = sampleVolume_2(vol_topo, gridPos + make_uint3(1, 0, 1), gridSize);
+        field_0[6] = sampleVolume_2(vol_topo, gridPos + make_uint3(1, 1, 1), gridSize);
+        field_0[7] = sampleVolume_2(vol_topo, gridPos + make_uint3(0, 1, 1), gridSize);
 
 
-        field_1[0] = sampleVolume_2(primitive_fixed, gridPos, gridSize,i);
-        field_1[1] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 0), gridSize,i);
-        field_1[2] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 0), gridSize,i);
-        field_1[3] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 0), gridSize,i);
-        field_1[4] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 0, 1), gridSize,i);
-        field_1[5] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 1), gridSize,i);
-        field_1[6] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 1), gridSize,i);
-        field_1[7] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 1), gridSize,i);
+        field_1[0] = sampleVolume_2(primitive_fixed, gridPos, gridSize);
+        field_1[1] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 0), gridSize);
+        field_1[2] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 0), gridSize);
+        field_1[3] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 0), gridSize);
+        field_1[4] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 0, 1), gridSize);
+        field_1[5] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 0, 1), gridSize);
+        field_1[6] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(1, 1, 1), gridSize);
+        field_1[7] = sampleVolume_2(primitive_fixed, gridPos + make_uint3(0, 1, 1), gridSize);
 
         field_2[0] = sampleVolume(primitive_dynamic, gridPos, gridSize);
         field_2[1] = sampleVolume(primitive_dynamic, gridPos + make_uint3(1, 0, 0), gridSize);
@@ -1294,7 +1303,7 @@ void MarchingCubeCuda::classifyVoxel_region(dim3 grid, dim3 threads,uint *voxelV
                                      make_region, show_region,show_domain);
     cudaDeviceSynchronize();
 
-    getLastCudaError("classifyVoxel failed");
+    getLastCudaError("classifyVoxel_region failed");
 
    
 }
@@ -1398,7 +1407,7 @@ void MarchingCubeCuda::classifyVoxel_lattice_2(dim3 grid, dim3 threads, uint *vo
                                      numVoxels, voxelSize, isoValue, isovalue1, numVertsTex_s);
     cudaDeviceSynchronize();
 
-    getLastCudaError("classifyVoxel failed");
+    getLastCudaError("classifyVoxel_2 failed");
 
    
 }
@@ -1462,7 +1471,7 @@ void MarchingCubeCuda::classifyVoxel_lattice_3(dim3 grid, dim3 threads, uint *vo
                                      numVoxels, voxelSize, isoValue, numVertsTex_s);
     cudaDeviceSynchronize();
 
-    getLastCudaError("classifyVoxel failed");
+    getLastCudaError("classifyVoxel_3 failed");
 
    
 }
@@ -2878,7 +2887,7 @@ void MarchingCubeCuda::classifyVoxel_lattice_new(dim3 grid, dim3 threads, uint *
                                      numVoxels, voxelSize, isoValue, numVertsTex_s);
     cudaDeviceSynchronize();
 
-    getLastCudaError("classifyVoxel failed");
+    getLastCudaError("classifyVoxel_new failed");
 
    
 }

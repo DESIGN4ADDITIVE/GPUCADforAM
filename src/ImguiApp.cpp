@@ -89,6 +89,9 @@ uint ImguiApp::lattice_index_type = 0;
 
 bool ImguiApp::grid_value_check;
 bool ImguiApp::initialise_grid = false;
+bool ImguiApp::uniform_grid = true;
+bool ImguiApp::bounding_box_grid = false;
+int3 ImguiApp::bounding_grid = {64,32,16};
 bool ImguiApp::execute_signal = false;
 bool ImguiApp::execute_done = false;
 bool ImguiApp::execute_primitive_lattice = false;
@@ -124,6 +127,8 @@ bool ImguiApp::background_color = false;
 bool ImguiApp::execute_optimize = false;
 bool ImguiApp::select_load_node = false;
 bool ImguiApp::select_support_node = false;
+
+uint ImguiApp::Iteration_count = 0;
 
 
 bool ImguiApp::load_icon = false;
@@ -1030,6 +1035,8 @@ ImguiApp::ImguiApp()
         {
             ImGui::Text("Executing the data...");
             ImGui::Text("Please Wait ");
+
+            ImGui::Text("Iteration  %u / %u  ",ImguiApp::Iteration_count, Topopt_val::MaxOptIter);
         }
         else if(ImguiApp::topo_done_lattice_do)
         {
@@ -1213,10 +1220,38 @@ void ImguiApp::show_grid_settings(bool *grid_setting, bool vulkan_buffer_created
 
     ImGui::SeparatorText("Enter Grid Dimension");
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
-    static int i0 = 16;
 
-    ImGui::InputInt("Enter Grid Dimension ", &i0,1,32);
-    grid_value = i0;
+    static int grid_type;
+    ImGui::RadioButton("UNIFORM_GRID", &grid_type, 0);
+    ImGui::RadioButton("CUSTOM_GRID", &grid_type, 1);
+
+    static int i0 = 16;
+    static int grid_x = 64;
+    static int grid_y = 32;
+    static int grid_z = 16;
+
+    if(grid_type == 0)
+    {
+
+        ImGui::InputInt("Enter Grid Dimension ", &i0,1,8);
+        grid_value = i0;
+
+
+        ImguiApp::bounding_box_grid = false;
+        ImguiApp::uniform_grid = true;
+    }
+    else if(grid_type == 1)
+    {
+        ImGui::InputInt("Dim X", &grid_x,1,8);
+        ImGui::InputInt("Dim Y", &grid_y,1,8);
+        ImGui::InputInt("Dim Z", &grid_z,1,8);
+        ImguiApp::bounding_grid = {grid_x,grid_y,grid_z};
+
+        ImguiApp::bounding_box_grid = true;
+        ImguiApp::uniform_grid = false;
+
+    }
+
 
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float f0 = 1.0f;
@@ -1266,14 +1301,45 @@ void ImguiApp::show_grid_settings(bool *grid_setting, bool vulkan_buffer_created
     {
         ImGui::SameLine();
         
-            
-        if ((ImguiApp::grid_value < 16 ) || (ImguiApp::grid_value > 128))
+        if(grid_type == 0)
         {
-            ImguiApp::grid_value_check = false;
+            if ((ImguiApp::grid_value < 16 ) || (ImguiApp::grid_value > 128))
+            {
+                ImguiApp::grid_value_check = false;
+            }
+            else
+            {
+                ImguiApp::grid_value_check = true;
+            }
         }
-        else
+        else if(grid_type == 1)
         {
-            ImguiApp::grid_value_check = true;
+            if ((ImguiApp::bounding_grid.x < 16 ) || (ImguiApp::bounding_grid.x > 128))
+            {
+                ImguiApp::grid_value_check = false;
+
+             
+            }
+       
+
+            else if ((ImguiApp::bounding_grid.y < 16 ) || (ImguiApp::bounding_grid.y > 128))
+            {
+                ImguiApp::grid_value_check = false;
+
+                
+            }
+    
+
+            else if ((ImguiApp::bounding_grid.z < 16 ) || (ImguiApp::bounding_grid.z > 128))
+            {
+                ImguiApp::grid_value_check = false;
+
+                
+            }
+            else
+            {
+                ImguiApp::grid_value_check = true;
+            }
         }
         
 

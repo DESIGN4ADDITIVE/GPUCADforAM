@@ -329,14 +329,14 @@ void Selection::update_load_condition(REAL3* d_us,float* d_cudastoragebuffer,int
 
 
 __device__
-uint3 calcGridPos_sel(uint i, uint3 gridSizeShift)
+uint3 calcGridPos_sel(uint i, uint3 gridSizeShift, uint3 gridSizeMask)
 {
     uint3 gridPos;
     
     uint z_quo = i / gridSizeShift.z;
     uint z_rem = i % gridSizeShift.z;
-    uint y_quo = (z_rem)/gridSizeShift.y;
-    uint x_rem = (z_rem) % gridSizeShift.y;
+    uint y_quo = (z_rem)/gridSizeMask.x;
+    uint x_rem = (z_rem) % gridSizeMask.x;
 
     gridPos.x = x_rem;
     gridPos.y = y_quo;
@@ -379,7 +379,7 @@ __global__ void update_raster_kernel(float isoval_fixed, float iso_dynamic, floa
 bool obj_union, bool obj_difference, bool obj_intersect)
 {
 	int ind =  (blockDim.x * blockIdx.x) + threadIdx.x;
-	uint3 gridPos = calcGridPos_sel(ind,make_uint3(1,Nx,Ny*Nx));
+	uint3 gridPos = calcGridPos_sel(ind,make_uint3(1,Nx,Ny*Nx),make_uint3(Nx,Ny,Nz));
 	uint3 gridSize = make_uint3(Nx * 2,  Ny * 2,Nz * 2);
 
 	if((gridPos.x < (Nx)) && (gridPos.y < (Ny)) && (gridPos.z < (Nz)))
@@ -1094,7 +1094,7 @@ bool obj_difference, bool obj_intersect)
 __global__ void update_make_region_kernel(float isoval_fixed, float iso_dynamic, float iso1, float iso2,float *raster,float *d_solid, grid_points *vol_one, float *boundary, float *lattice_field,float *fix_lat_field, bool fixed, bool dynamic,int Nx,int Ny, int Nz)
 {
 	int ind =  (blockDim.x * blockIdx.x) + threadIdx.x;
-	uint3 gridPos = calcGridPos_sel(ind,make_uint3(1,Nx,Ny*Nx));
+	uint3 gridPos = calcGridPos_sel(ind,make_uint3(1,Nx,Ny*Nx),make_uint3(Nx,Ny,Nz));
 	uint3 gridSize = make_uint3(Nx * 2,  Ny * 2,Nz * 2);
 
 	if((gridPos.x < Nx) && (gridPos.y < Ny) && (gridPos.z < Nz))
@@ -1439,8 +1439,8 @@ uint3 calcGridPos_selection(uint i, uint3 gridSizeShift, uint3 gridSizeMask)
     
     uint z_quo = i / gridSizeShift.z;
     uint z_rem = i % gridSizeShift.z;
-    uint y_quo = (z_rem)/gridSizeShift.y;
-    uint x_rem = (z_rem) % gridSizeShift.y;
+    uint y_quo = (z_rem)/gridSizeMask.x;
+    uint x_rem = (z_rem) % gridSizeMask.x;
 
     gridPos.x = x_rem;
     gridPos.y = y_quo;

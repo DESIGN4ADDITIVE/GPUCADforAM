@@ -84,8 +84,8 @@ REAL *d_new_den,REAL *d_new_den_result)
   int tx = threadIdx.x;
   int index = tx + blockDim.x*blockIdx.x;
   int zz = (index/(NY*NX));
-  int yy = ((index%(NY*NX))/NY);
-  int xx = ((index%(NY*NX))%NY);
+  int yy = ((index%(NY*NX))/NX);
+  int xx = ((index%(NY*NX))%NX);
 
   int index2 = xx + (yy * NX )+ zz * (NX*NY);
   

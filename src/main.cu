@@ -2920,16 +2920,29 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     void update_topo_grid_data()
     {
-        NumX = NumY = NumZ = ImguiApp::grid_value;
+        if(ImguiApp::uniform_grid)
+        {
+            NumX = NumY = NumZ = ImguiApp::grid_value;
+        }
+        if(ImguiApp::bounding_box_grid)
+        {
+            NumX = ImguiApp::bounding_grid.x;
+            NumY = ImguiApp::bounding_grid.y;
+            NumZ = ImguiApp::bounding_grid.z;
+        }
         
-        dx = dy = dz = 1.0;
+        dx = 1.0;
+        dy = 1.0;
+        dz = 1.0;
         
         dist2 = (MAX(NumZ,MAX(NumX,NumY)));
         
         maxmemverts = max((NumX*NumY*NumZ*4),300000);
 
-        NumX2 = NumY2 = NumZ2 = 2*(NumX);
-        
+        NumX2 = 2*(NumX);
+        NumY2 = 2*(NumY);
+        NumZ2 = 2*(NumZ);
+
         dx2 = 0.5 *dx;
         
         dy2 = 0.5 *dy;
@@ -3117,6 +3130,8 @@ class Multitopo : public VulkanBaseApp, Modelling
         {
             
             cout<<"OptIter "<<OptIter<<endl;
+
+            ImguiApp::Iteration_count = OptIter;
         
             gettimeofday(&t1, 0);
             
@@ -3150,7 +3165,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             lattice.refine(d_volume_twice,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
 
-            isosurf.patch_topo_field(d_volume_twice,NumX2,NumY2,NumZ2, Topopt_val::VolumeFraction,d_solid_field,Topopt_val::MinDens,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo);
+            isosurf.patch_topo_field(d_volume_twice,NumX2,NumY2,NumZ2, vol_one);
             
             lattice.copytotexture_results(d_us,devPitchedPtr,NumX,NumY,NumZ,x_result,y_result,z_result);
 
@@ -3262,7 +3277,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             lattice.refine(d_volume_twice,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
 
-            isosurf.patch_topo_field(d_volume_twice,NumX2,NumY2,NumZ2, Topopt_val::VolumeFraction,d_solid_field,Topopt_val::MinDens,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo);
+            isosurf.patch_topo_field(d_volume_twice,NumX2,NumY2,NumZ2, vol_one);
             
             lattice.copytotexture_results(d_us,devPitchedPtr,NumX,NumY,NumZ,x_result,y_result,z_result);
 
@@ -3472,8 +3487,7 @@ class Multitopo : public VulkanBaseApp, Modelling
                 else if(ImguiApp::region_done)
                 {
 
-                    isosurf.copy_regions(d_voxelVertstwo,0.0,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,numVoxelstwo,vol_topo,vol_one,d_boundary,d_volumethree,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,
-                    obj_union, obj_diff, obj_intersect);
+                    isosurf.copy_regions(0.0,gridSizetwo,vol_topo,vol_one,d_boundary,d_volumethree,ImguiApp::lattice_fixed,ImguiApp::lattice_dynamic,ImguiApp::bound_isoValone,ImguiApp::bound_isoValtwo,NumX2,NumY2,NumZ2);
 
                     ImguiApp::region_done = false;
                     ImguiApp::make_region = false;

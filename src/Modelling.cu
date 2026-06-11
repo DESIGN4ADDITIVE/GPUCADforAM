@@ -24,7 +24,7 @@ __global__ void concentric_cylinder_kernel(float* data_1,float3 center,float rad
     int tx = blockIdx.x*blockDim.x + threadIdx.x;
     int size = Nx*Ny*Nz;
     int zz = tx/(Nx*Ny);
-    int yy = (tx%(Nx*Ny))/Ny;
+    int yy = (tx%(Nx*Ny))/Nx;
     int xx = tx%Nx;
     float field_val1;
 	float mean_x = (Nx-1)/2.0;
@@ -246,7 +246,7 @@ __global__ void distance_from_line_kernel(float* data_1,float3 center,float3 axi
     int tx = blockIdx.x*blockDim.x + threadIdx.x;
     int size = Nx*Ny*Nz;
     int zz = tx/(Nx*Ny);
-    int yy = (tx%(Nx*Ny))/Ny;
+    int yy = (tx%(Nx*Ny))/Nx;
     int xx = tx%Nx;
   
 	float mean_x = (Nx-1)/2.0;
@@ -316,8 +316,9 @@ __global__ void implicit_sphere_kernel(float* data_1,float3 center,float radius,
     int tx = blockIdx.x*blockDim.x + threadIdx.x;
     int size = Nx*Ny*Nz;
     int zz = tx/(Nx*Ny);
-    int yy = (tx%(Nx*Ny))/Ny;
+    int yy = (tx%(Nx*Ny))/Nx;
     int xx = tx%Nx;
+
   
 	float mean_x = (Nx-1)/2.0;
 	float mean_y = (Ny-1)/2.0;
@@ -377,7 +378,7 @@ __global__ void implicit_cuboid_kernel(float* data_1,float3 center,float3 angles
 	int tx = blockIdx.x*blockDim.x + threadIdx.x;
 
     int zz = tx/(Nx*Ny);
-    int yy = (tx%(Nx*Ny))/Ny;
+    int yy = (tx%(Nx*Ny))/Nx;
     int xx = tx%Nx;
 
 	float mean_x = (Nx-1)/2.0;
@@ -437,7 +438,7 @@ __global__ void implicit_cuboid_shell_kernel(float* data_1,float3 center,float3 
 	int tx = blockIdx.x*blockDim.x + threadIdx.x;
     
     int zz = tx/(Nx*Ny);
-    int yy = (tx%(Nx*Ny))/Ny;
+    int yy = (tx%(Nx*Ny))/Nx;
     int xx = tx%Nx;
 
 	float mean_x = (Nx-1)/2.0;
@@ -503,7 +504,7 @@ __global__ void implicit_pyramid_frustum_kernel(float* data_1,float3 center,floa
 	int tx = blockIdx.x*blockDim.x + threadIdx.x;
 
     int zz = tx/(Nx*Ny);
-    int yy = (tx%(Nx*Ny))/Ny;
+    int yy = (tx%(Nx*Ny))/Nx;
     int xx = tx%Nx;
 
 	float mean_x = (Nx-1)/2.0;
@@ -570,7 +571,7 @@ __global__ void implicit_torus_kernel(float* data_1,float3 center,float3 angles,
     int tx = blockIdx.x*blockDim.x + threadIdx.x;
     int size = Nx*Ny*Nz;
     int zz = tx/(Nx*Ny);
-    int yy = (tx%(Nx*Ny))/Ny;
+    int yy = (tx%(Nx*Ny))/Nx;
     int xx = tx%Nx;
   
 	float mean_x = (Nx-1)/2.0;
@@ -632,7 +633,7 @@ __global__ void implicit_cone_kernel(float* data_1,float3 center,float3 angles,f
     int tx = blockIdx.x*blockDim.x + threadIdx.x;
     int size = Nx*Ny*Nz;
     int zz = tx/(Nx*Ny);
-    int yy = (tx%(Nx*Ny))/Ny;
+    int yy = (tx%(Nx*Ny))/Nx;
     int xx = tx%Nx;
   
 	float mean_x = (Nx-1)/2.0;
@@ -699,7 +700,7 @@ __global__ void implicit_cone_frustum_kernel(float* data_1,float3 center,float3 
     int tx = blockIdx.x*blockDim.x + threadIdx.x;
     int size = Nx*Ny*Nz;
     int zz = tx/(Nx*Ny);
-    int yy = (tx%(Nx*Ny))/Ny;
+    int yy = (tx%(Nx*Ny))/Nx;
     int xx = tx%Nx;
   
 	float mean_x = (Nx-1)/2.0;
@@ -824,7 +825,7 @@ __global__ void retain_boundary_kernel(float* data_1, float* data_2,float* data_
 	int size = Nx*Ny*Nz;
 
 	int xx = tx%Nx;
-	int yy = (tx%(Nx*Ny))/Ny;
+	int yy = (tx%(Nx*Ny))/Nx;
 	int zz = tx/(Nx*Ny);
 
 	float a;

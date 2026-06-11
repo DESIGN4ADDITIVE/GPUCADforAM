@@ -39,9 +39,8 @@ class MarchingCubeCuda
                      float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect);
 
         
-        void classify_copy_regions(dim3 grid, dim3 threads,  uint *voxel_verts,grid_points *vol_topo, grid_points *vol_one,float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
-                uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
-                float3 voxelSize, float isoValue, bool obj_union, bool obj_diff, bool obj_intersect);
+        void classify_copy_regions(dim3 grid, dim3 threads,  grid_points *vol_topo, grid_points *vol_one,float *volume_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2,
+                uint3 gridSize, float isoValue, int Nx, int Ny, int Nz);
 
         void classifyVoxel_lattice(dim3 grid, dim3 threads,float *vol,uint3 raster_grid, uint *voxelVerts, uint *voxelOccupied,grid_points  *primitive_fixed,float *primitive_dynamic, float *topo_field,float *lattice_field, 
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,float iso1, float iso2,

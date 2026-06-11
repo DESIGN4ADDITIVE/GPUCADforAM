@@ -132,7 +132,7 @@ float dx, float dy, float dz,  char latticetype_one, int uniform_type, float con
 		x = int(floorf((tx) % x_dim)); 
  
 		
-		y = int(floorf(((tx) % (x_dim * y_dim)) / y_dim));
+		y = int(floorf(((tx) % (x_dim * y_dim)) / x_dim));
 	
 
 		z = int(floorf(((tx) / (x_dim * y_dim))));
@@ -441,7 +441,7 @@ __global__ void GPUMatvec_lattice_kernel(float *d_d,float *d_q, int x_dim, int y
 	
 		phi1 = d_d[tx];
 		x = int(floorf((tx)%x_dim));
-		y = int(floorf(((tx)%(x_dim*y_dim)/y_dim)));
+		y = int(floorf(((tx)%(x_dim*y_dim)/x_dim)));
 		z = int(floorf((tx)/(x_dim*y_dim)));
     
 		if(x == 0)
@@ -787,7 +787,7 @@ float mean_z,char axis)
 	int tx = blockIdx.x * blockDim.x + threadIdx.x;
 	int size = NX*NY*NZ;
 	int xx = tx%NX;
-	int yy = (tx%(NX*NY))/NY;
+	int yy = (tx%(NX*NY))/NX;
 	int zz = tx/(NX*NY);
 
 	float x = (xx-mean_x)*dx;
@@ -830,7 +830,7 @@ char axis)
 	int tx = blockIdx.x * blockDim.x + threadIdx.x;
 	int size = NX*NY*NZ;
 	int xx = tx%NX;
-	int yy = (tx%(NX*NY))/NY;
+	int yy = (tx%(NX*NY))/NX;
 	int zz = tx/(NX*NY);
 	float period ;
 
@@ -1257,7 +1257,7 @@ __global__ void device_bufferfour(float *dataone,float *datatwo,float *datathree
 	int tx = blockIdx.x * blockDim.x + threadIdx.x; 
 
 	int xx = tx%NX;
-	int yy = (tx%(NX*NY))/NY;
+	int yy = (tx%(NX*NY))/NX;
 	int zz = tx/(NX*NY);
 	int size = NX*NY*NZ;
 	float k;
@@ -1307,7 +1307,7 @@ float iso2,bool union_val, bool inside, bool outside)
 
 
 	int xx = tx%NX;
-	int yy = (tx%(NX*NY))/NY;
+	int yy = (tx%(NX*NY))/NX;
 	int zz = tx/(NX*NY);
 	int size = NX*NY*NZ;
 	float j;

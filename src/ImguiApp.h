@@ -63,9 +63,14 @@ class ImguiApp
     static float3 Inst_scale_support;
 
     static bool vulkan_buffer_created;
+
     static int grid_value;
     static bool grid_value_check;
     static bool initialise_grid;
+    static bool uniform_grid;
+    static bool bounding_box_grid;
+    static int3 bounding_grid;
+
     static bool execute_signal;
     static bool execute_done;
     static bool execute_primitive_lattice;
@@ -127,6 +132,9 @@ class ImguiApp
     static bool view_lattice;
     static bool view_unit_lattice_data;
     static bool show_unit_lattice_data;
+
+    static uint Iteration_count;
+   
 
     static bool update_load;
     static bool update_support;

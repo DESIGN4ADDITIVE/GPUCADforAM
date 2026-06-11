@@ -20,9 +20,9 @@ class Isosurface : public MarchingCubeCuda
     uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize,uint numVoxels,
     grid_points *vol_one,float* vol_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2, bool obj_union, bool obj_diff, bool obj_intersect);
 
-    void copy_regions( uint *voxel_verts, float isoValue,
-    uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize,uint numVoxels,grid_points *vol_topo,
-    grid_points *vol_one,float* vol_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2, bool obj_union, bool obj_diff, bool obj_intersect );
+    void copy_regions(float isoValue,
+    uint3 gridSize,grid_points *vol_topo,
+    grid_points *vol_one,float* vol_two,float *vol_lattice,bool fixed, bool dynamic,float iso1, float iso2, int Nx, int Ny, int Nz );
 
     
     void computeIsosurface(float *vol,uint3 raster_grid, float4* pos , float4* norm, float isoValue,
@@ -63,7 +63,7 @@ class Isosurface : public MarchingCubeCuda
 
     void patch_grid(float *d_vec1 , int Nx, int Ny, int Nz ,float isoval);
 
-    void patch_topo_field(float *d_vec1 , int Nx, int Ny, int Nz, float isoval ,float *solid_field,float minDens, uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask);
+    void patch_topo_field(float *d_vec1 , int Nx, int Ny, int Nz, grid_points *vol_one);
 
 
 };

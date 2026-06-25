@@ -36,6 +36,8 @@ struct LightPushConstants
     int show_region;
     int show_domain;
     int show_analysis;
+    int2 mouse_delta;
+   
 
 } ;
 
@@ -46,6 +48,7 @@ struct InstancePushConstants
     fvec4 force_dir;
     fvec4 Scale_load;
     fvec4 Scale_support;
+    int2 mouse_delta;
 } ;
 
 class ImguiApp 
@@ -82,6 +85,9 @@ class ImguiApp
     static bool view_settings;
     static bool grid_settings;
     static bool background_color;
+
+    static ImVec2 pan_val;
+  
 
     static bool boundary;
 

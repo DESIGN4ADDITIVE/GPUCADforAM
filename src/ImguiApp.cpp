@@ -24,6 +24,7 @@ bool ImguiApp::region_done = false;
 bool ImguiApp::show_region = false;
 bool ImguiApp::show_domain = false;
 bool ImguiApp::show_analysis = false;
+ImVec2 ImguiApp::pan_val = {0.0f, 0.0f};
 
 float3 ImguiApp::Inst_scale_load = {1.0,1.0,1.0};
 float3 ImguiApp::Inst_scale_support = {1.0,1.0,1.0};
@@ -226,10 +227,10 @@ ImVec2 ImguiApp::window_extent = {50,50};
 ImVec4 ImguiApp::clear_color = ImVec4(0.148f, 0.148f, 0.148f, 1.00f);
 
 
-LightPushConstants ImguiApp::push_constants = {{0.0f,0.0f,0.0f,0.0f},0.0f,0.0f,0.0f,1.0f,0.0f,0.0f,0,5.0,0,15,0,1.0,0};
+LightPushConstants ImguiApp::push_constants = {{0.0f,0.0f,0.0f,0.0f},0.0f,0.0f,0.0f,2.0f,0.0f,0.0f,0,5.0,0,1,0,1.0,0,0,0,0,{0,0}};
 
 InstancePushConstants ImguiApp::Inst_push_constants = {{0.0f,0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f,0.0f}, {0.0f,1.0f,0.0f,0.0f},
-{1.0f,1.0f,1.0f,1.0f}, {1.0f,1.0f,1.0f,1.0f}};
+{1.0f,1.0f,1.0f,1.0f}, {1.0f,1.0f,1.0f,1.0f},{0,0}};
 
 
 /////////////////////Topopt_val//////////////////////////////

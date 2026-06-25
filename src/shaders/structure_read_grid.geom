@@ -42,6 +42,11 @@ layout( push_constant, std430) uniform push_constants
 		int boundary;
 		float alpha_val;
 		int make_region;
+		int show_region;
+		int show_domain;
+		int show_analysis;
+		ivec2 mouse_delta;
+		
 
 } ;
 
@@ -91,7 +96,9 @@ void main(void)
 	{
 
 	
-		gl_Position = ubo.modelViewProj[0]*pos[i];
+		vec4 proj_pos = ubo.modelViewProj[0]*pos[i];
+		proj_pos.xy += mouse_delta * 0.002; 
+		gl_Position = proj_pos ;
 		
 		if (gl_InvocationID == 0)
 		{

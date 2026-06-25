@@ -27,6 +27,7 @@ layout( push_constant, std430) uniform Inst_push_constants
     vec4 force_dir;
 	vec4 Scale_load;
 	vec4 Scale_support;
+	ivec2 mouse_delta;
 } ;
 
 layout (location = 0) in vec3 Pos[];
@@ -102,7 +103,9 @@ void main(void)
 		
 		if (gl_InvocationID == 0)
 			{
-                gl_Position =ubo.modelViewProj[0] * pos ;
+                vec4 proj_pos = ubo.modelViewProj[0]*pos;
+				proj_pos.xy += mouse_delta * 0.002; 
+				gl_Position = proj_pos ;
 
                 fragColor = vec4(lightcolor*amg,1.0);
 

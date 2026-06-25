@@ -30,7 +30,8 @@ layout( push_constant, std430) uniform push_constants
         int make_region;
         int show_region;
         int show_domain;
-        int analysis;
+        int show_analysis;
+        ivec2 mouse_delta;
 
 } ;
 
@@ -55,7 +56,7 @@ void main()
         {
                 outColor = fragColor;
 
-                if(analysis == 0)
+                if(show_analysis == 0)
                 {
                         if ((mouse_click == 2) && (support == -1) && (a < gl_FragCoord.x) && (gl_FragCoord.x < b) && (c < gl_FragCoord.y) && (gl_FragCoord.y < d) )
                         {
@@ -76,9 +77,6 @@ void main()
                         }
                 }
                         
-                
-                
-
         }
         else
         {

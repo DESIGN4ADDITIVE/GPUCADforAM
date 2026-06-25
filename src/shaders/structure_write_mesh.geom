@@ -39,7 +39,9 @@ layout( push_constant, std430) uniform push_constants
         int make_region;
         int show_region;
         int show_domain;
-        int analysis;
+        int show_analysis;
+        ivec2 mouse_delta;
+
 
 } ;
 
@@ -106,7 +108,13 @@ void main(void)
 		
 		if (gl_InvocationID == 0)
 			{
-                gl_Position =ubo.modelViewProj[0]*posit[i];
+            
+
+                vec4 proj_pos = ubo.modelViewProj[0]*posit[i] ;
+
+                proj_pos.xy += mouse_delta * 0.002; 
+                
+                gl_Position = proj_pos;
 
                 fragColor = vec4(lightcolor*amg,1.0);
 

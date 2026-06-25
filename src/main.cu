@@ -1684,6 +1684,8 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         ImVec2 mouse_pos = ImGui::GetMousePos();
 
+        ImVec2 mouse_pos_val = ImGui::GetMouseDragDelta(2) ;
+
         VulkanBaseApp::push_constants.mouse_x = mouse_pos.x;
 
         VulkanBaseApp::push_constants.mouse_y = mouse_pos.y;
@@ -1705,6 +1707,41 @@ class Multitopo : public VulkanBaseApp, Modelling
         ImguiApp::Inst_push_constants.force_dir[1] = ImguiApp::y_load_axis;
         ImguiApp::Inst_push_constants.force_dir[2] = ImguiApp::z_load_axis;
         ImguiApp::Inst_push_constants.force_dir[3] = 1.0;
+       
+        if(ImGui::IsMouseClicked(ImGuiMouseButton_Middle) && (ImGui::IsKeyDown(ImGuiKey_Space)))
+        {
+            ImguiApp::pan_val = {0,0};
+            ImguiApp::push_constants.mouse_delta = {0,0};
+            ImguiApp::Inst_push_constants.mouse_delta = {0,0};
+        }
+        else
+        {
+            if(ImGui::IsMouseDown(ImGuiMouseButton_Middle))
+            {
+
+                ImVec2 val_xy = ImGui::GetMouseDragDelta(2);
+                
+                if(mouse_pos_val.x <= VulkanBaseApp::screen_width)
+                {
+                    int x_val = ImguiApp::pan_val.x + mouse_pos_val.x;
+                    ImguiApp::push_constants.mouse_delta.x = x_val;
+                    ImguiApp::Inst_push_constants.mouse_delta.x = x_val;                
+                }
+                if(mouse_pos_val.y <= VulkanBaseApp::screen_height)
+                {
+                    int y_val = ImguiApp::pan_val.y + mouse_pos_val.y;
+                    ImguiApp::push_constants.mouse_delta.y = y_val;
+                    ImguiApp::Inst_push_constants.mouse_delta.y = y_val;
+                }
+ 
+            }
+
+            else if(ImGui::IsMouseReleased(ImGuiMouseButton_Middle))
+            {
+                ImguiApp::pan_val.x = ImguiApp::push_constants.mouse_delta.x;
+                ImguiApp::pan_val.y = ImguiApp::push_constants.mouse_delta.y;
+            }
+        }
 
 
         ImguiApp::Inst_push_constants.Scale_load [0]= ImguiApp::Inst_scale_load.x;

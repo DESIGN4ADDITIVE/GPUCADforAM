@@ -12,8 +12,6 @@
 
 #include <iomanip>
 
-#include "linmath.h"
-
 #define UseGPU
 
 #include <cstdlib>
@@ -35,6 +33,8 @@ using namespace std;
 #include <cufft.h> 
 
 #include <helper_cuda.h>
+
+#include "Camera_settings.hpp"
 
 ///////////OPTIMISATION//////////////////////////////////////////////////
 #include "Gauss.h"
@@ -221,7 +221,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     int volsize;
 
-    int dist2;
+    float dist2;
 
     float angle2;
 
@@ -266,7 +266,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     size_t maxmemvertstwo, maxmemvertsone, max_nfacets, nfacets;
 
-    int dist1, dist3, distone;
+    float dist1, dist3, distone;
 
     int indi_range; 
 
@@ -1845,246 +1845,173 @@ class Multitopo : public VulkanBaseApp, Modelling
     void updateUniformBuffer(uint32_t imageIndex, bool shift) {
         {
 
-            dist2 = ImguiApp::zoom_value * (MAX(NumZ,MAX(NumX,NumY))); 
+            if((ImguiApp::mouse_wheel != 0))
+            {
+                ImguiApp::zoom_value +=  ((ImguiApp::mouse_wheel)) * 0.2;
+                
+                dist2 = 2 + max(0.01,min(1000.0f, (MAX(NumZ,MAX(NumX,NumY))) * (ImguiApp::zoom_value) ));
+                distone = 2 + max(0.01,min(1000.0f,(MAX(Nxu,MAX(Nyu,Nzu))) * (ImguiApp::zoom_value) ));
 
-            distone =ImguiApp::zoom_value *  (MAX(Nxu,MAX(Nyu,Nzu)));
+                
+            }
 
+            if(ImGui::IsKeyDown(ImGuiKey_Z) && (ImGui::IsMouseClicked(ImGuiMouseButton_Middle)))
+            {
+                dist2 = (MAX(NumZ,MAX(NumX,NumY)));
+                distone = (MAX(Nxu,MAX(Nyu,Nzu))) ;
+            }
+
+
+            vec3 eye;
+            vec3 center;
+            vec3 up ;
+            
+            center[0] = 0.0f;
+            center[1] = 0.0f;
+            center[2] = 0.0f;
+
+            up[0] = 0.0f;
+            up[1] = 1.0f;
+            up[2] = 0.0f;
+            
+
+            mat4x4 traform[1], view[1], view_tran[1], proj[1];
             
             if(show_unit_lattice_data && (ImguiApp::lattice || ImguiApp::show_topo_lattice))
             {
+                    
+                eye[0] = 0.0f;
+                eye[1] = 0.0f;
+                eye[2] = (distone*1.2);
 
-                if ((VulkanBaseApp::shift))
+                if(ImGui::IsKeyDown(ImGuiKey_LeftShift))
+                {
+                    ImguiApp::mouse_view = true;
+                    ImguiApp::view_settings = false;
+                    ImguiApp::view_3dcam = false;
+                    
+                    if((ImGui::IsMouseDown(ImGuiMouseButton_Left)))
+                    {
+                        ImVec2 delta_mouse = ImGui::GetMouseDragDelta(0) ;
+                        int x_val = ImguiApp::mouse_rot.x + delta_mouse.y;
+                        int y_val = ImguiApp::mouse_rot.y + delta_mouse.x;
+                        ImguiApp::camera_rot.x = (x_val) * 0.001f;
+                        ImguiApp::camera_rot.y = (y_val) * 0.001f;
+
+                    }
+                    else if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+                    {
+                    
+                        
+                        ImguiApp::mouse_rot.x = ImguiApp::camera_rot.x * 1000.0f;
+                        ImguiApp::mouse_rot.y = ImguiApp::camera_rot.y * 1000.0f;
+                        
+
+                    }
+
+              
+
+                }
+
+                if(!ImguiApp::mouse_view)
                 {
                     
-                    if(view_top || view_bottom)
+                    if(VulkanBaseApp::shift)
                     {
-                        a_1 = (distone*1.2f)*sin(angle) + (Nxu-1)/2.0f;
+                        Camera_settings::rotate_plane(angle,ImguiApp::view_type,&ImguiApp::camera_rot);
 
-                        b_1 = (distone*1.2f)*cos(angle) + (Nyu-1)/2.0f;
+                        angle += ImguiApp::increment_angle;
 
-                        c_1 = (Nzu-1)/2.0f;
+                        if((view_type == 5) || (view_type == 6))
+                        {
+                            eye[0] = distone * 1.2f;
+                            eye[1] = 0.0f;
+                            eye[2] = 0.0f;
+                        }
                     }
                     else
                     {
-                        a_1 = (distone*1.2f)*sin(angle) + (Nxu-1)/2.0f;
-
-                        b_1 = (Nyu-1)/2.0f;
-
-                        c_1 = (distone*1.2f)*cos(angle) + (Nzu-1)/2.0f;
+                        if(ImguiApp::view_type != 0)
+                        {
+                            Camera_settings::camera_view(&ImguiApp::camera_rot,ImguiApp::view_type);
+                        }
                     }
-                    angle += 0.001;
+
                 }
 
-                else if(VulkanBaseApp::view_front)
-                {
-                    
-                    a_1 = (Nxu-1)/2.0f;
-
-                    b_1 = (Nyu-1)/2.0f;
-
-                    c_1 = (1.0*distone*1.2f);
+                float3 translate = {(Nxu - 1)/2.0f,(Nyu - 1)/2.0f,(Nzu - 1)/2.0f}; 
+                Camera_settings::set_ZYX_pos(traform[0],translate,ImguiApp::camera_rot);
                 
-                }
-
-                else if(VulkanBaseApp::view_back)
-                {
-                    
-                    a_1 = (Nxu-1)/2.0f;
-
-                    b_1 = (Nyu-1)/2.0f;
-
-                    c_1 = (-1.0*distone*1.2f);
-                }
-
-                else if(VulkanBaseApp::view_top)
-                {
-                    
-                    a_1 = (Nxu-1)/2.0f;
-
-                    b_1 = (1.0*distone*2.5f);
-
-                    c_1 = (Nzu-1)/2.0f;
-                }
-
-                else if(VulkanBaseApp::view_bottom)
-                {
-                    
-                    a_1 = (Nxu-1)/2.0f;
-
-                    b_1 = (-1.0*distone*2.5f);
-
-                    c_1 = (Nzu-1)/2.0f;
-                }
-
-                else if(VulkanBaseApp::view_right)
-                {
-                    
-                    a_1 = (1.0*distone*1.2f);
-
-                    b_1 = (Nyu-1)/2.0f;
-
-                    c_1 = (Nzu-1)/2.0f;
-                }
-
-                else if(VulkanBaseApp::view_left)
-                {
-                    
-                    a_1 = (-1.0*distone*1.2f);
-
-                    b_1 = (Nyu-1)/2.0f;
-
-                    c_1 = (Nzu-1)/2.0f;
-                }
-
-                else
-                {
-                    a_1 = (distone*1.2f)*sin(angle) + (Nxu-1)/2.0f;
-
-                    b_1 = (Nyu-1)/2.0f;
-
-                    c_1 = (distone*1.2f)*cos(angle) + (Nzu-1)/2.0f;
-                }
             }
+
             else
             {
                 show_unit_lattice_data = false;
-
-                if ((VulkanBaseApp::shift))
+                
+                eye[0] = 0.0f;
+                eye[1] = 0.0f;
+                eye[2] = (dist2*1.2);
+               
+                if(ImGui::IsKeyDown(ImGuiKey_LeftShift))
                 {
-
-                    if(view_top || view_bottom)
+                    ImguiApp::mouse_view = true;
+                    ImguiApp::view_settings = false;
+                    ImguiApp::view_3dcam = false;
+                    
+                    if((ImGui::IsMouseDown(ImGuiMouseButton_Left)))
                     {
-                        a_1 = (NumX-1)/2.0f;
+                        ImVec2 delta_mouse = ImGui::GetMouseDragDelta(0) ;
+                        int x_val = ImguiApp::mouse_rot.x + delta_mouse.y;
+                        int y_val = ImguiApp::mouse_rot.y + delta_mouse.x;
+                        ImguiApp::camera_rot.x = (x_val) * 0.001f;
+                        ImguiApp::camera_rot.y = (y_val) * 0.001f;
 
-                        b_1 = (dist2*1.2f)*cos(angle) + (NumY-1)/2.0f;
+                    }
+                    else if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+                    {
+                    
+                        ImguiApp::mouse_rot.x = ImguiApp::camera_rot.x * 1000.0f;
+                        ImguiApp::mouse_rot.y = ImguiApp::camera_rot.y * 1000.0f;
+                        
+                    }
 
-                        c_1 = (dist2*1.2f)*sin(angle) + (NumZ-1)/2.0f;
+                }
+
+                if(!ImguiApp::mouse_view)
+                {
+                    
+                    if(VulkanBaseApp::shift)
+                    {
+                        Camera_settings::rotate_plane(angle,ImguiApp::view_type,&ImguiApp::camera_rot);
+
+                        angle += ImguiApp::increment_angle;
+
+                        if((view_type == 5) || (view_type == 6))
+                        {
+                            eye[0] = dist2 * 1.2f;
+                            eye[1] = 0.0f;
+                            eye[2] = 0.0f;
+                        }
                     }
                     else
                     {
-                    
-                        a_1 = (dist2*1.2f)*sin(angle) + (NumX-1)/2.0f;
-
-                        b_1 = (NumY-1)/2.0f;
-
-                        c_1 = (dist2*1.2f)*cos(angle) + (NumZ-1)/2.0f;
+                        if(ImguiApp::view_type != 0)
+                        {
+                            Camera_settings::camera_view(&ImguiApp::camera_rot,ImguiApp::view_type);
+                        }
                     }
-                    angle += 0.001;
-                    
+
                 }
 
-                else if(VulkanBaseApp::view_front)
-                {
-                    
-                    a_1 = (NumX-1)/2.0f;
-
-                    b_1 = (NumY-1)/2.0f;
-
-                    c_1 = (1.0*dist2*1.2f);
-                
-                }
-
-                else if(VulkanBaseApp::view_back)
-                {
-                    
-                    a_1 = (NumX-1)/2.0f;
-
-                    b_1 = (NumY-1)/2.0f;
-
-                    c_1 = (-1.0*dist2*1.2f);
-                }
-
-                else if(VulkanBaseApp::view_top)
-                {
-                    
-                    a_1 = (NumX-1)/2.0f;
-
-                    b_1 = (1.0*dist2*2.5f);
-
-                    c_1 = (NumZ-1)/2.0f;
-
-                
-                }
-
-                else if(VulkanBaseApp::view_bottom)
-                {
-                    
-                    a_1 = (NumX-1)/2.0f;
-
-                    b_1 = (-1.0*dist2*2.5f);
-
-                    c_1 = (NumZ-1)/2.0f;
-                }
-
-                else if(VulkanBaseApp::view_right)
-                {
-                    
-                    a_1 = (1.0*dist2*1.2f);
-
-                    b_1 = (NumY-1)/2.0f;
-
-                    c_1 = (NumZ-1)/2.0f;
-                }
-
-                else if(VulkanBaseApp::view_left)
-                {
-                    
-                    a_1 = (-1.0*dist2*1.2f);
-
-                    b_1 = (NumY-1)/2.0f;
-
-                    c_1 = (NumZ-1)/2.0f;
-                }
-
-                else
-                {
-                    a_1 = (dist2*1.2f)*sin(angle) + (NumX-1)/2.0f;
-
-                    b_1 = (NumY-1)/2.0f;
-
-                    c_1 = (dist2*1.2f)*cos(angle) + (NumZ-1)/2.0f;
-                }
-            
-            }
-
-            mat4x4 view[1], proj[1];
-            
-            vec3 eye[1] = {{a_1,b_1,c_1}};
-
-            VulkanBaseApp::push_constants.eyes[0] = a_1;
-            VulkanBaseApp::push_constants.eyes[1] = b_1;
-            VulkanBaseApp::push_constants.eyes[2] = c_1;
-            VulkanBaseApp::push_constants.eyes[3] = 1.0;
-
-            ImguiApp::Inst_push_constants.eyes[0] = a_1;
-            ImguiApp::Inst_push_constants.eyes[1] = b_1;
-            ImguiApp::Inst_push_constants.eyes[2] = c_1;
-            ImguiApp::Inst_push_constants.eyes[3] = 1.0;
-
-            ImguiApp::Inst_push_constants.upaxis[0] = 0.0;
-            ImguiApp::Inst_push_constants.upaxis[1] = 1.0;
-            ImguiApp::Inst_push_constants.upaxis[2] = 0.0;
-            ImguiApp::Inst_push_constants.upaxis[3] = 0.0;
-
-
-            
-            vec3 center[1];
-
-            if(show_unit_lattice_data)
-            {
-                center[0][0] = float((Nxu-1)/2.0);
-                center[0][1] = float((Nyu-1)/2.0);
-                center[0][2] =  float((Nzu-1)/2.0);
-            }
-            else
-            {
-                center[0][0] = float((NumX-1)/2.0);
-                center[0][1] = float((NumY-1)/2.0);
-                center[0][2] =  float((NumZ-1)/2.0);
+                float3 translate = {(NumX - 1)/2.0f,(NumY - 1)/2.0f,(NumZ - 1)/2.0f}; 
+                Camera_settings::set_ZYX_pos(traform[0],translate,ImguiApp::camera_rot);
             }
             
-            vec3 up[1] ;
+            mat4x4_look_at(view[0],eye,center,up);
+            mat4x4_mul(view_tran[0],view[0],traform[0]);
 
+
+            ////////////////////////Projection Matrix ///////////////////////
             float r_l ;
             float t_b ;
             float n_f ;
@@ -2094,58 +2021,19 @@ class Multitopo : public VulkanBaseApp, Modelling
                 r_l = distone*0.7f;
                 t_b = distone*0.7f;
                 n_f = distone*3.5f;
-
-                if(view_top || view_bottom)
-                {
-                    up[0][0] =  0.0f;
-                    up[0][1] =  0.0f;
-                    up[0][2] =  1.0f;
-                  
-                    mat4x4_ortho(proj[0],-(r_l),(r_l),-(t_b),(t_b),-n_f,n_f);
-              
-                }
-                else
-                {
-                  
-                    up[0][0] =  0.0f;
-                    up[0][1] =  1.0f;
-                    up[0][2] =  0.0f;
-
-                    mat4x4_ortho(proj[0],-(r_l),(r_l),-(t_b),(t_b),-n_f,n_f);
-                    proj[0][1][1] *= -1.0f; // Flip y axis
-                }
             }
             else
             {
                 r_l = dist2*0.7f;
                 t_b = dist2*0.7f;
                 n_f = dist2*3.5f;
-            
-                if(view_top || view_bottom)
-                {
-                    up[0][0] =  0.0f;
-                    up[0][1] =  0.0f;
-                    up[0][2] =  1.0f;
-
-                    mat4x4_ortho(proj[0],-(r_l),(r_l),-(t_b),(t_b),-n_f,n_f);
-                
-                }
-                else
-                {
-                    up[0][0] =  0.0f;
-                    up[0][1] =  1.0f;
-                    up[0][2] =  0.0f;
-
-                    mat4x4_ortho(proj[0],-(r_l),(r_l),-(t_b),(t_b),-n_f,n_f);
-                    proj[0][1][1] *= -1.0f; // Flip y axis
-                }
-            
             }
-        
-            mat4x4_look_at(view[0], eye[0], center[0], up[0]);
+
+            mat4x4_ortho(proj[0],-(r_l),(r_l),-(t_b),(t_b),-n_f,n_f);
+            proj[0][1][1] *= -1.0f;
+            /////////////////////////////////////////////////////////////////////////////
            
-            mat4x4_mul(ubo.modelViewProj[0], proj[0], view[0]);
-       
+            mat4x4_mul(ubo.modelViewProj[0], proj[0], view_tran[0]);
         }
       
         void *data;
@@ -2466,7 +2354,7 @@ class Multitopo : public VulkanBaseApp, Modelling
          T *stagedVert = (T *)stagingBase;
 
         uint cou = 0;
-
+            
         for (size_t z =0; z<Nz; z++){
             for (size_t y = 0; y < Ny; y++) {
                 for (size_t x = 0; x < Nx; x++) {
@@ -3446,46 +3334,46 @@ class Multitopo : public VulkanBaseApp, Modelling
             if(sphere_selected || sphere_shell_selected)
             {
          
-                sphere_with_center(d_boundary,center, ImguiApp::sphere_radius, ImguiApp::sphere_thickness,NumX2,NumY2,NumZ2, dx2,dy2,dz2, ImguiApp::sphere_shell_selected);
+                sphere_with_center(d_boundary,ImguiApp::center, ImguiApp::sphere_radius, ImguiApp::sphere_thickness,NumX2,NumY2,NumZ2, dx2,dy2,dz2, ImguiApp::sphere_shell_selected);
 
                 compute_iso = true;
             }
             if(cuboid_selected)
             {
-                cuboid(d_boundary,center,angles, ImguiApp::cuboid_x, ImguiApp::cuboid_y, ImguiApp::cuboid_z,NumX2,NumY2,NumZ2, dx2, dy2, dz2);
+                cuboid(d_boundary,ImguiApp::center,ImguiApp::angles, ImguiApp::cuboid_x, ImguiApp::cuboid_y, ImguiApp::cuboid_z,NumX2,NumY2,NumZ2, dx2, dy2, dz2);
                 
                 compute_iso = true;
             }
             if(cuboid_shell_selected)
             {
-                cuboid_shell(d_boundary,center,angles, ImguiApp::cuboid_x, ImguiApp::cuboid_y, ImguiApp::cuboid_z, ImguiApp::cu_sh_thick,NumX2,NumY2,NumZ2, dx2,dy2,dz2);
+                cuboid_shell(d_boundary,ImguiApp::center,ImguiApp::angles, ImguiApp::cuboid_x, ImguiApp::cuboid_y, ImguiApp::cuboid_z, ImguiApp::cu_sh_thick,NumX2,NumY2,NumZ2, dx2,dy2,dz2);
             
                 compute_iso = true;
             }
             if(torus_selected)
             {
-                torus_with_center(d_boundary,center,angles,  ImguiApp::torus_radius, ImguiApp::torus_circle_radius,NumX2,NumY2,NumZ2, dx2, dy2, dz2);
+                torus_with_center(d_boundary,ImguiApp::center,ImguiApp::angles,  ImguiApp::torus_radius, ImguiApp::torus_circle_radius,NumX2,NumY2,NumZ2, dx2, dy2, dz2);
             
                 compute_iso = true;
             }
             if(cone_selected)
             {
                 
-                cone_with_base_radius_height(d_boundary,center,angles, ImguiApp::base_radius, ImguiApp::cone_height,NumX2,NumY2,NumZ2, dx2, dy2, dz2);
+                cone_with_base_radius_height(d_boundary,ImguiApp::center,ImguiApp::angles, ImguiApp::base_radius, ImguiApp::cone_height,NumX2,NumY2,NumZ2, dx2, dy2, dz2);
             
                 compute_iso = true;
             }
             if(cone_frustum_selected)
             {
 
-                cone_frustum(d_boundary,center,angles,top_radius, bottom_radius,cone_frustum_height,NumX2,NumY2, NumZ2, dx2, dy2, dz2);
+                cone_frustum(d_boundary,ImguiApp::center,ImguiApp::angles,top_radius, bottom_radius,cone_frustum_height,NumX2,NumY2, NumZ2, dx2, dy2, dz2);
 
                 compute_iso = true;
             }
 
             if(pyramid_frustum_selected)
             {
-                pyramid_frustum(d_boundary,center,angles,x_width_base,x_width_top,pyramid_frustum_height,z_width_base,z_width_top,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
+                pyramid_frustum(d_boundary,ImguiApp::center,ImguiApp::angles,x_width_base,x_width_top,pyramid_frustum_height,z_width_base,z_width_top,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
 
                 compute_iso = true;
             }

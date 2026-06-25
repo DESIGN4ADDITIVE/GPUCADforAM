@@ -2063,39 +2063,61 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
                 
                 if(ImGui::MenuItem("View Settings",NULL,&view_settings))
                 {
+                    ImguiApp::mouse_view = false;
+
                     ImguiApp::make_inactive(window_bools,&view_settings);
                 }
 
                 
                 if (ImGui::BeginMenu("VIEWS"))
                 {
+                    ImguiApp::mouse_view = false;
+
                     if(ImGui::MenuItem("FRONT",NULL,&view_front))
                     {
                         ImguiApp::make_inactive(view_bools,&view_front);
+                        ImguiApp::view_type = 1;
 
                     }
                     if(ImGui::MenuItem("BACK",NULL,&view_back))
                     {
                         ImguiApp::make_inactive(view_bools,&view_back);
+                        ImguiApp::view_type = 2;
                     }
                     if(ImGui::MenuItem("TOP",NULL,&view_top))
                     {
                         ImguiApp::make_inactive(view_bools,&view_top);
+                        ImguiApp::view_type = 3;
                     }
                     if(ImGui::MenuItem("BOTTOM",NULL,&view_bottom))
                     {
                         ImguiApp::make_inactive(view_bools,&view_bottom);
+                        ImguiApp::view_type = 4;
                     }
                     if(ImGui::MenuItem("RIGHT",NULL,&view_right))
                     {
                         ImguiApp::make_inactive(view_bools,&view_right);
+                        ImguiApp::view_type = 5;
                     }
                     if(ImGui::MenuItem("LEFT",NULL,&view_left))
                     {
                         ImguiApp::make_inactive(view_bools,&view_left);
+                        ImguiApp::view_type = 6;
                     }
                     ImGui::EndMenu();
                 }
+                if(ImGui::BeginMenu("3D VIEW"))
+                {
+                    ImguiApp::mouse_view = false;
+                    
+                    if(ImGui::MenuItem("CAMERA VIEW",NULL,&view_3dcam))
+                    {
+                        ImguiApp::make_inactive(view_bools,&view_3dcam);
+                        ImguiApp::view_type = 0;
+                    }
+                    ImGui::EndMenu();
+                }
+
                     
                 ImGui::EndMenu();
             }
@@ -2593,8 +2615,12 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
         }
 
         if(view_settings)
-        {       
+        {      
             ImguiApp::show_view_settings(&view_settings,&shift,&reset, &show_grid, &show_mesh);
+        }
+        if(view_3dcam)
+        {
+            ImguiApp::show_3dcam_settings();
         }
 
         if (cylind_selected || cylind_disc_selected)
@@ -2700,6 +2726,7 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
             show_debugging_window();
         }
 
+        ImguiApp::mouse_wheel = ImGui::GetIO().MouseWheel; 
 
    
         ImGui::Render();
@@ -3000,9 +3027,11 @@ void VulkanBaseApp::drawFrame(bool shift)
     }
 
 
+    update_inputevents();
+
     updateUniformBuffer(currentFrameIdx,shift);
 
-    update_inputevents();
+    
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     updatecommandBuffers(commandBuffers[currentFrameIdx],imageIndex,currentFrameIdx);

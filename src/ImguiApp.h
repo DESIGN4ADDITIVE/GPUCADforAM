@@ -108,6 +108,7 @@ class ImguiApp
     static bool view_bottom;
     static bool view_right;
     static bool view_left;
+    static bool view_3dcam;
 
     static bool reset_load_button;
     static bool reset_support_button;
@@ -264,6 +265,9 @@ class ImguiApp
 
     static bool debug_window;
 
+    static float increment_angle;
+    static bool mouse_view;
+
     static bool real_unit_lattice;
     static bool approx_unit_lattice;
 
@@ -289,6 +293,7 @@ class ImguiApp
     ////////////////////////////////////////////////////////////
 
     static float zoom_value;
+    static float mouse_wheel;
     //////////////////////////////////////////////////////////////
 
     static int checkpoint;
@@ -296,6 +301,11 @@ class ImguiApp
     /////////////////////////////////////////////////////////////
 
     static bool export_settings;
+
+    static float3 camera_rot;
+    static ImVec2 mouse_rot;
+
+    static uint view_type;
 
 
     static ImVec2 window_extent;
@@ -327,6 +337,7 @@ class ImguiApp
     static void spatial_lattice_settings();
     static void show_export_settings();
     static void show_debugging_window();
+    static void show_3dcam_settings();
 
 };
 

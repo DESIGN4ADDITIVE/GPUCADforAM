@@ -1,7 +1,7 @@
 
 #include "ImguiApp.h"
 #include "../src/general/topopt_defines.h"
-
+#include "math.h"
 
 int ImguiApp::grid_value;
 
@@ -19,11 +19,20 @@ bool ImguiApp::boundary = false;
 
 bool ImguiApp::cad_bool = false;
 
+float ImguiApp::increment_angle = 0.001;
+bool ImguiApp::mouse_view = false;
+
 bool ImguiApp::make_region = false;
 bool ImguiApp::region_done = false;
 bool ImguiApp::show_region = false;
 bool ImguiApp::show_domain = false;
 bool ImguiApp::show_analysis = false;
+
+uint ImguiApp::view_type = 1;
+
+float3 ImguiApp::camera_rot = {0.0f,0.0f,1.0f};
+ImVec2 ImguiApp::mouse_rot = {0.0f,0.0f};
+
 ImVec2 ImguiApp::pan_val = {0.0f, 0.0f};
 
 float3 ImguiApp::Inst_scale_load = {1.0,1.0,1.0};
@@ -179,6 +188,7 @@ bool ImguiApp::view_top = false;
 bool ImguiApp::view_bottom = false;
 bool ImguiApp::view_right = false;
 bool ImguiApp::view_left = false;
+bool ImguiApp::view_3dcam = false;
 
 bool ImguiApp::reset_load_button = false;
 bool ImguiApp::reset_support_button = false;
@@ -207,6 +217,8 @@ bool ImguiApp::real_unit_lattice = false;
 bool ImguiApp::approx_unit_lattice = false;
 
 float ImguiApp::zoom_value = 1.0;
+
+float ImguiApp::mouse_wheel = 0.0f;
 
 float ImguiApp::alpha_val = 0.5;
 
@@ -281,6 +293,7 @@ ImguiApp::ImguiApp()
     &cone_frustum_selected,
     &pyramid_frustum_selected,
     &view_settings,
+    &view_3dcam,
     &grid_settings,
     &background_color,
     &execute_optimize,
@@ -309,7 +322,8 @@ ImguiApp::ImguiApp()
         &view_bottom,
         &view_right,
         &view_left,
-        &view_settings
+        &view_settings,
+        &view_3dcam
     };
     
     physics_bools = {
@@ -1429,11 +1443,28 @@ void ImguiApp::show_view_settings(bool *view_setting, bool *shift, bool *reset, 
     ImGui::Checkbox("ROTATE",shift);
 
     ImGui::NewLine();
-    static float f00 = 1.00f;
-    ImGui::SliderFloat("Zoom", &f00, 0.01f, 1.00f, "%.2f");
-    ImguiApp::zoom_value = f00;
+
+    if(ImGui::Button("Increment"))
+    {
+        ImguiApp::increment_angle += 0.001;
+    }
 
     ImGui::NewLine();
+
+    if(ImGui::Button("Decrement"))
+    {
+        if(ImguiApp::increment_angle >= 0.002)
+        {
+            ImguiApp::increment_angle -= 0.001;
+        }
+    }
+    
+    ImGui::NewLine();
+
+    if(ImGui::Button("Reset Default"))
+    {
+        ImguiApp::increment_angle = 0.001;
+    }
     ImGui::NewLine();
 
     ImGui::Checkbox("Show 3D Grid", show_grid); 
@@ -1460,6 +1491,39 @@ void ImguiApp::show_view_settings(bool *view_setting, bool *shift, bool *reset, 
     ImguiApp::push_constants.p_size_2 = f1_2;
     ImguiApp::push_constants.p_size_3 = f1_3;
     ImguiApp::push_constants.p_size_4 = f1_4;
+
+    ImGui::End();
+}
+
+
+void ImguiApp::show_3dcam_settings()
+{
+    
+    ImGui::Begin("CAMERA SETTINGS"); 
+    ImGui::SetWindowPos(ImVec2(5,50));
+    ImGui::SetWindowSize(window_extent);
+    ImGui::SetWindowCollapsed(true,2);
+    ImGui::NewLine();
+    
+    ImGui::SeparatorText("Direction");
+    static float x_cam = 0.0f;
+    static float y_cam = 0.0f;
+    static float z_cam = 0.0f;
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.865);
+    ImGui::SliderFloat("x",&x_cam,0.0f,360.0f,"%.1f");
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.865);
+    ImGui::SliderFloat("y",&y_cam,0.0f,360.0f,"%.1f");
+
+    ImGui::NewLine();
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.865);
+    ImGui::SliderFloat("z",&z_cam,0.0f,360.0f,"%.2f");
+
+ 
+    ImguiApp::camera_rot.x = x_cam * (M_PI/ 180.0f);
+    ImguiApp::camera_rot.y = y_cam * (M_PI/ 180.0f);
+    ImguiApp::camera_rot.z = z_cam * (M_PI/ 180.0f);
 
     ImGui::End();
 }

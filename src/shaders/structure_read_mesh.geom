@@ -90,10 +90,10 @@ void main(void)
 	{
 
 	
-        vec3 n_normal = normalize(norm[i].xyz*1.0);
+        vec3 n_normal = normalize(norm[i].xyz);
 	
-		vec3 lightvector = normalize(eyes.xyz - posit[i].xyz);
-		
+		vec3 lightvector = normalize(eyes.xyz);
+
 		vec3 lightcolor1 = vec3(1.0,1.0,1.0);
 	
         vec3 lightcolor2 = vec3(0.0,1.0,1.0);

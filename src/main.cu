@@ -1865,6 +1865,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             vec3 eye;
             vec3 center;
             vec3 up ;
+            vec4 light_dir;
             
             center[0] = 0.0f;
             center[1] = 0.0f;
@@ -2031,6 +2032,33 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             mat4x4_ortho(proj[0],-(r_l),(r_l),-(t_b),(t_b),-n_f,n_f);
             proj[0][1][1] *= -1.0f;
+            
+            if((VulkanBaseApp::shift) && ((view_type == 5) || (view_type == 6)))
+            {
+                light_dir[0] = 1.0f *(dist2*1.2f);
+                light_dir[1] = 0.0f;
+                light_dir[2] = 0.0f;
+                light_dir[3] = 0.0f;
+            }
+            
+            else
+            {
+                light_dir[0] = 0.0f;
+                light_dir[1] = 0.0f;
+                light_dir[2] = 1.0f *(dist2*1.2f);
+                light_dir[3] = 0.0f;
+            }
+            float3 rot_light = -1.0f * ImguiApp::camera_rot;
+            float3 tran = {0.0f, 0.0f , 0.0f};
+            vec4 l_two = {0.0f,0.0f,0.0f,0.0f};
+            Camera_settings::set_ZYX_pos(traform[0],tran,rot_light);
+            mat4x4_mul_vec4(l_two,traform[0],light_dir);
+        
+            push_constants.eyes[0] = l_two[0];
+            push_constants.eyes[1] = l_two[1];
+            push_constants.eyes[2] = l_two[2];
+            push_constants.eyes[3] = 0.0f;
+
             /////////////////////////////////////////////////////////////////////////////
            
             mat4x4_mul(ubo.modelViewProj[0], proj[0], view_tran[0]);

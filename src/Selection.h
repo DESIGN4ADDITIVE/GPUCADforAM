@@ -36,9 +36,15 @@ class Selection : public MarchingCubeCuda
 
     // void raster_region_update(float isoval_fixed_region,  float *raster, grid_points *vol_topo, grid_points *vol_one, int Nx,int Ny, int Nz, bool show_domain);
 
+    void instanced_load(float *storage_buffer, uint *facets_check, uint *facets_check_occupied, uint active_facets, InstanceData *d_instance_buffer, triangle_metadata *triangle_data,
+    int load_index, float x_load, float y_load, float z_load, bool edit_load);
+
     void instanced_pos(float *storage_buffer, uint *facets_check, uint *facets_check_occupied, uint active_facets, InstanceData *d_instance_buffer, triangle_metadata *triangle_data);
 
-    void icon_count(float *storage_buffer, uint active_facets, uint *icon_count, uint *facets_check, uint *facets_check_occupied,  std::string type, InstanceData *d_instance_buffer, triangle_metadata *triangle_data);
+    void icon_count(float *storage_buffer, uint active_facets, uint *icon_count, uint *facets_check, uint *facets_check_occupied,  std::string type, InstanceData *d_instance_buffer, triangle_metadata *triangle_data,
+    int load_index, float x_load, float y_load, float z_load, bool edit_load);
+
+    void update_load_group(int load_index, REAL3 *d_loadgroup,float x_load, float y_load, float z_load);
 };
 
 

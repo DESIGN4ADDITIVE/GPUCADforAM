@@ -28,6 +28,10 @@ bool ImguiApp::show_region = false;
 bool ImguiApp::show_domain = false;
 bool ImguiApp::show_analysis = false;
 
+uint ImguiApp::load_index = 0;
+std::vector<std::string> ImguiApp::load_list = {"No Load"};
+bool ImguiApp::edit_load = false;
+
 uint ImguiApp::view_type = 1;
 
 float3 ImguiApp::camera_rot = {0.0f,0.0f,1.0f};
@@ -156,6 +160,8 @@ bool ImguiApp::update_source = false;
 bool ImguiApp::update_sink = false;
 bool ImguiApp::clear_load = false;;
 bool ImguiApp::clear_support = false;
+bool ImguiApp::new_load = false;
+bool ImguiApp::new_support = false;
 
 bool ImguiApp::spatial_angle_window = false;
 bool ImguiApp::spatial_period_window = false;
@@ -239,7 +245,7 @@ ImVec2 ImguiApp::window_extent = {50,50};
 ImVec4 ImguiApp::clear_color = ImVec4(0.148f, 0.148f, 0.148f, 1.00f);
 
 
-LightPushConstants ImguiApp::push_constants = {{0.0f,0.0f,0.0f,0.0f},0.0f,0.0f,0.0f,2.0f,0.0f,0.0f,0,5.0,0,1,0,1.0,0,0,0,0,{0,0}};
+LightPushConstants ImguiApp::push_constants = {{0.0f,0.0f,0.0f,0.0f},0.0f,0.0f,0.0f,2.0f,0.0f,0.0f,0,2.0,0,1,0,1.0,0,0,0,0,{0,0}};
 
 InstancePushConstants ImguiApp::Inst_push_constants = {{0.0f,0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f,0.0f}, {0.0f,1.0f,0.0f,0.0f},
 {1.0f,1.0f,1.0f,1.0f}, {1.0f,1.0f,1.0f,1.0f},{0,0}};
@@ -1318,7 +1324,7 @@ void ImguiApp::show_grid_settings(bool *grid_setting, bool vulkan_buffer_created
         
         if(grid_type == 0)
         {
-            if ((ImguiApp::grid_value < 16 ) || (ImguiApp::grid_value > 128))
+            if ((ImguiApp::grid_value < 16 ) || (ImguiApp::grid_value > 120))
             {
                 ImguiApp::grid_value_check = false;
             }
@@ -1329,7 +1335,7 @@ void ImguiApp::show_grid_settings(bool *grid_setting, bool vulkan_buffer_created
         }
         else if(grid_type == 1)
         {
-            if ((ImguiApp::bounding_grid.x < 16 ) || (ImguiApp::bounding_grid.x > 128))
+            if ((ImguiApp::bounding_grid.x < 16 ) || (ImguiApp::bounding_grid.x > 120))
             {
                 ImguiApp::grid_value_check = false;
 
@@ -1337,7 +1343,7 @@ void ImguiApp::show_grid_settings(bool *grid_setting, bool vulkan_buffer_created
             }
        
 
-            else if ((ImguiApp::bounding_grid.y < 16 ) || (ImguiApp::bounding_grid.y > 128))
+            else if ((ImguiApp::bounding_grid.y < 16 ) || (ImguiApp::bounding_grid.y > 120))
             {
                 ImguiApp::grid_value_check = false;
 
@@ -1345,7 +1351,7 @@ void ImguiApp::show_grid_settings(bool *grid_setting, bool vulkan_buffer_created
             }
     
 
-            else if ((ImguiApp::bounding_grid.z < 16 ) || (ImguiApp::bounding_grid.z > 128))
+            else if ((ImguiApp::bounding_grid.z < 16 ) || (ImguiApp::bounding_grid.z > 120))
             {
                 ImguiApp::grid_value_check = false;
 
@@ -1380,7 +1386,7 @@ void ImguiApp::show_grid_settings(bool *grid_setting, bool vulkan_buffer_created
     else if(initialise_grid_num == 2)
     {
         ImGui::SameLine();
-        ImGui::Text("Grid dimension should be in between 16 and 128");
+        ImGui::Text("Grid dimension should be in between 16 and 120");
         
     }
 
@@ -1538,6 +1544,8 @@ void ImguiApp::show_select_load_structure(bool* window)
     ImGui::SetWindowCollapsed(true,2);
 
     static int execute_load = 0;
+    static uint load_group = 0;
+    static uint load_check = 0;
 
     if(ImguiApp::reset_load_button)
     {
@@ -1545,8 +1553,81 @@ void ImguiApp::show_select_load_structure(bool* window)
         reset_load_button = false;
     }
 
+    ImGui::SeparatorText("Loads");
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    static bool show_load_group;
+    static ImGuiComboFlags flags = ImGuiComboFlags_None;
+    
+    static int item_current_idx = 0; 
+
+    const char* combo_preview_value = (item_current_idx >= 0 && item_current_idx < load_list.size()) 
+    ? load_list[item_current_idx].c_str() : "";
+    
+    if (ImGui::BeginCombo("Load Group", combo_preview_value, flags))
+    {
+        for (int n = 0; n < (ImguiApp::load_list.size()); n++)
+        {
+            const bool is_selected = (item_current_idx == n);
+            if (ImGui::Selectable(load_list[n].c_str(), is_selected))
+                item_current_idx = n;
+                if(load_group > 0)
+                {
+                    ImguiApp::load_index = item_current_idx + 1;
+                }
+                
+      
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+        }
+
+        if (ImGui::Button("Add New Load"))
+        {
+            if((load_group == 0))
+            {
+                
+                load_group = 1;
+                load_list[0] = "Load " + std::to_string(load_group);
+            }
+            else
+            {
+                load_group += 1;
+                load_list.push_back("Load " + std::to_string(load_group));
+            }
+        }
+
+        
+        ImGui::EndCombo();
+    }
 
     ImGui::NewLine();
+    ImGui::NewLine();
+    if(ImGui::Button("GROUP INDEX"))
+    {
+        show_load_group = !show_load_group;        
+    }
+    if(show_load_group)
+    {
+        ImGui::NewLine();
+
+        if(ImguiApp::load_index == 0)
+        {
+            
+            ImGui::Text("Select a load group");
+        }
+        else
+        {
+            ImGui::Text("Load index val is  %u \n",ImguiApp::load_index);
+        }
+    }
+
+    ImGui::NewLine();
+    ImGui::NewLine();
+
+    ImGui::Checkbox("Edit load",&ImguiApp::edit_load);
+
+    ImGui::NewLine();
+    ImGui::NewLine();
+
     ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
     static float xx_vall = 0.0f;
     ImGui::SliderFloat("X Axis ", &xx_vall,-1.0, 1.0, "%.1f");
@@ -1593,18 +1674,32 @@ void ImguiApp::show_select_load_structure(bool* window)
          
             if(select_load_node)
             {
-                
-                ImguiApp::update_load = true;
+                if(ImguiApp::load_index == 0)
+                {
+                    load_check = 1;
+                }
+                else
+                {
+                    ImguiApp::update_load = true;
+                    ImguiApp::new_load = true;
+                    ImguiApp::load_icon = true;
+                    load_check = 0;
 
-                ImguiApp::load_icon = true;
+                    execute_load++;
 
-                execute_load++;
+                }
             }
 
         }
 
 
     }
+
+    if(load_check == 1)
+    {
+        ImGui::Text("Create a Load Group");
+    }
+
     if(execute_load == 1)
     {
         
@@ -1748,6 +1843,8 @@ void ImguiApp::show_select_support_structure(bool *window)
             if(select_support_node)
             {
                 update_support = true;
+
+                ImguiApp::new_support = true;
 
                 ImguiApp::support_icon = true;
 

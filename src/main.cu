@@ -124,7 +124,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     VkBuffer v_volumeBuffer_s, v_volumeBuffer_t,v_raster,
     latticeonevol,latticethreevol,v_volume_twice,
-    v_pos_s,v_norm_s,vpos_one,vnorm_one,vpos_two,vnorm_two,
+    vpos_one,vnorm_one,vpos_two,vnorm_two,
     v_xyzBuffer_s,v_indexBuffer_s,
     v_xyzlatticeBuffer,v_indexlatticeBuffer,
     v_xyzBufferthree,v_indexBufferthree,
@@ -132,7 +132,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     VkDeviceMemory v_volumeMemory_s,v_volumeMemory_t,v_rasterMemory,
     latticeoneVolMemory,latticethreeVolMemory, v_volume_twice_memory,
-    v_posmemory_s,v_normmemory_s,
     vposMemory_one,vnormMemory_one,
     vposMemory_two,vnormMemory_two,
     v_xyzMemory_s,v_indexMemory_s,
@@ -175,15 +174,14 @@ class Multitopo : public VulkanBaseApp, Modelling
 
 
     InstanceData *d_loadinstance_buffer, *d_supportinstance_buffer;
+    
     cudaExternalMemory_t m_loadinstance_Mem, m_supportinstance_Mem;
 
     std::vector<float*> d_cudastorageBuffers;
 
     std::vector<cudaExternalMemory_t> d_cudastorageMemory;
-
-    float4 *d_pos , *d_normal,
-    *d_posone,
-    *d_normalone,
+   
+    float4 *d_posone,*d_normalone,
     *d_postwo,
     *d_normaltwo;
 
@@ -194,9 +192,6 @@ class Multitopo : public VulkanBaseApp, Modelling
     uint numVoxels, activeVoxels, totalVerts, solid_voxels;
 
     float dx, dy, dz;
-
-    uint *d_voxelVerts, *d_voxelVertsScan, *d_voxelOccupied, *d_voxelOccupiedScan, *d_compVoxelArray;
-
 
     uint3 gridSizeShifttwo, gridSizetwo, gridSizeMasktwo;
  
@@ -243,6 +238,8 @@ class Multitopo : public VulkanBaseApp, Modelling
     REAL *d_den, *d_grads, *d_result;
 
     REAL *d_selection;
+
+    REAL3 *d_loadgroup;
 
     REAL *d_selection2;
 
@@ -327,13 +324,9 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         v_volume_twice(VK_NULL_HANDLE),
 
-        v_pos_s(VK_NULL_HANDLE),
-
         vpos_one(VK_NULL_HANDLE),
 
         vpos_two(VK_NULL_HANDLE),
-
-        v_norm_s(VK_NULL_HANDLE),
 
         vnorm_one(VK_NULL_HANDLE),
 
@@ -370,10 +363,6 @@ class Multitopo : public VulkanBaseApp, Modelling
         latticethreeVolMemory(VK_NULL_HANDLE),
 
         v_volume_twice_memory(VK_NULL_HANDLE),
-
-        v_posmemory_s(VK_NULL_HANDLE),
-
-        v_normmemory_s(VK_NULL_HANDLE),
 
         v_xyzMemory_s(VK_NULL_HANDLE),
 
@@ -455,10 +444,6 @@ class Multitopo : public VulkanBaseApp, Modelling
         d_solid(nullptr),
 
         d_solid_field(nullptr),
-     
-        d_pos(nullptr),
-
-        d_normal(nullptr),
 
         d_posone(nullptr),
 
@@ -493,16 +478,6 @@ class Multitopo : public VulkanBaseApp, Modelling
         dz(),
     
         gridcenter(),
-
-        d_voxelVerts(),
-
-        d_voxelVertsScan(),
-
-        d_voxelOccupied(),
-
-        d_voxelOccupiedScan(),
-
-        d_compVoxelArray(),
 
         gridSizeShifttwo(),
 
@@ -797,19 +772,6 @@ class Multitopo : public VulkanBaseApp, Modelling
         }
 
 
-        if (d_pos) {
-           
-            checkCudaErrors(cudaDestroyExternalMemory(m_cudaPos_s));
-            checkCudaErrors(cudaFree(d_pos));
-        }
-
-
-        if (d_normal) {
-            checkCudaErrors(cudaDestroyExternalMemory(m_cudaNorm_s));
-            checkCudaErrors(cudaFree(d_normal));
-        }
-
-
         if (d_loadinstance_buffer) {
             checkCudaErrors(cudaDestroyExternalMemory(m_loadinstance_Mem));
             checkCudaErrors(cudaFree(d_loadinstance_buffer));
@@ -848,15 +810,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         if (v_raster != VK_NULL_HANDLE) {
             vkDestroyBuffer(device, v_raster, nullptr);
-        }
-
-        if (v_pos_s != VK_NULL_HANDLE) {
-            vkDestroyBuffer(device, v_pos_s, nullptr);
-        }
-
-
-        if (v_norm_s != VK_NULL_HANDLE) {
-            vkDestroyBuffer(device, v_norm_s, nullptr);
         }
 
         
@@ -899,15 +852,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         if (v_raster != VK_NULL_HANDLE) {
             vkFreeMemory(device, v_rasterMemory, nullptr);
-        }
-
-        if (v_posmemory_s != VK_NULL_HANDLE) {
-            vkFreeMemory(device, v_posmemory_s, nullptr);
-        }
-
-
-        if (v_normmemory_s != VK_NULL_HANDLE) {
-            vkFreeMemory(device, v_normmemory_s, nullptr);
         }
 
 
@@ -1060,8 +1004,6 @@ class Multitopo : public VulkanBaseApp, Modelling
             vkFreeMemory(device, v_indexMemorythree, nullptr);
         }
 
-         
-
     }
 
  
@@ -1099,9 +1041,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         attribDesc[2].offset = 0;
 
     }
-
-
-        
+  
     void getVertexDescriptionsone(std::vector<VkVertexInputBindingDescription>& bindingDesc, std::vector<VkVertexInputAttributeDescription>& attribDesc) {
         bindingDesc.resize(3);
         attribDesc.resize(3);
@@ -1139,7 +1079,7 @@ class Multitopo : public VulkanBaseApp, Modelling
     {
 
         bindingDesc.resize(2);
-        attribDesc.resize(5);
+        attribDesc.resize(7);
 
         bindingDesc[0].binding = 0;
         bindingDesc[0].stride = sizeof(IconData);
@@ -1172,8 +1112,18 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         attribDesc[4].binding = 1;
         attribDesc[4].location = 4;
-        attribDesc[4].format = VK_FORMAT_R32_SFLOAT;
+        attribDesc[4].format = VK_FORMAT_R32G32B32_SFLOAT;
         attribDesc[4].offset = sizeof(float) * 6;
+
+        attribDesc[5].binding = 1;
+        attribDesc[5].location = 5;
+        attribDesc[5].format = VK_FORMAT_R32_SFLOAT;
+        attribDesc[5].offset = sizeof(float) * 9;
+
+        attribDesc[6].binding = 1;
+        attribDesc[6].location = 6;
+        attribDesc[6].format = VK_FORMAT_R32_SINT;
+        attribDesc[6].offset = sizeof(float) * 10;
 
     }
 
@@ -1371,37 +1321,10 @@ class Multitopo : public VulkanBaseApp, Modelling
         vkCmdDrawIndexed(commandBuffer, (uint32_t)(NumX2 * NumY2 * NumZ2), 1, 0, 0, 0);
     }
 
-    void fillRenderingCommandBufferone(VkCommandBuffer& commandBuffer) {
-   
-        if((!show_topo_lattice) && (totalVerts > 0))
-        {
-            if(ImguiApp::structural)
-            {
-                VkBuffer vertexBuffers[] = {v_pos_s, v_norm_s, v_volumeBuffer_s};
+    void fillRenderingCommandBufferone(VkCommandBuffer& commandBuffer) 
+    {
 
-                VkDeviceSize offsets[] = { 0, 0, 0 };
-
-                vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(ImguiApp::push_constants),&push_constants);
-
-                vkCmdBindVertexBuffers(commandBuffer, 0, 3, vertexBuffers, offsets);
-
-                vkCmdDraw(commandBuffer, (uint32_t)(totalVerts), 1, 0, 0);
-            }
-            else if (ImguiApp::thermal)
-            {
-                VkBuffer vertexBuffers[] = {v_pos_s, v_norm_s, v_volumeBuffer_t};
-
-                VkDeviceSize offsets[] = { 0, 0, 0 };
-
-                vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(ImguiApp::push_constants),&push_constants);
-
-                vkCmdBindVertexBuffers(commandBuffer, 0, 3, vertexBuffers, offsets);
-
-                vkCmdDraw(commandBuffer, (uint32_t)(totalVerts), 1, 0, 0);
-            }
-
-        }
-        else if (show_topo_lattice || (totalVertstwo > 0))
+        if (show_topo_lattice || (totalVertstwo > 0))
         {
           
             VkBuffer vertexBuffers[] = {vpos_two, vnorm_two, v_volume_twice};
@@ -1514,34 +1437,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     void fillRenderingCommandBufferone_subpass1(VkCommandBuffer& commandBuffer) 
     {
-
-        if((!show_topo_lattice) && (totalVerts > 0))
-        {
-            if(ImguiApp::structural)
-            {
-                VkBuffer vertexBuffers[] = {v_pos_s, v_norm_s, v_volumeBuffer_s};
-
-                VkDeviceSize offsets[] = { 0, 0, 0 };
-
-                vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(ImguiApp::push_constants),&push_constants);
-
-                vkCmdBindVertexBuffers(commandBuffer, 0, 3, vertexBuffers, offsets);
-
-                vkCmdDraw(commandBuffer, (uint32_t)(totalVerts), 1, 0, 0);
-            }
-            else if (ImguiApp::thermal)
-            {
-                VkBuffer vertexBuffers[] = {v_pos_s, v_norm_s, v_volumeBuffer_t};
-
-                VkDeviceSize offsets[] = { 0, 0, 0 };
-
-                vkCmdPushConstants(commandBuffer,pipelineLayout,VK_SHADER_STAGE_GEOMETRY_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,0,sizeof(ImguiApp::push_constants),&push_constants);
-
-                vkCmdBindVertexBuffers(commandBuffer, 0, 3, vertexBuffers, offsets);
-
-                vkCmdDraw(commandBuffer, (uint32_t)(totalVerts), 1, 0, 0);
-            }
-        }
 
         if(show_topo_lattice || (totalVertstwo > 0))
         {
@@ -1826,7 +1721,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
             }
 
-
         }
 
         if (ImGui::IsKeyDown(ImGuiKey_D))
@@ -1851,8 +1745,6 @@ class Multitopo : public VulkanBaseApp, Modelling
                 
                 dist2 = 2 + max(0.01,min(1000.0f, (MAX(NumZ,MAX(NumX,NumY))) * (ImguiApp::zoom_value) ));
                 distone = 2 + max(0.01,min(1000.0f,(MAX(Nxu,MAX(Nyu,Nzu))) * (ImguiApp::zoom_value) ));
-
-                
             }
 
             if(ImGui::IsKeyDown(ImGuiKey_Z) && (ImGui::IsMouseClicked(ImGuiMouseButton_Middle)))
@@ -1907,7 +1799,6 @@ class Multitopo : public VulkanBaseApp, Modelling
                         ImguiApp::mouse_rot.x = ImguiApp::camera_rot.x * 1000.0f;
                         ImguiApp::mouse_rot.y = ImguiApp::camera_rot.y * 1000.0f;
                         
-
                     }
 
               
@@ -2005,9 +1896,11 @@ class Multitopo : public VulkanBaseApp, Modelling
                 }
 
                 float3 translate = {(NumX - 1)/2.0f,(NumY - 1)/2.0f,(NumZ - 1)/2.0f}; 
+
                 Camera_settings::set_ZYX_pos(traform[0],translate,ImguiApp::camera_rot);
+              
             }
-            
+
             mat4x4_look_at(view[0],eye,center,up);
             mat4x4_mul(view_tran[0],view[0],traform[0]);
 
@@ -2158,19 +2051,6 @@ class Multitopo : public VulkanBaseApp, Modelling
   
         gridcenter = make_float3(0.0,0.0,0.0);
 
-        unsigned int memSize = sizeof(uint) * numVoxels ;
-    
-        checkCudaErrors(cudaMalloc((void **) &d_voxelVerts,            memSize));
-
-        checkCudaErrors(cudaMalloc((void **) &d_voxelVertsScan,        memSize));
-
-        checkCudaErrors(cudaMalloc((void **) &d_voxelOccupied,         memSize));
-
-        checkCudaErrors(cudaMalloc((void **) &d_voxelOccupiedScan,     memSize));
-
-        checkCudaErrors(cudaMalloc((void **) &d_compVoxelArray,   memSize));
-
-    
     }
 
     void initMC_two()
@@ -2206,6 +2086,8 @@ class Multitopo : public VulkanBaseApp, Modelling
         checkCudaErrors(cudaMalloc((void **) &d_facet_active,  sizeof(uint) * max_nfacets));
 
         checkCudaErrors(cudaMalloc((void **) &d_facet_active_scan, sizeof(uint) * max_nfacets));
+
+        checkCudaErrors(cudaMemset(triangle_data, 0, max_nfacets * sizeof(*triangle_data)));
 
     }
 
@@ -2262,11 +2144,15 @@ class Multitopo : public VulkanBaseApp, Modelling
         
         checkCudaErrors(cudaMalloc((void **)&d_selection, sizeof(REAL)*NumX * NumY*NumZ));
 
-        checkCudaErrors(cudaMemset(d_selection, 0.0, sizeof(REAL)*NumX * NumY * NumZ));
+        checkCudaErrors(cudaMemset(d_selection, 0, sizeof(REAL)*NumX * NumY * NumZ));
 
         checkCudaErrors(cudaMalloc((void **)&d_selection2, sizeof(REAL)*NumX2 * NumY2*NumZ2));
 
-        checkCudaErrors(cudaMemset(d_selection2, 0.0, sizeof(REAL)*NumX2 * NumY2 * NumZ2));
+        checkCudaErrors(cudaMemset(d_selection2, 0, sizeof(REAL)*NumX2 * NumY2 * NumZ2));
+
+        checkCudaErrors(cudaMalloc((void **)&d_loadgroup, sizeof(REAL3)* 32));
+
+        checkCudaErrors(cudaMemset(d_loadgroup,0, sizeof(REAL3)* 32));
 
     }
     
@@ -2334,8 +2220,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         checkCudaErrors(cudaMemset(vol_topo, 0.0, (NumX2 *NumY2 * NumZ2) * sizeof(*vol_topo)));
 
-        checkCudaErrors(cudaMemset(d_pos, 0.0, (maxmemverts) * sizeof(*d_pos)));
-        checkCudaErrors(cudaMemset(d_normal, 0.0, (maxmemverts) * sizeof(*d_normal)));
         checkCudaErrors(cudaMemset(d_volume_s, 0.0, (NumX *NumY * NumZ) * sizeof(*d_volume_s)));
         checkCudaErrors(cudaMemset(d_volume_t, 0.0, (NumX *NumY * NumZ) * sizeof(*d_volume_t)));
         checkCudaErrors(cudaMemset(d_raster, 0.0, (NumX *NumY * NumZ) * sizeof(*d_raster)));
@@ -2349,8 +2233,9 @@ class Multitopo : public VulkanBaseApp, Modelling
         checkCudaErrors(cudaMemset(d_selection2, 0.0, sizeof(*d_selection2)*NumX2 * NumY2 * NumZ2));
         checkCudaErrors(cudaMemset(d_cudastorageBuffers[0], 0.0, (max_nfacets) * sizeof(*d_cudastorageBuffers[0])));
         checkCudaErrors(cudaMemset(d_cudastorageBuffers[1], 0.0, (max_nfacets) * sizeof(*d_cudastorageBuffers[1])));
+        checkCudaErrors(cudaMemset(d_loadgroup, 0, sizeof(*d_loadgroup)*32));
 
-        checkCudaErrors(cudaMemset(triangle_data, 0.0, max_nfacets * sizeof(*triangle_data)));
+     
 
         ImguiApp::show_analysis = false;
      
@@ -2514,8 +2399,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
          T *stagedVert = (T *)stagingBase;
 
-   
-
         for (size_t i = 0; i < maximumverts; i++){
            
             stagedVert[i].x = 0.0;
@@ -2624,7 +2507,12 @@ class Multitopo : public VulkanBaseApp, Modelling
             stagedVert[i].normal.x = 0.0;
             stagedVert[i].normal.y = 1.0;
             stagedVert[i].normal.z = 0.0;
+            stagedVert[i].load_dir.x = 0.0;
+            stagedVert[i].load_dir.y = 0.0;
+            stagedVert[i].load_dir.z = 0.0;
             stagedVert[i].val = 0.0;
+            stagedVert[i].load_id = 0;
+
 
 
         }
@@ -2683,20 +2571,6 @@ class Multitopo : public VulkanBaseApp, Modelling
                         getDefaultMemHandleType(),
                         v_raster, v_rasterMemory);
 
-        
-        createExternalBuffer(maxmemverts * sizeof(float4),
-                             VK_BUFFER_USAGE_TRANSFER_DST_BIT  | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                             getDefaultMemHandleType(),
-                             v_pos_s, v_posmemory_s);
-
-
-        createExternalBuffer(maxmemverts * sizeof(float4),
-                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                             getDefaultMemHandleType(),
-                             v_norm_s, v_normmemory_s);
-
         createExternalBuffer(max_nfacets * sizeof(InstanceData),
                              VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -2728,10 +2602,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         importCudaExternalMemory((void **)&d_raster, m_cudarasterMem, v_rasterMemory, (nVerts) * sizeof(REAL), getDefaultMemHandleType());
         
-        importCudaExternalMemory((void **)&d_pos, m_cudaPos_s,v_posmemory_s, maxmemverts * sizeof(*d_pos), getDefaultMemHandleType());
-        
-        importCudaExternalMemory((void **)&d_normal, m_cudaNorm_s,v_normmemory_s, maxmemverts * sizeof(*d_normal), getDefaultMemHandleType());
-    
         importCudaExternalMemory((void **)&d_volume_twice, m_cuda_volume_twiceMem,v_volume_twice_memory, size2 * sizeof(*d_volume_twice), getDefaultMemHandleType());
 
         importCudaExternalMemory((void **)&d_loadinstance_buffer, m_loadinstance_Mem,v_loadinstance_memory, max_nfacets * sizeof(InstanceData), getDefaultMemHandleType());
@@ -2755,10 +2625,6 @@ class Multitopo : public VulkanBaseApp, Modelling
         fill_buffer_val<float>(device,v_volume_twice,size2,NumX2,NumY2,NumZ2,0.0f);
         
         ////////////////////////////////////////////////////////////////////////////
-  
-        fill_buffer_posnorm<float4>(device,v_pos_s,maxmemverts);
-
-        fill_buffer_posnorm<float4>(device,v_norm_s,maxmemverts);
 
         fill_instance_buffer(device,max_nfacets);
 
@@ -2962,7 +2828,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         gettimeofday(&t1, 0);
         
         structure.GPUCG(d_us,d_den,d_selection,  Topopt_val::iter, 0, Topopt_val::EndRes, FinalIter_s, FinalRes_s,Topopt_val::pexp,
-        ImguiApp::x_load_axis, ImguiApp::y_load_axis, ImguiApp::z_load_axis);
+        ImguiApp::load_index,d_loadgroup);
         
         gettimeofday(&t2, 0);
 
@@ -3155,7 +3021,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             gettimeofday(&t1, 0);
             
             structure.GPUCG(d_us,d_den,d_selection, Topopt_val::iter, OptIter, Topopt_val::EndRes, FinalIter_s, FinalRes_s,Topopt_val::pexp, 
-            ImguiApp::x_load_axis, ImguiApp::y_load_axis, ImguiApp::z_load_axis);
+            ImguiApp::load_index,d_loadgroup);
             
             gettimeofday(&t2, 0);
 
@@ -3321,8 +3187,6 @@ class Multitopo : public VulkanBaseApp, Modelling
         ImguiApp::boundary_buffers = true;
 
     }
-
-
 
     void show_model()
     {
@@ -3747,8 +3611,6 @@ class Multitopo : public VulkanBaseApp, Modelling
             }
 
         }   
-
-  
 
         checkCudaErrors(cudaMemcpy2D(fft_gratings,Nxu * sizeof(float), fft_data,(((Nxu/2)+1)*2)*sizeof(float), (Nxu*sizeof(float)),Nyu*Nzu, cudaMemcpyDeviceToDevice));
    
@@ -4284,27 +4146,32 @@ class Multitopo : public VulkanBaseApp, Modelling
             }
 
     
-            if(load_icon && (update_load))
+            if(load_icon && (ImguiApp::new_load || ImguiApp::edit_load))
             {
 
+                selectt.update_load_group(ImguiApp::load_index,d_loadgroup,ImguiApp::x_load_axis,ImguiApp::y_load_axis,ImguiApp::z_load_axis);
+                
                 uint32_t FrmIdx = (currentFrame - 1) % ( swapChainImages.size());
 
-                selectt.icon_count(d_cudastorageBuffers[FrmIdx],nfacets, &loadinstance_count, d_facet_active, d_facet_active_scan, "load", d_loadinstance_buffer, triangle_data);
-
+                selectt.icon_count(d_cudastorageBuffers[FrmIdx],nfacets, &loadinstance_count, d_facet_active, d_facet_active_scan, "load", d_loadinstance_buffer, triangle_data,
+                ImguiApp::load_index,ImguiApp::x_load_axis,ImguiApp::y_load_axis,ImguiApp::z_load_axis, ImguiApp::edit_load );
+                ImguiApp::new_load = false;
             }
-            if (support_icon && (update_support))
+            if (support_icon && (ImguiApp::new_support))
             {
                 uint32_t FrmIdx = (currentFrame - 1) % ( swapChainImages.size());
 
-                selectt.icon_count(d_cudastorageBuffers[FrmIdx],nfacets, &supportinstance_count, d_facet_active, d_facet_active_scan, "support", d_supportinstance_buffer, triangle_data);
-
+                selectt.icon_count(d_cudastorageBuffers[FrmIdx],nfacets, &supportinstance_count, d_facet_active, d_facet_active_scan, "support", d_supportinstance_buffer, triangle_data,
+                ImguiApp::load_index,ImguiApp::x_load_axis,ImguiApp::y_load_axis,ImguiApp::z_load_axis, ImguiApp::edit_load);
+                ImguiApp::new_support = false;
             }
 
             if(ImguiApp::compute_load_icon && load_icon)
             {
                 uint32_t FrmIdx = (currentFrame - 1) % ( swapChainImages.size());
 
-                selectt.icon_count(d_cudastorageBuffers[FrmIdx],nfacets, &loadinstance_count, d_facet_active, d_facet_active_scan, "load", d_loadinstance_buffer, triangle_data);
+                selectt.icon_count(d_cudastorageBuffers[FrmIdx],nfacets, &loadinstance_count, d_facet_active, d_facet_active_scan, "load", d_loadinstance_buffer, triangle_data,
+                ImguiApp::load_index,ImguiApp::x_load_axis,ImguiApp::y_load_axis,ImguiApp::z_load_axis, ImguiApp::edit_load);
 
                 ImguiApp::compute_load_icon = 0;
             }
@@ -4312,7 +4179,8 @@ class Multitopo : public VulkanBaseApp, Modelling
             {
                 uint32_t FrmIdx = (currentFrame - 1) % ( swapChainImages.size());
 
-                selectt.icon_count(d_cudastorageBuffers[FrmIdx],nfacets, &supportinstance_count, d_facet_active, d_facet_active_scan, "support", d_supportinstance_buffer, triangle_data);
+                selectt.icon_count(d_cudastorageBuffers[FrmIdx],nfacets, &supportinstance_count, d_facet_active, d_facet_active_scan, "support", d_supportinstance_buffer, triangle_data,
+                ImguiApp::load_index,ImguiApp::x_load_axis,ImguiApp::y_load_axis,ImguiApp::z_load_axis, ImguiApp::edit_load);
 
                 ImguiApp::compute_support_icon = 0;
             }
@@ -4998,15 +4866,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         checkCudaErrors(cudaFree(d_numVertsTable));
 
-        checkCudaErrors(cudaFree(d_voxelVerts));
-
-        checkCudaErrors(cudaFree(d_voxelVertsScan));
-
-        checkCudaErrors(cudaFree(d_voxelOccupied));
-
-        checkCudaErrors(cudaFree(d_voxelOccupiedScan));
-
-        checkCudaErrors(cudaFree(d_compVoxelArray));
 
     }
 
@@ -5065,6 +4924,11 @@ class Multitopo : public VulkanBaseApp, Modelling
         if(d_selection != nullptr)
         {
             checkCudaErrors(cudaFree(d_selection));
+        }
+
+        if(d_loadgroup != nullptr)
+        {
+            checkCudaErrors(cudaFree(d_loadgroup));
         }
 
         if(d_selection2 != nullptr)

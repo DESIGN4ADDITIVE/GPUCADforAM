@@ -25,8 +25,10 @@ struct triangle_metadata
     uint edge_1;
     uint edge_2;
     uint edge_3;
+    uint load_group;
     float3 centroid;
     float3 normal;
+    float3 force_dir;
 };
 
 class MarchingCubeCuda

@@ -35,7 +35,9 @@ layout (location = 1) in vec3 Normal[];
 
 layout (location = 2) in vec3 instPos[];
 layout (location = 3) in vec3 instNormal[];
-layout (location = 4) in float instVal[];
+layout (location = 4) in vec3 instforce_dir[];
+layout (location = 5) in float instVal[];
+layout (location = 6) in int inst_loadindex[];
 
 layout (location = 0) out vec4 fragColor;
 
@@ -58,7 +60,7 @@ void main(void)
 
 		if(instVal[i] == 1.0)
 		{
-			dir_force = normalize(force_dir.xyz);
+			dir_force = normalize(instforce_dir[i].xyz);
 
 			Pos_scale = Pos[i].xyz * Scale_load.xyz;
 		}
@@ -114,9 +116,6 @@ void main(void)
 			}
 
 
-		gl_ViewportIndex =gl_InvocationID;
-
-		gl_PrimitiveID = gl_PrimitiveIDIn;
         
 		EmitVertex();
 	}

@@ -101,6 +101,11 @@ class ImguiApp
     static bool y_result;
     static bool z_result;
 
+    static uint load_index;
+    static bool edit_load;
+
+    static std::vector<std::string> load_list;
+
    
     static bool view_front;
     static bool view_back;
@@ -149,6 +154,8 @@ class ImguiApp
     static bool update_sink;
     static bool clear_load;
     static bool clear_support;
+    static bool new_load;
+    static bool new_support;
 
     static bool load_icon;
     static bool support_icon;

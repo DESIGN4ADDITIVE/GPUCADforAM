@@ -14,9 +14,11 @@ struct IconData {
 struct InstanceData {
     float3 pos;
     float3 normal;
+    float3 load_dir;
     float val;
-
+    int load_id;
 };
+
 
 
 #endif //_INSTANCES_H_

@@ -1571,7 +1571,7 @@ __device__ int final_idx_val(uint2 indxx , grid_points *vol_one, float isoval, u
 }
 
 
-__device__ void face_to_grid(float a, uint2 indx1, uint2 indx2, uint2 indx3,grid_points *d_vol_one,uint voxel,uint edge_1,uint edge_2, uint edge_3, REAL *d_selection, float isoval)
+__device__ void face_to_grid(float a, uint2 indx1, uint2 indx2, uint2 indx3,grid_points *d_vol_one,uint voxel,uint edge_1,uint edge_2, uint edge_3, REAL *d_selection, float isoval, uint load_group)
 {
 	
 	
@@ -1604,15 +1604,15 @@ __device__ void face_to_grid(float a, uint2 indx1, uint2 indx2, uint2 indx3,grid
 	{
 		if(v_index.x > -1)
 		{
-			d_selection[v_index.x] = 1.0;
+			d_selection[v_index.x] = float(load_group);
 		}
 		if(v_index.y > -1)
 		{
-			d_selection[v_index.y] = 1.0;
+			d_selection[v_index.y] = float(load_group);
 		}
 		if(v_index.z > -1)
 		{
-			d_selection[v_index.z] = 1.0;
+			d_selection[v_index.z] = float(load_group);
 		}
 
 	}	
@@ -1636,6 +1636,7 @@ uint3 gridSizeShift, uint3 gridSizeMask, uint Nx, uint Ny, grid_points *d_vol_on
 		uint edge_2 = triangle_data[tx].edge_2;
 		uint edge_3 = triangle_data[tx].edge_3;
 		uint l_index = triangle_data[tx].l_index;
+		uint load_group = triangle_data[tx].load_group;
 
 		uint3 gridPos = calcGridPos_selection(voxel, gridSizeShift, gridSizeMask);
 
@@ -1647,7 +1648,7 @@ uint3 gridSizeShift, uint3 gridSizeMask, uint Nx, uint Ny, grid_points *d_vol_on
 		if(l_index == 0)
 		{
 			
-			face_to_grid(a,indx1,indx2,indx3,d_vol_one,voxel, edge_1, edge_2, edge_3, d_selection, isoval);
+			face_to_grid(a,indx1,indx2,indx3,d_vol_one,voxel, edge_1, edge_2, edge_3, d_selection, isoval,load_group);
 			
 		}
 		__syncthreads();
@@ -1655,7 +1656,7 @@ uint3 gridSizeShift, uint3 gridSizeMask, uint Nx, uint Ny, grid_points *d_vol_on
 		if(l_index == 1)
 		{
 			
-			face_to_grid(a,indx1,indx2,indx3,d_vol_one,voxel, edge_1, edge_2, edge_3, d_selection, isoval);
+			face_to_grid(a,indx1,indx2,indx3,d_vol_one,voxel, edge_1, edge_2, edge_3, d_selection, isoval,load_group);
 			
 		}
 		__syncthreads();
@@ -1663,7 +1664,7 @@ uint3 gridSizeShift, uint3 gridSizeMask, uint Nx, uint Ny, grid_points *d_vol_on
 		if(l_index == 2)
 		{
 			
-			face_to_grid(a,indx1,indx2,indx3,d_vol_one,voxel, edge_1, edge_2, edge_3, d_selection, isoval);
+			face_to_grid(a,indx1,indx2,indx3,d_vol_one,voxel, edge_1, edge_2, edge_3, d_selection, isoval,load_group);
 			
 		}
 		__syncthreads();
@@ -1671,7 +1672,7 @@ uint3 gridSizeShift, uint3 gridSizeMask, uint Nx, uint Ny, grid_points *d_vol_on
 		if(l_index == 3)
 		{
 			
-			face_to_grid(a,indx1,indx2,indx3,d_vol_one,voxel, edge_1, edge_2, edge_3, d_selection, isoval);
+			face_to_grid(a,indx1,indx2,indx3,d_vol_one,voxel, edge_1, edge_2, edge_3, d_selection, isoval,load_group);
 			
 		}
 		__syncthreads();
@@ -1679,7 +1680,7 @@ uint3 gridSizeShift, uint3 gridSizeMask, uint Nx, uint Ny, grid_points *d_vol_on
 		if(l_index == 4)
 		{
 			
-			face_to_grid(a,indx1,indx2,indx3,d_vol_one,voxel, edge_1, edge_2, edge_3, d_selection, isoval);
+			face_to_grid(a,indx1,indx2,indx3,d_vol_one,voxel, edge_1, edge_2, edge_3, d_selection, isoval,load_group);
 			
 		}
 		__syncthreads();
@@ -1730,18 +1731,17 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 		if(x0 == -1.0)
 		{
 			d_selection[tx] = -1.0;
-		
 		}
-		else if( x0 == 1)
+		else if( x0 >= 1)
 		{
-			d_selection[tx] = 1.0;
+			d_selection[tx] = x0;
 		}
 
 		__syncthreads();
 
 		if((xx < (Nx -1)))
 		{
-			if(fabs(x1) == 1)
+			if(fabs(x1) >= 1)
 			{
 			
 				int vx = d_vol_one[indone + 1].val;
@@ -1753,12 +1753,10 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					if(x1 == -1.0)
 					{
 						d_selection[tx + 1] = -1.0;
-						
 					}	
-					else if(x1 == 1.0)
+					else if(x1 >= 1.0)
 					{
-						d_selection[tx + 1] = 1.0;
-						
+						d_selection[tx + 1] = x1;			
 					}
 				}
 				else
@@ -1766,12 +1764,10 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					if(x1 == -1.0)
 					{
 						d_selection[tx] = -1.0;
-
 					}	
-					else if(x1 == 1.0)
+					else if(x1 >= 1.0)
 					{
-						d_selection[tx] = 1.0;
-				
+						d_selection[tx] = x1;			
 					}
 				}
 			}
@@ -1781,7 +1777,7 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 
 		if((yy < (Ny -1)))
 		{
-			if(fabs(y1) == 1)
+			if(fabs(y1) >= 1)
 			{
 				
 				int vy = d_vol_one[indone + (mask.x) * 2].val;
@@ -1793,12 +1789,10 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					if(y1 == -1.0)
 					{
 						d_selection[tx + (mask.x)] = -1.0;
-						
 					}	
-					else if(y1 == 1.0)
+					else if(y1 >= 1.0)
 					{
-						d_selection[tx + (mask.x)] = 1.0;
-						
+						d_selection[tx + (mask.x)] = y1;
 					}
 				}
 				else
@@ -1807,12 +1801,10 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					if(y1 == -1.0)
 					{
 						d_selection[tx ] = -1.0;
-						
 					}	
-					else if(y1 == 1.0)
+					else if(y1 >= 1.0)
 					{
-						d_selection[tx ] = 1.0;
-						
+						d_selection[tx ] = y1;	
 					}
 				}
 			}
@@ -1822,7 +1814,7 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 
 		if((zz < (Nz -1 )))
 		{
-			if(fabs(z1) == 1)
+			if(fabs(z1) >= 1)
 			{
 				float vz = d_vol_one[indone + (((mask.x) * 2) * ((mask.y) * 2))].val;
 				float vz_n = d_vol_one[indone + (((mask.x) * 2) * ((mask.y) * 2)) + (((mask.x) * 2) * ((mask.y) * 2))].val;
@@ -1833,12 +1825,10 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					if(z1 == -1.0)
 					{
 						d_selection[tx + (((mask.x)) * ((mask.y)))] = -1.0;
-						
 					}	
-					else if(z1 == 1.0)
+					else if(z1 >= 1.0)
 					{
-						d_selection[tx + (((mask.x)) * ((mask.y)))] = 1.0;
-						
+						d_selection[tx + (((mask.x)) * ((mask.y)))] = z1;
 					}
 				}
 
@@ -1848,12 +1838,10 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					if(z1 == -1.0)
 					{
 						d_selection[tx] = -1.0;
-						
 					}	
-					else if(z1 == 1.0)
+					else if(z1 >= 1.0)
 					{
-						d_selection[tx] = 1.0;
-						
+						d_selection[tx] = z1;						
 					}
 				}
 			}
@@ -1863,7 +1851,7 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 
 		if((xx < (Nx -1)) && (yy < (Ny -1)))
 		{
-			if(fabs(xy) == 1)
+			if(fabs(xy) >= 1)
 			{
 				float vxy = d_vol_one[indone + ((mask.x) * 2) + 1].val;
 				float vxy_n = d_vol_one[indone + (((mask.x) * 2) * 2) + 2].val;
@@ -1875,12 +1863,10 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					if(xy == -1.0)
 					{
 						d_selection[tx + (mask.x + 1)] = -1.0;
-						
 					}	
-					else if(xy == 1.0)
+					else if(xy >= 1.0)
 					{
-						d_selection[tx + (mask.x + 1)] = 1.0;
-						
+						d_selection[tx + (mask.x + 1)] = xy;
 					}
 				}
 
@@ -1890,12 +1876,10 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					if(xy == -1.0)
 					{
 						d_selection[tx] = -1.0;
-						
 					}	
-					else if(xy == 1.0)
+					else if(xy >= 1.0)
 					{
-						d_selection[tx] = 1.0;
-						
+						d_selection[tx] = xy;
 					}
 				}
 			}
@@ -1906,7 +1890,7 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 
 		if((xx < (Nx -1)) && (zz < (Nz -1)))
 		{
-			if(fabs(xz) == 1)
+			if(fabs(xz) >= 1)
 			{
 				float vxz = d_vol_one[indone + (((mask.x) * 2) * ((mask.y) * 2)) + 1].val;
 				float vxz_n = d_vol_one[indone + (((mask.x) * 2) * ((mask.y) * 2)) * 2 + 2].val;
@@ -1917,12 +1901,10 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					if(xz == -1.0)
 					{
 						d_selection[tx + (mask.x * mask.y) + 1] = -1.0;
-						
 					}	
-					else if(xz == 1.0)
+					else if(xz >= 1.0)
 					{
-						d_selection[tx + (mask.x * mask.y) + 1] = 1.0;
-						
+						d_selection[tx + (mask.x * mask.y) + 1] = xz;
 					}
 				}
 
@@ -1931,13 +1913,11 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					
 					if(xz == -1.0)
 					{
-						d_selection[tx] = -1.0;
-						
+						d_selection[tx] = -1.0;		
 					}	
-					else if(xz == 1.0)
+					else if(xz >= 1.0)
 					{
-						d_selection[tx] = 1.0;
-						
+						d_selection[tx] = xz;
 					}
 				}
 			}
@@ -1948,7 +1928,7 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 
 		if((yy < (Ny -1)) && (zz < (Nz -1)))
 		{
-			if(fabs(yz) == 1)
+			if(fabs(yz) >= 1)
 			{
 				float vyz = d_vol_one[indone + (((mask.x) * 2) * ((mask.y) * 2)) + ((mask.x) * 2)].val;
 				float vyz_n = d_vol_one[indone + (((mask.x) * 2) * ((mask.y) * 2)) * 2 + ((mask.x) * 2) * 2].val;
@@ -1959,12 +1939,10 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					if(yz == -1.0)
 					{
 						d_selection[tx + (mask.x * mask.y) + mask.x] = -1.0;
-						
 					}	
-					else if(yz == 1.0)
+					else if(yz >= 1.0)
 					{
-						d_selection[tx + (mask.x * mask.y) + mask.x] = 1.0;
-						
+						d_selection[tx + (mask.x * mask.y) + mask.x] = yz;
 					}
 				}
 
@@ -1975,10 +1953,9 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					{
 						d_selection[tx] = -1.0;
 					}	
-					else if(yz == 1.0)
+					else if(yz >= 1.0)
 					{
-						d_selection[tx] = 1.0;
-						
+						d_selection[tx] = yz;
 					}
 				}
 			}
@@ -1988,7 +1965,7 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 
 		if((yy < (Ny -1)) && (zz < (Nz -1)) && (xx < (Nx -1)))
 		{
-			if(fabs(xyz) == 1)
+			if(fabs(xyz) >= 1)
 			{
 				float vxyz = d_vol_one[indone + (((mask.x) * 2) * ((mask.y) * 2)) + ((mask.x) * 2) + 1].val;
 				float vxyz_n = d_vol_one[indone + (((mask.x) * 2) * ((mask.y) * 2)) *2 + ((mask.x) * 2) * 2  + 2].val;
@@ -1999,12 +1976,10 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					if(xyz == -1.0)
 					{
 						d_selection[tx + (mask.x * mask.y) + mask.x + 1] = -1.0;
-						
 					}	
-					else if(xyz == 1.0)
+					else if(xyz >= 1.0)
 					{
-						d_selection[tx + (mask.x * mask.y) + mask.x + 1] = 1.0;
-						
+						d_selection[tx + (mask.x * mask.y) + mask.x + 1] = xyz;
 					}
 				}
 
@@ -2015,10 +1990,9 @@ __global__ void apply_to_lower_kernel(REAL *d_selection, REAL *d_selection2, gri
 					{
 						d_selection[tx] = -1.0;
 					}	
-					else if(xyz == 1.0)
+					else if(xyz >= 1.0)
 					{
-						d_selection[tx] = 1.0;
-						
+						d_selection[tx] = xyz;
 					}
 				}
 			}
@@ -2100,6 +2074,74 @@ __global__ void Min_reduction_selection(int2 *d_DataIn,int block_num)
 
 
 __global__ void
+instanced_load_kernel( float *storage_buffer,uint *facets_check, uint *facets_check_occupied, uint active_facets, InstanceData *d_instance_buffer, triangle_metadata *triangle_data,
+int load_index, float x_load, float y_load, float z_load, bool edit_load)
+{
+	int tx = threadIdx.x;
+	int i = blockIdx.x*blockDim.x+tx;
+
+
+    if(i < active_facets)
+    {
+        
+		triangle_metadata tri_data = triangle_data[i];
+		float grid_val = storage_buffer[i];
+		InstanceData inst_buffer_data ;
+
+		if (facets_check[i] && (load_index != 0))
+        {
+            
+			if(tri_data.load_group == 0)
+			{
+				tri_data.load_group = load_index;
+				tri_data.force_dir = {x_load,y_load,z_load};
+			}
+
+			else if((tri_data.load_group  == load_index) && (edit_load))
+			{
+				tri_data.force_dir = {x_load,y_load,z_load};
+			}
+			
+
+			
+			inst_buffer_data.pos = tri_data.centroid;
+			inst_buffer_data.normal = tri_data.normal;
+			inst_buffer_data.val = 1.0f;
+			inst_buffer_data.load_dir = tri_data.force_dir;
+			inst_buffer_data.load_id = tri_data.load_group;
+
+			d_instance_buffer[facets_check_occupied[i]] = inst_buffer_data;
+			triangle_data[i] = tri_data;
+	
+        }
+		else if((tri_data.load_group > 0) && (grid_val == 0))
+		{
+			tri_data.load_group = 0;
+			tri_data.force_dir = {0.0f,0.0f,0.0f};
+			
+			triangle_data[i] = tri_data;
+
+		}
+    
+    }
+}
+
+
+void Selection::instanced_load(float *storage_buffer, uint *facets_check, uint *facets_check_occupied, uint active_facets, InstanceData *d_instance_buffer, triangle_metadata *triangle_data,
+int load_index, float x_load, float y_load, float z_load, bool edit_load)
+{
+    dim3 gids(ceil((active_facets)/float(1024)), 1, 1);
+	dim3 tids(1024,1,1);
+	
+	instanced_load_kernel<<<gids, tids>>>( storage_buffer,facets_check,
+                                     facets_check_occupied, active_facets, d_instance_buffer, triangle_data,load_index,
+									x_load,y_load,z_load,edit_load);
+    cudaDeviceSynchronize();
+	getLastCudaError("instanced_load fails");
+}
+
+
+__global__ void
 instanced_pos_kernel( float *storage_buffer,uint *facets_check, uint *facets_check_occupied, uint active_facets, InstanceData *d_instance_buffer, triangle_metadata *triangle_data)
 {
 	int tx = threadIdx.x;
@@ -2163,7 +2205,8 @@ void Selection::instanced_pos(float *storage_buffer, uint *facets_check, uint *f
 
  }
 
-void Selection::icon_count(float *storage_buffer, uint active_facets, uint *icon_count, uint *facets_check, uint *facets_check_occupied,  std::string type, InstanceData *d_instance_buffer, triangle_metadata *triangle_data)
+void Selection::icon_count(float *storage_buffer, uint active_facets, uint *icon_count, uint *facets_check, uint *facets_check_occupied,  std::string type, InstanceData *d_instance_buffer, triangle_metadata *triangle_data,
+int load_index, float x_load, float y_load, float z_load, bool edit_load)
 {
 	
 	dim3 grids(ceil((active_facets)/float(1024)),1,1);
@@ -2197,7 +2240,39 @@ void Selection::icon_count(float *storage_buffer, uint active_facets, uint *icon
 		*icon_count = lastElement_1 + lastScanElement_1;
 
 	}
+	if(type == "support")
+	{
+		instanced_pos(storage_buffer , facets_check, facets_check_occupied, active_facets, d_instance_buffer, triangle_data);
+	}
+	if(type == "load")
+	{
+		instanced_load(storage_buffer , facets_check, facets_check_occupied, active_facets, d_instance_buffer, triangle_data,
+		load_index, x_load, y_load, z_load, edit_load);
+	}
+}
 
-	instanced_pos(storage_buffer , facets_check, facets_check_occupied, active_facets, d_instance_buffer, triangle_data);
-	
+
+__global__ void load_group_kernel(int load_index, REAL3 *d_loadgroup,float x_load, float y_load, float z_load)
+{
+	int tx = threadIdx.x;
+	if(tx == load_index)
+	{
+		d_loadgroup[tx].x = x_load;
+		d_loadgroup[tx].y = y_load;
+		d_loadgroup[tx].z = z_load;
+	}
+}
+
+
+void Selection::update_load_group(int load_index, REAL3 *d_loadgroup,float x_load, float y_load, float z_load)
+{
+	dim3 grids(1,1,1);
+
+	dim3 tids(32,1,1);
+
+	load_group_kernel<<<grids,tids>>>(load_index,d_loadgroup,x_load,y_load,z_load);
+
+	cudaDeviceSynchronize();
+
+	getLastCudaError("update_load_group failed");
 }

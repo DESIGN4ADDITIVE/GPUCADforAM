@@ -2023,8 +2023,8 @@ generateTriangles_lattice_kernel(float4 *pos, float4 *norm, uint *compactVoxelAr
                 edge = tex1Dfetch<uint>(triTex, (cubeindex*16) + j + 2);
                 
                 ver[2] = &vertlist[(edge*NTHREADS)+threadIdx.x];
-
-                float3 n = (calcNormal(ver[0], ver[1], ver[2]));
+                ///// Orientation Order is different - issue with Marching cube table and coordinate system used in the application /////
+                float3 n = (calcNormal(ver[0], ver[2], ver[1]));
 
             
                 if (index < (maxVerts - 3))

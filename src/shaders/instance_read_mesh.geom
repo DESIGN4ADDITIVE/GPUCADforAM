@@ -81,6 +81,7 @@ void main(void)
 		vec3 cross_vec = normalize(cross(up_axis,dir_force.xyz));
 
 		vec3 locPos;
+		vec3 new_norm;
 
 		float angle = -1 * (acos((dir_force.x * up_axis.x )+ (dir_force.y * up_axis.y) + (dir_force.z * up_axis.z)));
 
@@ -88,26 +89,28 @@ void main(void)
 		{
 
 			locPos = Pos_scale.xyz * cos(angle) + (cross_vec * dot(cross_vec , Pos_scale.xyz) * (1 - cos(angle))) + (cross(Pos_scale.xyz, cross_vec ) * sin(angle));
+			new_norm = n_normal.xyz * cos(angle) + (cross_vec * dot(cross_vec , n_normal.xyz) * (1 - cos(angle))) + (cross(n_normal.xyz, cross_vec ) * sin(angle));
+			
 		}
 		else
 		{
 			
 			locPos = Pos_scale.xyz;
+			new_norm = n_normal;
 
 			if(cos(angle) == -1)
 			{
 				locPos.y *= -1;
+				new_norm.y *= -1;
 			}
 			
 		}
 		
 		vec4 pos = vec4((locPos.xyz) + instPos[i].xyz, 1.0);
 
-		vec3 lightvector = normalize(eyes.xyz - pos.xyz);
-		
-		
+		vec3 lightvector = normalize(eyes.xyz);
 	
-		float amg = abs(dot(lightvector.xyz,n_normal.xyz));
+		float amg = abs(dot(lightvector.xyz,new_norm.xyz));
 		
 		if (gl_InvocationID == 0)
 			{

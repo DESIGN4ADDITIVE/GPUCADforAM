@@ -1952,6 +1952,12 @@ class Multitopo : public VulkanBaseApp, Modelling
             push_constants.eyes[2] = l_two[2];
             push_constants.eyes[3] = 0.0f;
 
+
+            Inst_push_constants.eyes[0] = l_two[0];
+            Inst_push_constants.eyes[1] = l_two[1];
+            Inst_push_constants.eyes[2] = l_two[2];
+            Inst_push_constants.eyes[3] = 0.0f;
+
             /////////////////////////////////////////////////////////////////////////////
            
             mat4x4_mul(ubo.modelViewProj[0], proj[0], view_tran[0]);

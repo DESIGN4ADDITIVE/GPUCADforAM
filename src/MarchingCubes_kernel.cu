@@ -1691,19 +1691,14 @@ float3  vertexInterp_analysis(float isolevel,float3 p0, float3 p1, float f0, flo
     if( (t1 > 0) && (t2 > 0) )
     {
         t = (t1 + t2) * 0.5;
-
-        *field_val = (r0 + r1) * 0.5;
     }
     else if ((t1 > 0) && (t2 == 0))
     {
         t = t1;
-        
     } 
     else if ((t2 > 0) && (t1 == 0))
     {
         t = t2;
-        
-        *field_val = (r0 + r1) * 0.5;
     }
 
     

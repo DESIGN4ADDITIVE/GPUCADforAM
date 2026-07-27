@@ -49,6 +49,14 @@ class Isosurface : public MarchingCubeCuda
         uint *activeVoxels, uint *totalVerts, uint *d_compVoxelArray, uint maxVerts, grid_points *vol_topo, 
         grid_points *vol_one,float* vol_two, float *d_solid, float isovalue1, float *d_result, triangle_metadata *triangle_data);
 
+
+    void computeIsosurface_topo(float4* pos , float4* norm, float isoValue,
+        uint numVoxels, uint *d_voxelVerts,uint *d_voxelVertsScan, uint *d_voxelOccupied,uint *d_voxelOccupiedScan,
+        uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,
+        uint *activeVoxels, uint *totalVerts, uint *d_compVoxelArray, uint maxVerts, grid_points *vol_topo, 
+        grid_points *vol_one,float* vol_two, float *d_solid, float isovalue1, float *d_result, triangle_metadata *triangle_data, bool disp , 
+        float4 *disp_two);
+
     void computeIsosurface_lattice(float* vol, float4* pos , float4* norm, float &isoValue,
         uint numVoxels, uint *d_voxelVerts,uint *d_voxelVertsScan, uint *d_voxelOccupied,uint *d_voxelOccupiedScan,
         uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,

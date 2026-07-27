@@ -3,7 +3,6 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shader_storage_buffer_object : enable
-// #extension GL_EXT_debug_printf : enable
 
 
 layout(location = 0) in vec4 fragColorout;
@@ -53,98 +52,23 @@ void main() {
         
         vec4 colorr = subpassLoad(inputColor).rgba;
         float ch_depth = subpassLoad(inputDepth).r;
+    
 
-
-        if(boundary > 0)
+        if((gl_FragCoord.z == ch_depth))
         {
-                if((gl_FragCoord.z == ch_depth) && (fragColorout.w >= 0.6))
-                {
-                        if(make_region > 0)
-                        {
-                                if(fragColorout.w == 0.643)
-                                {
-                                        outColor = vec4(0.9,0.0,0.3,alpha_val);
-                                }
-                                else
-                                {
-                                      outColor = vec4(0.15,0.9,0.1,alpha_val);  
-                                }
-                        }
-                        else
-                        {
-                                if(fragColorout.w == 0.7)
-                                {
-                                        outColor = vec4(0.0,0.8,1.0,alpha_val);
-                                }
-                                
-                                else if(fragColorout.w == 0.8)
-                                {
-                                        outColor = vec4(0.5,1.0,0.5,alpha_val);
-                                }
-
-
-                                else if(fragColorout.w == 0.9)
-                                {
-                                        outColor = vec4(1.0,0.0,0.5,alpha_val);
-                                }
-
-
-                                else if(fragColorout.w == 0.925)
-                                {
-                                        outColor = vec4(fragColorout.xyz,alpha_val);
-                                }
-
-
-                                else if(fragColorout.w == 1.0)
-                                {
-                                        outColor = vec4(1.0,0.0,1.0,alpha_val);
-                                }
-
-
-
-                                else if(fragColorout.w == 0.625)
-                                {
-                                        outColor = vec4(0.85,1.0,0.5,alpha_val);
-                                }
-
-                                else
-                                {
-                                        outColor = vec4(fragColorout.xyz,alpha_val);
-                                }
-                        }
                 
-
-                        
-                }
-
-                else
-                {
-                        
-                        discard;
-                }
+                
+                outColor = vec4(fragColorout.xyz,alpha_val);
+                                        
+                
         }
 
         else
-        {       
-
+        {
                 
-
-                if((gl_FragCoord.z == ch_depth))
-                {
-                 
-                        
-                        outColor = vec4(fragColorout.xyz,alpha_val);
-                                             
-                        
-                }
-
-                else
-                {
-                      
-                        discard;
-                }
-
+                discard;
         }
+
    
 }
     

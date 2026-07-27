@@ -76,6 +76,16 @@ void MarchingCubeCuda::destroyAllTextureObjects()
 
 
 __device__
+float4 sampleVolume_3d(float4 *data, uint3 p, uint3 gridSize)
+{
+    p.x = min(p.x, gridSize.x);
+    p.y = min(p.y, gridSize.y);
+    p.z = min(p.z, gridSize.z);
+    uint i = (p.z*gridSize.x*gridSize.y) + (p.y*gridSize.x) + p.x;
+    return (float4) data[i];
+}
+
+__device__
 float sampleVolume(float *data, uint3 p, uint3 gridSize)
 {
     p.x = min(p.x, gridSize.x);
@@ -1415,6 +1425,110 @@ void MarchingCubeCuda::classifyVoxel_lattice_2(dim3 grid, dim3 threads, uint *vo
 
 
 __global__ void
+classifyVoxel_kernel_topo(uint *voxelVerts, uint *voxelOccupied, grid_points *vol_topo, grid_points *vol_one, float *volume_one, float *d_solid,
+              uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
+              float3 voxelSize, float isoValue, float isovalue1, cudaTextureObject_t numVertsTex)
+{
+    uint blockId = __mul24(blockIdx.y, gridDim.x) + blockIdx.x;
+    uint i = __mul24(blockId, blockDim.x) + threadIdx.x;
+
+    if (i < numVoxels)
+    {
+        uint3 gridPos = calcGridPos(i, gridSizeShift, gridSizeMask);
+    
+        grid_points field_1[8];
+        
+        float field_3[8];
+
+        float isoVal = isoValue;
+    
+        uint cubeindex  = 0;
+
+        uint cubeindex1  = 0;
+
+        uint cubeindex3  = 0;
+
+        field_1[0] = sampleVolume_3(vol_topo, gridPos, gridSize);
+        field_1[1] = sampleVolume_3(vol_topo, gridPos + make_uint3(1, 0, 0), gridSize);
+        field_1[2] = sampleVolume_3(vol_topo, gridPos + make_uint3(1, 1, 0), gridSize);
+        field_1[3] = sampleVolume_3(vol_topo, gridPos + make_uint3(0, 1, 0), gridSize);
+        field_1[4] = sampleVolume_3(vol_topo, gridPos + make_uint3(0, 0, 1), gridSize);
+        field_1[5] = sampleVolume_3(vol_topo, gridPos + make_uint3(1, 0, 1), gridSize);
+        field_1[6] = sampleVolume_3(vol_topo, gridPos + make_uint3(1, 1, 1), gridSize);
+        field_1[7] = sampleVolume_3(vol_topo, gridPos + make_uint3(0, 1, 1), gridSize);
+
+
+
+        field_3[0] = sampleVolume(volume_one, gridPos, gridSize);
+        field_3[1] = sampleVolume(volume_one, gridPos + make_uint3(1, 0, 0), gridSize);
+        field_3[2] = sampleVolume(volume_one, gridPos + make_uint3(1, 1, 0), gridSize);
+        field_3[3] = sampleVolume(volume_one, gridPos + make_uint3(0, 1, 0), gridSize);
+        field_3[4] = sampleVolume(volume_one, gridPos + make_uint3(0, 0, 1), gridSize);
+        field_3[5] = sampleVolume(volume_one, gridPos + make_uint3(1, 0, 1), gridSize);
+        field_3[6] = sampleVolume(volume_one, gridPos + make_uint3(1, 1, 1), gridSize);
+        field_3[7] = sampleVolume(volume_one, gridPos + make_uint3(0, 1, 1), gridSize);
+
+
+        cubeindex1 =  (uint(field_1[0].val < isovalue1));
+        cubeindex1 += (uint(field_1[1].val < isovalue1)) *2;
+        cubeindex1 += (uint(field_1[2].val < isovalue1)) *4;
+        cubeindex1 += (uint(field_1[3].val < isovalue1)) *8;
+        cubeindex1 += (uint(field_1[4].val < isovalue1)) *16;
+        cubeindex1 += (uint(field_1[5].val < isovalue1)) *32;
+        cubeindex1 += (uint(field_1[6].val < isovalue1)) *64;
+        cubeindex1 += (uint(field_1[7].val < isovalue1)) *128;
+
+
+        cubeindex3 =  (uint(field_3[0] >= isoVal));
+        cubeindex3 += (uint(field_3[1] >= isoVal)) *2;
+        cubeindex3 += (uint(field_3[2] >= isoVal)) *4;
+        cubeindex3 += (uint(field_3[3] >= isoVal)) *8;
+        cubeindex3 += (uint(field_3[4] >= isoVal)) *16;
+        cubeindex3 += (uint(field_3[5] >= isoVal)) *32;
+        cubeindex3 += (uint(field_3[6] >= isoVal)) *64;
+        cubeindex3 += (uint(field_3[7] >= isoVal)) *128;
+
+     
+        cubeindex =  (uint(field_1[0].val < isovalue1) | (uint(field_3[0] >= isoVal)));
+        cubeindex += (uint(field_1[1].val < isovalue1) | (uint(field_3[1] >= isoVal))) *2;
+        cubeindex += (uint(field_1[2].val < isovalue1) | (uint(field_3[2] >= isoVal))) *4;
+        cubeindex += (uint(field_1[3].val < isovalue1) | (uint(field_3[3] >= isoVal))) *8;
+        cubeindex += (uint(field_1[4].val < isovalue1) | (uint(field_3[4] >= isoVal))) *16;
+        cubeindex += (uint(field_1[5].val < isovalue1) | (uint(field_3[5] >= isoVal))) *32;
+        cubeindex += (uint(field_1[6].val < isovalue1) | (uint(field_3[6] >= isoVal))) *64;
+        cubeindex += (uint(field_1[7].val < isovalue1) | (uint(field_3[7] >= isoVal))) *128;
+  
+
+        uint numVerts = tex1Dfetch<uint>(numVertsTex, cubeindex);
+
+        voxelVerts[i] = numVerts;
+
+        voxelOccupied[i] = (numVerts > 0);
+
+    }
+  
+ 
+}
+
+
+void MarchingCubeCuda::classifyVoxel_topo(dim3 grid, dim3 threads, uint *voxelVerts, uint *voxelOccupied, grid_points *vol_topo, grid_points *vol_one, float *volume_one, float *d_solid,
+                     uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
+                     float3 voxelSize, float isoValue, float isovalue1)
+{
+
+    classifyVoxel_kernel_topo<<<grid, threads>>>(voxelVerts, voxelOccupied, vol_topo,vol_one,volume_one,d_solid,
+                                     gridSize, gridSizeShift, gridSizeMask,
+                                     numVoxels, voxelSize, isoValue, isovalue1, numVertsTex_s);
+    cudaDeviceSynchronize();
+
+    getLastCudaError("classifyVoxel_topo failed");
+
+   
+}
+
+
+
+__global__ void
 classifyVoxel_3(uint *voxelVerts, uint *voxelOccupied, float *volume_one,
               uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
               float3 voxelSize, float isoValue, cudaTextureObject_t numVertsTex)
@@ -1704,6 +1818,48 @@ float3  vertexInterp_analysis(float isolevel,float3 p0, float3 p1, float f0, flo
     
     return lerp(p0, p1, t);
 }
+
+
+__device__
+float3  vertexInterp_disp_analysis(float isolevel,float3 p0, float3 p1, float f0, float f1,float edge_val, float r0, float r1,  float *field_val, float4 disp_0, float4 disp_1)
+{
+    
+    
+    float t1 = edge_val;
+    float t2 = 0.0 ;
+
+    float t = 0;
+    
+    *field_val = r0;
+
+    float3 v0 = {disp_0.x,disp_0.y,disp_0.z};
+    float3 v1 = {disp_1.x,disp_1.y,disp_1.z};
+
+
+    if(((f1 >= isolevel) && (f0 < isolevel)) || ((f0 >= isolevel) && (f1 < isolevel)))
+    {
+        t2 = (isolevel - f0) / (f1 - f0);
+        
+    }
+
+    if( (t1 > 0) && (t2 > 0) )
+    {
+        t = (t1 + t2) * 0.5;
+
+    }
+    else if ((t1 > 0) && (t2 == 0))
+    {
+        t = t1;
+    } 
+    else if ((t2 > 0) && (t1 == 0))
+    {
+        t = t2;
+    }
+    
+    return lerp(v0, v1, t);
+   
+}
+
 
 
 __global__ void
@@ -2466,9 +2622,6 @@ void MarchingCubeCuda::generateTriangles_region(dim3 grid, dim3 threads,float4 *
     
 }
 
-
-
-
 __global__ void
 generateTriangles_lattice_kernel_2(float4 *pos, float4 *norm, uint *compactedVoxelArray, uint *numVertsScanned, 
                    uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask,
@@ -2654,6 +2807,230 @@ void MarchingCubeCuda::generateTriangles_lattice_2(dim3 grid, dim3 threads,
                                            maxVerts, triTex_s, numVertsTex_s, totalverts,vol_topo,vol_one, volume_one,d_solid,isovalue1,d_result,triangle_data);
     cudaDeviceSynchronize();
     getLastCudaError("generateTriangles failed");
+    cudaError_t err = cudaGetLastError();
+    
+}
+
+
+
+__global__ void
+generateTriangles_lattice_kernel_topo(float4 *pos, float4 *norm, uint *compactedVoxelArray, uint *numVertsScanned, 
+                   uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask,
+                   float3 voxelSize, float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts,
+                   cudaTextureObject_t triTex, cudaTextureObject_t numVertsTex,uint totalverts, grid_points *vol_topo, 
+                   grid_points *vol_one,float *volume_one,float *d_solid, float isovalue1, float *d_result, triangle_metadata *triangle_data, bool disp_active, float4 *disp_two)
+{
+    
+    
+    uint blockId = __mul24(blockIdx.y, gridDim.x) + blockIdx.x;
+    uint i = __mul24(blockId, blockDim.x) + threadIdx.x;
+    
+    if (i < activeVoxels)
+    {
+             
+        uint voxel = compactedVoxelArray[i];
+        
+        uint3 gridPos = calcGridPos(voxel, gridSizeShift, gridSizeMask);
+
+        float4 check_disp = sampleVolume_3d(disp_two, gridPos, gridSize);
+       
+        float3 p;
+
+        p.x = (gridPos.x - gridcenter.x) *voxelSize.x ;
+        p.y = (gridPos.y - gridcenter.y) *voxelSize.y ;
+        p.z = (gridPos.z - gridcenter.z) *voxelSize.z ;
+        
+        float3 v[8];
+        v[0] = p;
+        v[1] = p + make_float3(voxelSize.x, 0, 0);
+        v[2] = p + make_float3(voxelSize.x, voxelSize.y, 0);
+        v[3] = p + make_float3(0, voxelSize.y, 0);
+        v[4] = p + make_float3(0, 0, voxelSize.z);
+        v[5] = p + make_float3(voxelSize.x, 0, voxelSize.z);
+        v[6] = p + make_float3(voxelSize.x, voxelSize.y, voxelSize.z);
+        v[7] = p + make_float3(0, voxelSize.y, voxelSize.z);
+
+        grid_points field_1[8];
+
+        float field_3[8];
+
+        float result[8];
+
+        float color[12];
+
+        float4 displacement[8];
+    
+
+        float isoVal = isoValue;
+    
+        uint cubeindex  = 0;
+
+
+        field_1[0] = sampleVolume_3(vol_topo, gridPos, gridSize);
+        field_1[1] = sampleVolume_3(vol_topo, gridPos + make_uint3(1, 0, 0), gridSize);
+        field_1[2] = sampleVolume_3(vol_topo, gridPos + make_uint3(1, 1, 0), gridSize);
+        field_1[3] = sampleVolume_3(vol_topo, gridPos + make_uint3(0, 1, 0), gridSize);
+        field_1[4] = sampleVolume_3(vol_topo, gridPos + make_uint3(0, 0, 1), gridSize);
+        field_1[5] = sampleVolume_3(vol_topo, gridPos + make_uint3(1, 0, 1), gridSize);
+        field_1[6] = sampleVolume_3(vol_topo, gridPos + make_uint3(1, 1, 1), gridSize);
+        field_1[7] = sampleVolume_3(vol_topo, gridPos + make_uint3(0, 1, 1), gridSize);
+
+
+
+        field_3[0] = sampleVolume(volume_one, gridPos, gridSize);
+        field_3[1] = sampleVolume(volume_one, gridPos + make_uint3(1, 0, 0), gridSize);
+        field_3[2] = sampleVolume(volume_one, gridPos + make_uint3(1, 1, 0), gridSize);
+        field_3[3] = sampleVolume(volume_one, gridPos + make_uint3(0, 1, 0), gridSize);
+        field_3[4] = sampleVolume(volume_one, gridPos + make_uint3(0, 0, 1), gridSize);
+        field_3[5] = sampleVolume(volume_one, gridPos + make_uint3(1, 0, 1), gridSize);
+        field_3[6] = sampleVolume(volume_one, gridPos + make_uint3(1, 1, 1), gridSize);
+        field_3[7] = sampleVolume(volume_one, gridPos + make_uint3(0, 1, 1), gridSize);
+
+        cubeindex =  (uint(field_1[0].val < isovalue1) | (uint(field_3[0] >= isoVal)));
+        cubeindex += (uint(field_1[1].val < isovalue1) | (uint(field_3[1] >= isoVal))) *2;
+        cubeindex += (uint(field_1[2].val < isovalue1) | (uint(field_3[2] >= isoVal))) *4;
+        cubeindex += (uint(field_1[3].val < isovalue1) | (uint(field_3[3] >= isoVal))) *8;
+        cubeindex += (uint(field_1[4].val < isovalue1) | (uint(field_3[4] >= isoVal))) *16;
+        cubeindex += (uint(field_1[5].val < isovalue1) | (uint(field_3[5] >= isoVal))) *32;
+        cubeindex += (uint(field_1[6].val < isovalue1) | (uint(field_3[6] >= isoVal))) *64;
+        cubeindex += (uint(field_1[7].val < isovalue1) | (uint(field_3[7] >= isoVal))) *128;
+  
+        uint numVerts = tex1Dfetch<uint>(numVertsTex, cubeindex);
+
+        if(numVerts > 0)
+        {
+            
+            result[0] = sampleVolume(d_result, gridPos, gridSize);
+            result[1] = sampleVolume(d_result, gridPos + make_uint3(1, 0, 0), gridSize);
+            result[2] = sampleVolume(d_result, gridPos + make_uint3(1, 1, 0), gridSize);
+            result[3] = sampleVolume(d_result, gridPos + make_uint3(0, 1, 0), gridSize);
+            result[4] = sampleVolume(d_result, gridPos + make_uint3(0, 0, 1), gridSize);
+            result[5] = sampleVolume(d_result, gridPos + make_uint3(1, 0, 1), gridSize);
+            result[6] = sampleVolume(d_result, gridPos + make_uint3(1, 1, 1), gridSize);
+            result[7] = sampleVolume(d_result, gridPos + make_uint3(0, 1, 1), gridSize);
+            
+            displacement[0] = sampleVolume_3d(disp_two, gridPos, gridSize)  ;
+            displacement[1] = sampleVolume_3d(disp_two, gridPos + make_uint3(1, 0, 0), gridSize)  ;
+            displacement[2] = sampleVolume_3d(disp_two, gridPos + make_uint3(1, 1, 0), gridSize)  ;
+            displacement[3] = sampleVolume_3d(disp_two, gridPos + make_uint3(0, 1, 0), gridSize)  ;
+            displacement[4] = sampleVolume_3d(disp_two, gridPos + make_uint3(0, 0, 1), gridSize)  ;
+            displacement[5] = sampleVolume_3d(disp_two, gridPos + make_uint3(1, 0, 1), gridSize)  ;
+            displacement[6] = sampleVolume_3d(disp_two, gridPos + make_uint3(1, 1, 1), gridSize)  ;
+            displacement[7] = sampleVolume_3d(disp_two, gridPos + make_uint3(0, 1, 1), gridSize)  ;
+                        
+            __syncthreads();
+
+            __shared__ float3 vertlist[12*NTHREADS];
+
+       
+            if(!disp_active)
+            {
+                vertlist[threadIdx.x] = vertexInterp_analysis(isoVal, v[0], v[1], field_3[0], field_3[1],field_1[0].t_x, result[0], result[1],  &color[0]);
+                vertlist[NTHREADS+threadIdx.x] = vertexInterp_analysis(isoVal, v[1], v[2], field_3[1], field_3[2],field_1[1].t_y, result[1], result[2],  &color[1]);
+                vertlist[(NTHREADS*2)+threadIdx.x] = vertexInterp_analysis(isoVal, v[3], v[2], field_3[3], field_3[2],field_1[3].t_x, result[3], result[2],  &color[2]);
+                vertlist[(NTHREADS*3)+threadIdx.x] = vertexInterp_analysis(isoVal, v[0], v[3], field_3[0], field_3[3],field_1[0].t_y, result[0], result[3],  &color[3]);
+                vertlist[(NTHREADS*4)+threadIdx.x] = vertexInterp_analysis(isoVal, v[4], v[5], field_3[4], field_3[5],field_1[4].t_x, result[4], result[5],  &color[4]);
+                vertlist[(NTHREADS*5)+threadIdx.x] = vertexInterp_analysis(isoVal, v[5], v[6], field_3[5], field_3[6],field_1[5].t_y, result[5], result[6],  &color[5]);
+                vertlist[(NTHREADS*6)+threadIdx.x] = vertexInterp_analysis(isoVal, v[7], v[6], field_3[7], field_3[6],field_1[7].t_x, result[7], result[6],  &color[6]);
+                vertlist[(NTHREADS*7)+threadIdx.x] = vertexInterp_analysis(isoVal, v[4], v[7], field_3[4], field_3[7],field_1[4].t_y, result[4], result[7],  &color[7]);
+                vertlist[(NTHREADS*8)+threadIdx.x] = vertexInterp_analysis(isoVal, v[0], v[4], field_3[0], field_3[4],field_1[0].t_z, result[0], result[4],  &color[8]);
+                vertlist[(NTHREADS*9)+threadIdx.x] = vertexInterp_analysis(isoVal, v[1], v[5], field_3[1], field_3[5],field_1[1].t_z, result[1], result[5],  &color[9]);
+                vertlist[(NTHREADS*10)+threadIdx.x] = vertexInterp_analysis(isoVal, v[2], v[6], field_3[2], field_3[6],field_1[2].t_z, result[2], result[6],  &color[10]);
+                vertlist[(NTHREADS*11)+threadIdx.x] = vertexInterp_analysis(isoVal, v[3], v[7], field_3[3], field_3[7],field_1[3].t_z, result[3], result[7],  &color[11]);
+            }
+            else
+            {
+            
+                vertlist[threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[0], v[1], field_3[0], field_3[1],field_1[0].t_x, result[0], result[1],  &color[0],displacement[0],displacement[1]);
+                vertlist[NTHREADS+threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[1], v[2], field_3[1], field_3[2],field_1[1].t_y, result[1], result[2],  &color[1],displacement[1],displacement[2]);
+                vertlist[(NTHREADS*2)+threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[3], v[2], field_3[3], field_3[2],field_1[3].t_x, result[3], result[2],  &color[2],displacement[3],displacement[2]);
+                vertlist[(NTHREADS*3)+threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[0], v[3], field_3[0], field_3[3],field_1[0].t_y, result[0], result[3],  &color[3],displacement[0],displacement[3]);
+                vertlist[(NTHREADS*4)+threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[4], v[5], field_3[4], field_3[5],field_1[4].t_x, result[4], result[5],  &color[4],displacement[4],displacement[5]);
+                vertlist[(NTHREADS*5)+threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[5], v[6], field_3[5], field_3[6],field_1[5].t_y, result[5], result[6],  &color[5],displacement[5],displacement[6]);
+                vertlist[(NTHREADS*6)+threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[7], v[6], field_3[7], field_3[6],field_1[7].t_x, result[7], result[6],  &color[6],displacement[7],displacement[6]);
+                vertlist[(NTHREADS*7)+threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[4], v[7], field_3[4], field_3[7],field_1[4].t_y, result[4], result[7],  &color[7],displacement[4],displacement[7]);
+                vertlist[(NTHREADS*8)+threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[0], v[4], field_3[0], field_3[4],field_1[0].t_z, result[0], result[4],  &color[8],displacement[0],displacement[4]);
+                vertlist[(NTHREADS*9)+threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[1], v[5], field_3[1], field_3[5],field_1[1].t_z, result[1], result[5],  &color[9],displacement[1],displacement[5]);
+                vertlist[(NTHREADS*10)+threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[2], v[6], field_3[2], field_3[6],field_1[2].t_z, result[2], result[6],  &color[10],displacement[2],displacement[6]);
+                vertlist[(NTHREADS*11)+threadIdx.x] = vertexInterp_disp_analysis(isoVal, v[3], v[7], field_3[3], field_3[7],field_1[3].t_z, result[3], result[7],  &color[11],displacement[3],displacement[7]);
+          
+            }
+            
+
+            __syncthreads();
+
+            for (int j = 0; j<numVerts; j += 3)
+            {
+                uint index;
+                
+                index = numVertsScanned[voxel] + j;
+                
+                float3 *ver[3];
+                float *col[3];
+
+                uint edge_1;
+                uint edge_2;
+                uint edge_3;
+            
+
+                edge_1 = tex1Dfetch<uint>(triTex, (cubeindex*16) + j);
+            
+                ver[0] = &vertlist[(edge_1*NTHREADS)+threadIdx.x];
+
+                col[0] = &color[edge_1];
+
+                edge_2 = tex1Dfetch<uint>(triTex, (cubeindex*16) + j + 1);
+              
+                ver[1] = &vertlist[(edge_2*NTHREADS)+threadIdx.x];
+
+                col[1] = &color[edge_2];
+                
+                edge_3 = tex1Dfetch<uint>(triTex, (cubeindex*16) + j + 2);
+
+                ver[2] = &vertlist[(edge_3*NTHREADS)+threadIdx.x];
+
+                col[2] = &color[edge_3];
+             
+                
+                float3 n = calcNormal(ver[0], ver[1], ver[2]);
+            
+                if (index < (maxVerts - 3))
+                {
+            
+                    pos[index] = make_float4(*ver[0], 1.0f);
+                    norm[index] = make_float4(n, *col[0]);
+
+                    pos[index+1] = make_float4(*ver[1], 1.0f);
+                    norm[index+1] = make_float4(n, *col[1]);
+
+                    pos[index+2] = make_float4(*ver[2], 1.0f);
+                    norm[index+2] = make_float4(n, *col[2]);    
+                
+                }
+            }
+        }
+
+      
+    }
+
+
+}
+
+void MarchingCubeCuda::generateTriangles_lattice_topo(dim3 grid, dim3 threads,
+                          float4 *pos, float4 *norm, uint *compactedVoxelArray, uint *numVertsScanned,
+                          uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask,
+                          float3 voxelSize, float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts, uint totalverts,grid_points *vol_topo, grid_points *vol_one,float *volume_one, float *d_solid,float isovalue1, float *d_result, triangle_metadata *triangle_data, bool disp,
+                        float4 *disp_two)
+{
+    
+    generateTriangles_lattice_kernel_topo<<<grid, threads>>>(pos, norm,
+                                           compactedVoxelArray,
+                                           numVertsScanned,
+                                           gridSize, gridSizeShift, gridSizeMask,
+                                           voxelSize,gridcenter, isoValue, activeVoxels,
+                                           maxVerts, triTex_s, numVertsTex_s, totalverts,vol_topo,vol_one, volume_one,d_solid,isovalue1,d_result,triangle_data,disp, disp_two);
+    cudaDeviceSynchronize();
+    getLastCudaError("generateTriangles_topo failed");
     cudaError_t err = cudaGetLastError();
     
 }

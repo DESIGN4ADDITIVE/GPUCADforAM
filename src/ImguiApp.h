@@ -186,6 +186,8 @@ class ImguiApp
     static bool unit_lattice_settings;
 
     static bool svl_data;
+    
+    static bool texture_data;
 
     static float bound_isoVal;
     static float bound_isoValone;
@@ -193,6 +195,9 @@ class ImguiApp
 
     static bool update_isorange;
     static bool update_unit_isorange;
+
+    static bool disp_active;
+    static uint magnify;
 
 
     static bool retain;
@@ -283,9 +288,13 @@ class ImguiApp
     std::vector<bool*> physics_bools;
     std::vector<bool*> result_bools;
 
+    static bool displace_grid;
+
     static float3 center;
     static float3 axis;
     static float3 angles;
+
+    static bool animation_settings;
 
     /////////////////////////////////////////////////////////////
     
@@ -338,6 +347,7 @@ class ImguiApp
     static void show_fea_settings();
     static void show_cg_solver_settings();
     static void show_optimisation_settings();
+    static void show_animation_settings();
     static void show_unit_lattice_settings();
     static void show_spatial_period_settings();
     static void show_spatial_angle_settings();

@@ -61,6 +61,10 @@ class MarchingCubeCuda
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
                      float3 voxelSize, float isoValue, float isovalue1);
 
+        void classifyVoxel_topo(dim3 grid, dim3 threads, uint *voxelVerts, uint *voxelOccupied,grid_points *vol_topo, grid_points *vol_one, float *volume_one, float *d_solid,
+                uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
+                float3 voxelSize, float isoValue, float isovalue1);
+
         void classifyVoxel_lattice_3(dim3 grid, dim3 threads, uint *voxelVerts, uint *voxelOccupied, float *volume_one,
                      uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask, uint numVoxels,
                      float3 voxelSize, float isoValue);
@@ -84,12 +88,16 @@ class MarchingCubeCuda
                     float iso1,float iso2,uint *voxel_verts, bool obj_union, bool obj_diff, bool obj_intersect, bool primitive, bool topo, bool compute_lattice, bool fixed, bool dynamic, bool make_region,
                     bool show_region, bool show_domain, triangle_metadata *triangle_data);
 
-        
-        void generateTriangles_lattice_2(dim3 grid, dim3 threads,float4 *pos, float4 *norm, 
+        void generateTriangles_lattice_2(dim3 grid, dim3 threads,
+                          float4 *pos, float4 *norm, uint *compactedVoxelArray, uint *numVertsScanned,
+                          uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask,
+                          float3 voxelSize, float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts, uint totalverts,grid_points *vol_topo, grid_points *vol_one,float *volume_one, float *d_solid,float isovalue1, float *d_result, triangle_metadata *triangle_data);
+                          
+        void generateTriangles_lattice_topo(dim3 grid, dim3 threads,float4 *pos, float4 *norm, 
                             uint *compactedVoxelArray, uint *numVertsScanned,
                             uint3 gridSize, uint3 gridSizeShift, uint3 gridSizeMask,
                             float3 voxelSize,float3 gridcenter, float isoValue, uint activeVoxels, uint maxVerts, uint totalverts, grid_points *vol_topo, grid_points *vol_one,
-                            float *volume_one,float *d_solid,float isovalue1, float *d_result, triangle_metadata *triangle_data);
+                            float *volume_one,float *d_solid,float isovalue1, float *d_result, triangle_metadata *triangle_data, bool disp, float4 *disp_two);
         
         void generateTriangles_lattice_3(dim3 grid, dim3 threads,float4 *pos, float4 *norm, 
                             uint *compactedVoxelArray, uint *numVertsScanned,

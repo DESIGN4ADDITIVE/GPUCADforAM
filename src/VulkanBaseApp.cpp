@@ -2346,6 +2346,18 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
                     ImGui::EndMenu();
                 }
 
+                if (ImGui::BeginMenu("Animation  "))
+                {
+                    
+
+                    if (ImGui::MenuItem("Displacement Settings",NULL,&animation_settings))
+                    {
+                        ImguiApp::make_inactive(window_bools,&animation_settings);
+                    };
+
+                    ImGui::EndMenu();
+                }
+
             }
             else if((ImguiApp::structural || ImguiApp::thermal) && (!ImguiApp::vulkan_buffer_created))
             {
@@ -2698,6 +2710,11 @@ void VulkanBaseApp::updatecommandBuffers(VkCommandBuffer commandBuffer, uint32_t
         if(optimisation_settings)
         {
             show_optimisation_settings();
+        }
+
+        if(animation_settings)
+        {
+            show_animation_settings();
         }
 
         if(unit_lattice_settings)

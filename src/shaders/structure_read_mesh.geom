@@ -65,7 +65,8 @@ vec3 saturate (vec3 x)
 
 vec3 spectral_jet(float x)
 {
- 
+    saturate(x);
+    
 	vec3 c;
 
 	if (x < 0.25)

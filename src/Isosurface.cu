@@ -240,6 +240,86 @@ void Isosurface::computeIsosurface(float *vol, uint3 raster_grid, float4* pos , 
 
 
 
+    void Isosurface::computeIsosurface_topo(float4* pos , float4* norm, float isoValue,
+    uint numVoxels, uint *d_voxelVerts,uint *d_voxelVertsScan, uint *d_voxelOccupied,uint *d_voxelOccupiedScan,
+    uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,
+    uint *activeVoxels, uint *totalVerts, uint *d_compVoxelArray, uint maxVerts, grid_points *vol_topo, 
+    grid_points *vol_one, float* vol_two, float* d_solid, float isovalue1,float *d_result, triangle_metadata *triangle_data, bool disp,
+    float4 *disp_two) 
+    {
+        
+        dim3 grid(ceil(numVoxels/float(1024)), 1, 1);
+        dim3 threads(1024,1,1);
+    
+        classifyVoxel_topo(grid,threads,
+                            d_voxelVerts, d_voxelOccupied, vol_topo,vol_one,vol_two,d_solid,
+                            gridSize, gridSizeShift, gridSizeMask,
+                            numVoxels, voxelSize, isoValue, isovalue1);
+ 
+        ////// Numbering active voxels ///////
+        
+        ThrustScanWrapper_lattice(d_voxelOccupiedScan, d_voxelOccupied, numVoxels);
+    
+        {
+            uint lastElement, lastScanElement;
+            checkCudaErrors(cudaMemcpy((void *) &lastElement,
+                                    (void *)(d_voxelOccupied + (numVoxels)-1),
+                                    sizeof(uint), cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaMemcpy((void *) &lastScanElement,
+                                    (void *)(d_voxelOccupiedScan + (numVoxels)-1),
+                                    sizeof(uint), cudaMemcpyDeviceToHost));
+            *activeVoxels = lastElement + lastScanElement;
+        }
+        // printf("active_voxel  %u  \n",*activeVoxels);
+        if (*activeVoxels == 0)
+        {
+            *totalVerts = 0;
+            return;
+        }
+    
+        dim3 gids(ceil((numVoxels)/float(1024)), 1, 1);
+        dim3 tids(1024,1,1);
+    
+    
+        compactVoxels_lattice(gids, tids, d_compVoxelArray, d_voxelOccupied, d_voxelOccupiedScan, numVoxels);
+        getLastCudaError("compactVoxels failed");
+
+        /////////Finding totalverts ////////////
+
+        ThrustScanWrapper_lattice(d_voxelVertsScan, d_voxelVerts, numVoxels);
+
+        
+    
+        {
+            uint totalverts_1;
+            uint lastElement_1, lastScanElement_1;
+            
+            checkCudaErrors(cudaMemcpy((void *) &lastElement_1,
+                                    (void *)(d_voxelVerts + (numVoxels)-1),
+                                    sizeof(uint), cudaMemcpyDeviceToHost));
+            checkCudaErrors(cudaMemcpy((void *) &lastScanElement_1,
+                                    (void *)(d_voxelVertsScan + (numVoxels)-1),
+                                    sizeof(uint), cudaMemcpyDeviceToHost));
+
+            totalverts_1 = lastElement_1 + lastScanElement_1;
+            
+            *totalVerts = totalverts_1;
+        }
+
+        dim3 grid2((int) ceil(*activeVoxels / (float)NTHREADS), 1, 1);
+       
+        dim3 tids2(NTHREADS,1,1);
+       
+        generateTriangles_lattice_topo(grid2, tids2, pos, norm,
+                                d_compVoxelArray,
+                                d_voxelVertsScan,
+                                gridSize, gridSizeShift, gridSizeMask,
+                                voxelSize,gridcenter, isoValue, *activeVoxels,
+                                maxVerts,*totalVerts,vol_topo,vol_one,vol_two,d_solid,isovalue1,d_result,triangle_data,disp,
+                                disp_two);        
+    }
+
+
     void Isosurface::computeIsosurface_2(float4* pos , float4* norm, float isoValue,
     uint numVoxels, uint *d_voxelVerts,uint *d_voxelVertsScan, uint *d_voxelOccupied,uint *d_voxelOccupiedScan,
     uint3 gridSize,uint3 gridSizeShift,uint3 gridSizeMask, float3 voxelSize, float3 gridcenter,
@@ -269,7 +349,7 @@ void Isosurface::computeIsosurface(float *vol, uint3 raster_grid, float4* pos , 
                                     sizeof(uint), cudaMemcpyDeviceToHost));
             *activeVoxels = lastElement + lastScanElement;
         }
-        printf("active_voxel  %u  \n",*activeVoxels);
+        // printf("active_voxel  %u  \n",*activeVoxels);
         if (*activeVoxels == 0)
         {
             *totalVerts = 0;

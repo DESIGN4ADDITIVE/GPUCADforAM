@@ -95,9 +95,10 @@ float select_val;
 
 ////////////lattice/////////////////////
 cudaPitchedPtr devPitchedPtr;
-size_t tPitch = 0;
-size_t slicepitch =0;
+cudaPitchedPtr devPitchedPtr_3d;
+
 cudaExtent extend;
+cudaExtent extend_3d;
 
 
 uint boundary_in_region = 0;
@@ -166,7 +167,8 @@ class Multitopo : public VulkanBaseApp, Modelling
     m_cudaPos_s,m_cudaNorm_s,
     m_cudaPosone,m_cudaNormone,
     m_cudaPostwo,m_cudaNormtwo,
-    m_loadicon_Mem, m_supporticon_Mem;
+    m_loadicon_Mem, m_supporticon_Mem,
+    m_xyzBuffer_Mem;
 
     float *d_volume_s, *d_volume_t, *d_volumeone,*d_volumeone_one, *d_volumethree, 
 
@@ -182,8 +184,11 @@ class Multitopo : public VulkanBaseApp, Modelling
     std::vector<cudaExternalMemory_t> d_cudastorageMemory;
    
     float4 *d_posone,*d_normalone,
-    *d_postwo,
-    *d_normaltwo;
+    *d_postwo, *d_normaltwo, 
+    *disp_two;
+    
+
+    float3 *d_xyzBuffer_s;
 
     uint3 gridSize, gridSizeMask ,gridSizeShift;
 
@@ -408,7 +413,8 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         m_cudaSignalSemaphore(),
 
-   
+        m_xyzBuffer_Mem(),
+
         m_cudaVertMem_s(),
 
         m_cudaVertMem_t(),
@@ -433,6 +439,8 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         d_cudastorageMemory(),
 
+        d_xyzBuffer_s(nullptr),
+
         d_volume_s(nullptr),
 
         d_volume_t(nullptr),
@@ -452,6 +460,8 @@ class Multitopo : public VulkanBaseApp, Modelling
         d_postwo(nullptr),
 
         d_normaltwo(nullptr),
+
+        disp_two(nullptr),
 
         d_loadinstance_buffer(nullptr),
 
@@ -664,6 +674,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         char * read_vertex_shader_path = &bone[0];
         char * read_geometry_shader_path = &btwo[0];
         char * read_fragment_shader_path = &bthree[0];
+        
         shaderFilesread.push_back(std::make_pair(VK_SHADER_STAGE_VERTEX_BIT, read_vertex_shader_path));
         shaderFilesread.push_back(std::make_pair(VK_SHADER_STAGE_GEOMETRY_BIT, read_geometry_shader_path));
         shaderFilesread.push_back(std::make_pair(VK_SHADER_STAGE_FRAGMENT_BIT, read_fragment_shader_path));
@@ -676,6 +687,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         char * write_bmesh_vertex_shader_path = &cone[0];
         char * write_bmesh_geometry_shader_path = &ctwo[0];
         char * write_bmesh_fragment_shader_path = &cthree[0];
+        
         shaderFilesone.push_back(std::make_pair(VK_SHADER_STAGE_VERTEX_BIT, write_bmesh_vertex_shader_path));
         shaderFilesone.push_back(std::make_pair(VK_SHADER_STAGE_GEOMETRY_BIT, write_bmesh_geometry_shader_path));
         shaderFilesone.push_back(std::make_pair(VK_SHADER_STAGE_FRAGMENT_BIT, write_bmesh_fragment_shader_path));
@@ -687,6 +699,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         char * read_bmesh_vertex_shader_path = &done[0];
         char * read_bmesh_geometry_shader_path = &dtwo[0];
         char * read_bmesh_fragment_shader_path = &dthree[0];
+        
         shaderFilesoneread.push_back(std::make_pair(VK_SHADER_STAGE_VERTEX_BIT, read_bmesh_vertex_shader_path));
         shaderFilesoneread.push_back(std::make_pair(VK_SHADER_STAGE_GEOMETRY_BIT, read_bmesh_geometry_shader_path));
         shaderFilesoneread.push_back(std::make_pair(VK_SHADER_STAGE_FRAGMENT_BIT, read_bmesh_fragment_shader_path));
@@ -749,7 +762,10 @@ class Multitopo : public VulkanBaseApp, Modelling
             checkCudaErrors(cudaFree(d_volume_t));
         }
 
-
+        if (d_xyzBuffer_s) {
+            checkCudaErrors(cudaDestroyExternalMemory(m_xyzBuffer_Mem));
+            checkCudaErrors(cudaFree(d_xyzBuffer_s));
+        }
         if (d_raster) {
             checkCudaErrors(cudaDestroyExternalMemory(m_cudarasterMem));
             checkCudaErrors(cudaFree(d_raster));
@@ -758,6 +774,12 @@ class Multitopo : public VulkanBaseApp, Modelling
         if (d_volume_twice) {
             checkCudaErrors(cudaDestroyExternalMemory(m_cuda_volume_twiceMem));
             checkCudaErrors(cudaFree(d_volume_twice));
+        }
+
+
+        if(disp_two)
+        {
+            checkCudaErrors(cudaFree(disp_two));
         }
 
         if(d_solid)
@@ -1585,7 +1607,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         VulkanBaseApp::push_constants.mouse_y = mouse_pos.y;
 
-        VulkanBaseApp::push_constants.boundary = int(ImguiApp::boundary);
+        VulkanBaseApp::push_constants.boundary = false;//(ImguiApp::boundary);
 
         VulkanBaseApp::push_constants.alpha_val = ImguiApp::alpha_val;
 
@@ -1751,6 +1773,8 @@ class Multitopo : public VulkanBaseApp, Modelling
             {
                 dist2 = (MAX(NumZ,MAX(NumX,NumY)));
                 distone = (MAX(Nxu,MAX(Nyu,Nzu))) ;
+                ImguiApp::zoom_value = 1.0f;
+                ImguiApp::mouse_wheel = 0.0f;
             }
 
 
@@ -2012,6 +2036,41 @@ class Multitopo : public VulkanBaseApp, Modelling
     void init_textures()
     {
         isosurf.allocateTextures_s(&d_triTable, &d_numVertsTable);
+
+
+        //////cudapitched_ptr//////////
+         size_t d_width = NumX, d_height = NumY, d_depth = NumZ;
+
+        extend = make_cudaExtent(d_width*sizeof(float),d_height, d_depth);
+
+        printf("extend x %lu y %lu z %lu \n",extend.width,extend.height,extend.depth);
+
+        cudaMalloc3D(&devPitchedPtr, extend);
+
+        getLastCudaError("cudaMalloc3D failed");
+
+        lattice.setupTexture(NumX,NumY,NumZ);
+
+        getLastCudaError("setuptexture failed ");
+
+        size_t d_width_3d = NumX;
+        size_t d_height_3d = NumY;
+        size_t d_depth_3d = NumZ;
+
+        extend_3d = make_cudaExtent(d_width_3d*sizeof(float4),d_height_3d, d_depth_3d);
+
+        printf("extend_3d x %lu y %lu z %lu \n",extend_3d.width,extend_3d.height,extend_3d.depth);
+
+        cudaMalloc3D(&devPitchedPtr_3d, extend_3d);
+
+        lattice.setup_3DTexture(NumX,NumY,NumZ);
+
+        getLastCudaError("3D setuptexture failed ");
+        ///////////////////////////////////////////////////////
+
+        ImguiApp::texture_data = true;
+
+
     }
 
     void initMC_unitlattice()
@@ -2214,7 +2273,8 @@ class Multitopo : public VulkanBaseApp, Modelling
         checkCudaErrors(cudaMemset(d_raster, 0.0, (NumX *NumY * NumZ) * sizeof(*d_raster)));
         checkCudaErrors(cudaMemset(d_latt_field, 0.0, NumX2*NumY2*NumZ2 * sizeof(*d_latt_field)));
         checkCudaErrors(cudaMemset(triangle_data, 0.0, max_nfacets * sizeof(*triangle_data)));
-        
+        checkCudaErrors(cudaMemset(vol_topo, 0.0, (NumX2 *NumY2 * NumZ2) * sizeof(*vol_topo)));
+
     }
 
     void erase_topo_data()
@@ -2230,9 +2290,13 @@ class Multitopo : public VulkanBaseApp, Modelling
         checkCudaErrors(cudaMemset(d_volume_t, 0.0, (NumX *NumY * NumZ) * sizeof(*d_volume_t)));
         checkCudaErrors(cudaMemset(d_raster, 0.0, (NumX *NumY * NumZ) * sizeof(*d_raster)));
 
+        checkCudaErrors(cudaMemset(d_xyzBuffer_s, 0.0, (NumX *NumY * NumZ) * sizeof(*d_xyzBuffer_s)));
+
         checkCudaErrors(cudaMemset(d_solid, 0, ((NumX) *(NumY) * (NumZ)) * sizeof(*d_solid)));
         checkCudaErrors(cudaMemset(d_solid_field, 0, ((NumX2 - 1) *(NumY2 - 1) * (NumZ2 - 1)) * sizeof(*d_solid_field)));
         checkCudaErrors(cudaMemset(d_den, 0, ((NumX) *(NumY) * (NumZ)) * sizeof(*d_den)));
+        checkCudaErrors(cudaMemset(d_us, 0, ((NumX) *(NumY) * (NumZ)) * sizeof(*d_us)));
+        checkCudaErrors(cudaMemset(disp_two,0.0,sizeof(*disp_two)*NumX2 * NumY2*NumZ2));
      
 
         checkCudaErrors(cudaMemset(d_selection, 0.0, sizeof(*d_selection)*NumX * NumY * NumZ));
@@ -2546,11 +2610,14 @@ class Multitopo : public VulkanBaseApp, Modelling
         maxmemverts = (NumX*NumY*(max_dim*4));
 
 
-        checkCudaErrors(cudaMalloc((void **)&d_solid, sizeof(d_solid)*(NumX) * (NumY)*(NumZ)));
-        cudaMemset(d_solid, 0, sizeof(d_solid)*(NumX) * (NumY) * (NumZ));
+        checkCudaErrors(cudaMalloc((void **)&d_solid, sizeof(*d_solid)*(NumX) * (NumY)*(NumZ)));
+        cudaMemset(d_solid, 0, sizeof(*d_solid)*(NumX) * (NumY) * (NumZ));
 
-        checkCudaErrors(cudaMalloc((void **)&d_solid_field, sizeof(d_solid_field)*(NumX2 - 1) * (NumY2 - 1)*(NumZ2 - 1)));
-        cudaMemset(d_solid_field, 0, sizeof(d_solid_field)*(NumX2 - 1) * (NumY2 - 1) * (NumZ2 - 1));
+        checkCudaErrors(cudaMalloc((void **)&d_solid_field, sizeof(*d_solid_field)*(NumX2 - 1) * (NumY2 - 1)*(NumZ2 - 1)));
+        cudaMemset(d_solid_field, 0, sizeof(*d_solid_field)*(NumX2 - 1) * (NumY2 - 1) * (NumZ2 - 1));
+
+        checkCudaErrors(cudaMalloc((void **)&disp_two, sizeof(*disp_two)*(NumX2) * (NumY2)*(NumZ2)));
+        cudaMemset(disp_two, 0, sizeof(*disp_two)*(NumX2) * (NumY2) * (NumZ2));
 
 
         createExternalBuffer(size2 * sizeof(REAL),
@@ -2589,11 +2656,11 @@ class Multitopo : public VulkanBaseApp, Modelling
                              getDefaultMemHandleType(),
                              v_supportinstance_buffer, v_supportinstance_memory);
 
-
-        createBuffer(nVerts * sizeof(vec3),
-                     VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                     v_xyzBuffer_s, v_xyzMemory_s);
+        createExternalBuffer(nVerts * sizeof(vec3),
+                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                             getDefaultMemHandleType(),
+                             v_xyzBuffer_s, v_xyzMemory_s);
 
 
         createBuffer(nInds * sizeof(uint32_t),
@@ -2614,7 +2681,8 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         importCudaExternalMemory((void **)&d_supportinstance_buffer, m_supportinstance_Mem,v_supportinstance_memory, max_nfacets * sizeof(InstanceData), getDefaultMemHandleType());
 
-        
+        importCudaExternalMemory((void **)&d_xyzBuffer_s, m_xyzBuffer_Mem,v_xyzMemory_s, nVerts * sizeof(vec3), getDefaultMemHandleType());
+
         fill_buffer_xyz<vec3>(device,v_xyzBuffer_s,nVerts,NumX,NumY,NumZ,dx,dy,dz);
         
         fill_buffer_indices<uint32_t>(device,v_indexBuffer_s,nInds,NumX,NumY,NumZ);
@@ -2635,6 +2703,8 @@ class Multitopo : public VulkanBaseApp, Modelling
         fill_instance_buffer(device,max_nfacets);
 
         ImguiApp::vulkan_buffer_created = true;
+
+        getLastCudaError("Create_topo_buffer failed");
 
     }
 
@@ -2715,7 +2785,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         importCudaExternalMemory((void **)&d_posone, m_cudaPosone,vposMemory_one, maxmemvertsone * sizeof(*d_posone), getDefaultMemHandleType());
     
         importCudaExternalMemory((void **)&d_normalone, m_cudaNormone,vnormMemory_one, maxmemvertsone * sizeof(*d_normalone), getDefaultMemHandleType());
-       
+
         fill_buffer_val<float>(device,latticethreevol,nVertsthree,NumX2,NumY2,NumZ2,0.0f);
        
         fill_buffer_val<float>(device,latticeonevol,nVertsone,Nxu,Nyu,Nzu,0.0f);
@@ -2991,18 +3061,54 @@ class Multitopo : public VulkanBaseApp, Modelling
             lattice.refine(d_volume_twice,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
 
             isosurf.patch_topo_field(d_volume_twice,NumX2,NumY2,NumZ2, vol_one);
-            
-            lattice.copytotexture_results(d_us,devPitchedPtr,NumX,NumY,NumZ,x_result,y_result,z_result);
+        
+            lattice.limit_displacement(d_xyzBuffer_s,d_us,NumX,NumY,NumZ, ImguiApp::displace_grid,ImguiApp::magnify);
+                    
+            if(ImguiApp::disp_active && ImguiApp::structural)
+            {
+                
+                if(ImguiApp::magnify == 0)
+                {
+                    lattice.copytotexture_3d_results(d_us,devPitchedPtr_3d,NumX,NumY,NumZ);
+                    
+                    lattice.update_3dTexture(devPitchedPtr_3d);
 
-            lattice.updateTexture(devPitchedPtr);
+                }
+                else
+                {
+                    lattice.copytotexture_3d_results(d_xyzBuffer_s,devPitchedPtr_3d,NumX,NumY,NumZ);
+                    
+                    lattice.update_3dTexture(devPitchedPtr_3d);
+                }
 
-            lattice.refine(d_result,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
+                lattice.refine_3d(disp_two,NumX2,NumY2,NumZ2,dx2,dy2,dz2,d_result,x_result,y_result,z_result);
+    
+                lattice.GPU_buffer_normalise_buffer(d_result,d_result,size2);
 
-            lattice.GPU_buffer_normalise_buffer(d_result,d_result,size2);
+                isosurf.computeIsosurface_topo(d_postwo,d_normaltwo,Topopt_val::VolumeFraction,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_topo,vol_one,d_volume_twice,d_solid_field,0.0,d_result, triangle_data, ImguiApp::disp_active, disp_two);
 
-            isosurf.computeIsosurface_2(d_postwo,d_normaltwo,Topopt_val::VolumeFraction,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
-            d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
-            &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_topo,vol_one,d_volume_twice,d_solid_field,0.0,d_result, triangle_data);
+
+            }
+            else
+            {   
+                lattice.copytotexture_results(d_us,devPitchedPtr,NumX,NumY,NumZ,x_result,y_result,z_result);
+
+                lattice.updateTexture(devPitchedPtr);
+
+                lattice.refine(d_result,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
+
+                lattice.GPU_buffer_normalise_buffer(d_result,d_result,size2);
+
+                isosurf.computeIsosurface_2(d_postwo,d_normaltwo,Topopt_val::VolumeFraction,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_topo,vol_one,d_volume_twice,d_solid_field,0.0,d_result, triangle_data);
+                
+                
+            }
+
+
 
             gettimeofday(&t2, 0);
 
@@ -3062,8 +3168,6 @@ class Multitopo : public VulkanBaseApp, Modelling
     int toprun_thermal()
     {
        
-
-
         while(OptIter < Topopt_val::MaxOptIter)
         {
 
@@ -3462,38 +3566,6 @@ class Multitopo : public VulkanBaseApp, Modelling
         cudaMemset(d_phi,0,sizeof(float) * size);
 
         cudaMemset(d_svl,0,sizeof(float) * size2);
-     
-        size_t d_width = NumX, d_height = NumY, d_depth = NumZ;
-
-        extend = make_cudaExtent(d_width*sizeof(float),d_height, d_depth);
-
-        printf("extend x %lu y %lu z %lu \n",extend.width,extend.height,extend.depth);
-
-        cudaMalloc3D(&devPitchedPtr, extend);
-
-        getLastCudaError("cudaMalloc3D failed");
-
-        tPitch = devPitchedPtr.pitch;
-
-        slicepitch = tPitch*d_height;
-    
-        cudaMemcpy3DParms params ={0};
-
-        params.srcPtr = make_cudaPitchedPtr(d_phi,d_width*sizeof(float),d_width,d_height);
-
-        params.dstPtr = devPitchedPtr;
-
-        params.extent = extend;
-
-        params.kind = cudaMemcpyDeviceToDevice;
-
-        cudaMemcpy3D( &params );
-
-        getLastCudaError("cudaMemcpy3D failed ");
-
-        lattice.setupTexture(NumX,NumY,NumZ);
-
-        getLastCudaError("set up texture failed ");
 
         printf("Lattice svl Initialisation Completed Successfully \n\n");
 
@@ -4424,10 +4496,45 @@ class Multitopo : public VulkanBaseApp, Modelling
                     if (ImguiApp::checkpoint == 1)
                     {
                         toprun_struct();
+                        
+                        if(VulkanBaseApp::topo_data)
+                        {
 
-                        isosurf.computeIsosurface_2(d_postwo,d_normaltwo,Topopt_val::VolumeFraction,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
-                        d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,
-                        gridcentertwo,&activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_topo,vol_one,d_volume_twice,d_solid_field,0.0,d_result, triangle_data);
+                            if(ImguiApp::structural)
+                            {
+
+
+                                lattice.limit_displacement(d_xyzBuffer_s,d_us,NumX,NumY,NumZ,ImguiApp::displace_grid,ImguiApp::magnify);
+
+                                if(ImguiApp::disp_active )
+                                {
+
+                                    if(ImguiApp::magnify == 0)
+                                    {
+                                        lattice.copytotexture_3d_results(d_us,devPitchedPtr_3d,NumX,NumY,NumZ);
+                                        
+                                        lattice.update_3dTexture(devPitchedPtr_3d);
+
+                                    }
+                                    else
+                                    {
+                                        lattice.copytotexture_3d_results(d_xyzBuffer_s,devPitchedPtr_3d,NumX,NumY,NumZ);
+                                        
+                                        lattice.update_3dTexture(devPitchedPtr_3d);
+                                    }
+
+                                    lattice.refine_3d(disp_two,NumX2,NumY2,NumZ2,dx2,dy2,dz2,d_result,x_result,y_result,z_result);
+
+
+                                    lattice.GPU_buffer_normalise_buffer(d_result,d_result,size2);
+                                }
+
+                                isosurf.computeIsosurface_topo(d_postwo,d_normaltwo,Topopt_val::VolumeFraction,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                                d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                                &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_topo,vol_one,d_volume_twice,d_solid_field,0.0,d_result, triangle_data, ImguiApp::disp_active,disp_two);
+
+                            }
+                        }
 
                         ImguiApp::checkpoint = 3;
 
@@ -4481,6 +4588,39 @@ class Multitopo : public VulkanBaseApp, Modelling
                     spatial_lattice_run();
                 
                 }
+                if(ImguiApp::structural)
+                {
+                    lattice.limit_displacement(d_xyzBuffer_s,d_us,NumX,NumY,NumZ,ImguiApp::displace_grid,ImguiApp::magnify);
+
+                    if(ImguiApp::disp_active )
+                    {
+                        if(ImguiApp::magnify == 0)
+                        {
+                            lattice.copytotexture_3d_results(d_us,devPitchedPtr_3d,NumX,NumY,NumZ);
+                            
+                            lattice.update_3dTexture(devPitchedPtr_3d);
+
+                        }
+                        else
+                        {
+                            lattice.copytotexture_3d_results(d_xyzBuffer_s,devPitchedPtr_3d,NumX,NumY,NumZ);
+                            
+                            lattice.update_3dTexture(devPitchedPtr_3d);
+                        }
+
+                        lattice.refine_3d(disp_two,NumX2,NumY2,NumZ2,dx2,dy2,dz2,d_result,x_result,y_result,z_result);
+
+
+                        lattice.GPU_buffer_normalise_buffer(d_result,d_result,size2);
+                    }
+
+                    isosurf.computeIsosurface_topo(d_postwo,d_normaltwo,Topopt_val::VolumeFraction,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                    d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                    &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_topo,vol_one,d_volume_twice,d_solid_field,0.0,d_result, triangle_data, ImguiApp::disp_active,disp_two);
+
+                }
+
+                
          
             }
 
@@ -4489,17 +4629,50 @@ class Multitopo : public VulkanBaseApp, Modelling
             {
                 ImguiApp::results_view = false;
 
-                lattice.copytotexture_results(d_us,devPitchedPtr,NumX,NumY,NumZ,x_result,y_result,z_result);
 
-                lattice.updateTexture(devPitchedPtr);
+                if(ImguiApp::disp_active && ImguiApp::structural)
+                {
+                    if(ImguiApp::magnify == 0)
+                    {
+                        lattice.copytotexture_3d_results(d_us,devPitchedPtr_3d,NumX,NumY,NumZ);
+                        
+                        lattice.update_3dTexture(devPitchedPtr_3d);
 
-                lattice.refine(d_result,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
+                    }
+                    else
+                    {
+                        lattice.copytotexture_3d_results(d_xyzBuffer_s,devPitchedPtr_3d,NumX,NumY,NumZ);
+                        
+                        lattice.update_3dTexture(devPitchedPtr_3d);
+                    }
 
-                lattice.GPU_buffer_normalise_buffer(d_result,d_result,size2);
+                    lattice.refine_3d(disp_two,NumX2,NumY2,NumZ2,dx2,dy2,dz2,d_result,x_result,y_result,z_result);
+                    
+                    lattice.GPU_buffer_normalise_buffer(d_result,d_result,size2);
 
-                isosurf.computeIsosurface_2(d_postwo,d_normaltwo,Topopt_val::VolumeFraction,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
-                d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
-                &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_topo,vol_one,d_volume_twice,d_solid_field,0.0,d_result, triangle_data);
+                    isosurf.computeIsosurface_topo(d_postwo,d_normaltwo,Topopt_val::VolumeFraction,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                    d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                    &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_topo,vol_one,d_volume_twice,d_solid_field,0.0,d_result, triangle_data, ImguiApp::disp_active, disp_two);
+
+
+                }
+                else
+                {   
+
+                    lattice.copytotexture_results(d_us,devPitchedPtr,NumX,NumY,NumZ,x_result,y_result,z_result);
+
+                    lattice.updateTexture(devPitchedPtr);
+
+                    lattice.refine(d_result,NumX2,NumY2,NumZ2,dx2,dy2,dz2);
+
+                    lattice.GPU_buffer_normalise_buffer(d_result,d_result,size2);
+
+                    isosurf.computeIsosurface_2(d_postwo,d_normaltwo,Topopt_val::VolumeFraction,numVoxelstwo,d_voxelVertstwo,d_voxelVertsScantwo,
+                    d_voxelOccupiedtwo,d_voxelOccupiedScantwo,gridSizetwo,gridSizeShifttwo,gridSizeMasktwo,voxelSizetwo,gridcentertwo,
+                    &activeVoxelstwo,&totalVertstwo,d_compVoxelArraytwo,maxmemvertstwo,vol_topo,vol_one,d_volume_twice,d_solid_field,0.0,d_result, triangle_data);
+
+                }
+
 
                 cudaExternalSemaphoreWaitParams waitParams = {};
                 waitParams.flags = 0;
@@ -4639,6 +4812,13 @@ class Multitopo : public VulkanBaseApp, Modelling
 
                     ImguiApp::svl_data = false;
                 }
+
+                if(ImguiApp::texture_data)
+                {
+                    cleanup_textures();
+
+                    ImguiApp::texture_data = false;
+                }
                
                 if(ImguiApp::checkpoint == 3)
                 {
@@ -4723,7 +4903,12 @@ class Multitopo : public VulkanBaseApp, Modelling
             cleanup_svl();
 
             cleanup_fft_data();
-         
+
+        }
+
+        if(ImguiApp::texture_data)
+        {
+            cleanup_textures();
         }
 
         if(ImguiApp::lattice_buffer_created)
@@ -4793,12 +4978,8 @@ class Multitopo : public VulkanBaseApp, Modelling
             
         lattice.GPUCleanUp();  
 
-        lattice.deleteTexture();
+        
 
-        if(devPitchedPtr.ptr)
-        {
-            checkCudaErrors(cudaFree(devPitchedPtr.ptr));
-        }
         if(d_phi)
         {
             checkCudaErrors(cudaFree(d_phi));
@@ -4836,6 +5017,27 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     }
 
+    void cleanup_textures()
+    {
+        lattice.deleteTexture();
+
+        lattice.delete_3dTexture();
+
+        isosurf.destroyAllTextureObjects();
+
+
+        if(devPitchedPtr.ptr)
+        {
+            checkCudaErrors(cudaFree(devPitchedPtr.ptr));
+        }
+
+
+        if(devPitchedPtr_3d.ptr)
+        {
+            checkCudaErrors(cudaFree(devPitchedPtr_3d.ptr));
+        }
+    }
+
     void cleanup_fft_data()
     {
    
@@ -4864,8 +5066,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     void  cleanup_isosurf()
     {
-        isosurf.destroyAllTextureObjects();
-    
+
         checkCudaErrors(cudaFree(d_edgeTable));
 
         checkCudaErrors(cudaFree(d_triTable));

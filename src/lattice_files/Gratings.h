@@ -5,8 +5,9 @@
 
 #include "../ImguiApp.h"
 #include "../MarchingCubes_kernel.h"
+#include "../Interpolations.h"
 
-class  Gratings
+class  Gratings : public Interpolations
 {
    
 
@@ -68,16 +69,6 @@ class  Gratings
     void svl(float *d_svl,float2 *d_grating,int NX, int NY, int NZ, int indxx,float2 *data_fft);
 
     void fillfrac(float *d_svl, float *d_fillfrac, int NX, int NY, int NZ);
-
-    void setupTexture(int dx, int dy, int dz);
-
-    void copytotexture(float *d_phi,cudaPitchedPtr data_ptr, int NX, int NY, int NZ);
-
-    void copytotexture_results(float3 *d_displacement,cudaPitchedPtr data_ptr,int NX,int NY,int NZ, bool x_result, bool y_result, bool z_result);
-
-    void updateTexture(cudaPitchedPtr data_ptr);
-
-    void deleteTexture();
 
     void GPUCleanUp ();
 

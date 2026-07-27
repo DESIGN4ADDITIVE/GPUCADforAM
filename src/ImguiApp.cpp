@@ -11,6 +11,8 @@ bool ImguiApp::vulkan_buffer_created = false;
 
 bool ImguiApp::svl_data = false;
 
+bool ImguiApp::texture_data = false;
+
 bool ImguiApp::retain = false;
 bool ImguiApp::calculate = true;
 bool ImguiApp::undoo = false;
@@ -50,6 +52,9 @@ bool ImguiApp::results_view = false;
 
 uint ImguiApp::lattice_type_index = 0;
 uint ImguiApp::lattice_size_index = 0;
+
+bool ImguiApp::disp_active = false;
+uint ImguiApp::magnify = 1.0;
 
 float ImguiApp::sphere_radius = 5;
 float ImguiApp::sphere_thickness = 2.0;
@@ -179,6 +184,8 @@ bool ImguiApp::solver_settings_set = false;
 bool ImguiApp::optimisation_settings = false;
 bool ImguiApp::optimisation_settings_set = false;
 
+bool ImguiApp::animation_settings = false;
+
 bool ImguiApp::unit_lattice_settings = false;
 
 float ImguiApp::x_load_axis = 0.0f;
@@ -270,6 +277,8 @@ bool ImguiApp::thermal = false;
 bool ImguiApp::primitives = false;
 bool ImguiApp::lattice = false;
 
+bool ImguiApp::displace_grid = true;
+
 float3 ImguiApp::center = {0.0,0.0,0.0};
 float3 ImguiApp::axis = {0.0,0.0,1.0};
 float3 ImguiApp::angles = {0.0,0.0,0.0};
@@ -311,6 +320,7 @@ ImguiApp::ImguiApp()
     &spatial_period_window,
     &fea_settings,
     &optimisation_settings,
+    &animation_settings,
     &cg_solver_settings,
     &unit_lattice_settings,
     &export_settings,
@@ -1478,25 +1488,13 @@ void ImguiApp::show_view_settings(bool *view_setting, bool *shift, bool *reset, 
     ImGui::NewLine();
     ImGui::NewLine();
 
-    ImGui::Checkbox("Boundary ",&ImguiApp::boundary);
+    // ImGui::Checkbox("Boundary ",&ImguiApp::boundary);
     
     ImGui::NewLine();
 
-    static float f1_1 = 0.0f;
-    ImGui::SliderFloat("Point Size1", &f1_1, 0.0f, 10.0f, "%.0f");
-    static float f1_2 = 0.0f;
-    ImGui::SliderFloat("Point Size2", &f1_2, 0.0f, 10.0f, "%.0f");
-    static float f1_3 = 0.0f;
-    ImGui::SliderFloat("Point Size3", &f1_3, 0.0f, 10.0f, "%.0f");
-    static float f1_4 = 1.0;
-    ImGui::SliderFloat("Point Size4", &f1_4, 0.0f, 15.0f, "%.0f");
+
 
     ImGui::Checkbox("Show 3D Mesh", show_mesh);
-
-    ImguiApp::push_constants.p_size_1 = f1_1;
-    ImguiApp::push_constants.p_size_2 = f1_2;
-    ImguiApp::push_constants.p_size_3 = f1_3;
-    ImguiApp::push_constants.p_size_4 = f1_4;
 
     ImGui::End();
 }
@@ -2149,7 +2147,7 @@ void ImguiApp::show_selected_primitive()
             ImguiApp::show_region = false;
             ImguiApp::show_domain = false;
 
-            ImguiApp::boundary = true;
+            // ImguiApp::boundary = true;
 
             ImguiApp::show_model = true;
             ImguiApp::show_primitive_lattice = false;
@@ -2172,7 +2170,7 @@ void ImguiApp::show_selected_primitive()
             ImguiApp::show_domain = false;
 
 
-            ImguiApp::boundary = false;
+            // ImguiApp::boundary = false;
 
             ImguiApp::show_model = true;
             ImguiApp::show_primitive_lattice = false;
@@ -2195,7 +2193,7 @@ void ImguiApp::show_selected_primitive()
             ImguiApp::show_domain = true;
 
 
-            ImguiApp::boundary = false;
+            // ImguiApp::boundary = false;
 
             ImguiApp::show_model = true;
             ImguiApp::show_primitive_lattice = false;
@@ -2439,6 +2437,76 @@ void ImguiApp::show_optimisation_settings()
 
     ImGui::End();
 
+}
+
+void ImguiApp::show_animation_settings()
+{
+    ImGui::Begin("Animation Settings",NULL);
+
+    ImGui::SetWindowPos(ImVec2(5,50));
+    
+    ImGui::SetWindowSize(window_extent);
+
+    ImGui::NewLine();
+
+    ImGui::SetNextItemWidth(ImguiApp::window_extent.x* 0.265);
+    
+    ImGui::Checkbox("Show Grid Displacement ",&ImguiApp::displace_grid);
+
+    ImGui::NewLine();
+    
+    ImGui::NewLine();
+
+
+    if(ImguiApp::disp_active || ImguiApp::displace_grid)
+    {
+        ImGui::NewLine();
+
+        static int mag = 0;
+
+        ImGui::SliderInt("Magnify ",&mag,0,30);
+
+        ImguiApp::magnify = mag;
+    }
+
+    ImGui::NewLine();
+    ImGui::NewLine();
+
+    ImGui::Checkbox("Show Mesh Displacement ",&ImguiApp::disp_active);
+    static int mesh_disp = 0;
+    if((ImguiApp::magnify == 0) && (ImguiApp::disp_active))
+    {
+        ImguiApp::disp_active = false;
+        mesh_disp = 1;
+    }
+    else if((mesh_disp == 1) && (ImguiApp::magnify > 0))
+    {
+        ImguiApp::disp_active = true;
+        mesh_disp = 0;
+    }
+
+
+    ImGui::NewLine();
+    ImGui::NewLine();
+
+    
+    static float f1_1 = 0.0f;
+    ImGui::SliderFloat("Point Size1", &f1_1, 0.0f, 10.0f, "%.0f");
+    static float f1_2 = 0.0f;
+    ImGui::SliderFloat("Point Size2", &f1_2, 0.0f, 10.0f, "%.0f");
+    static float f1_3 = 0.0f;
+    ImGui::SliderFloat("Point Size3", &f1_3, 0.0f, 10.0f, "%.0f");
+    static float f1_4 = 1.0;
+    ImGui::SliderFloat("Point Size4", &f1_4, 0.0f, 15.0f, "%.0f");
+
+  
+
+    ImguiApp::push_constants.p_size_1 = f1_1;
+    ImguiApp::push_constants.p_size_2 = f1_2;
+    ImguiApp::push_constants.p_size_3 = f1_3;
+    ImguiApp::push_constants.p_size_4 = f1_4;
+
+    ImGui::End();
 }
 
 void ImguiApp::show_unit_lattice_settings()

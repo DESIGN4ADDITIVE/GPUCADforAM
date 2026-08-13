@@ -4,7 +4,6 @@
 #version 450 
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shader_storage_buffer_object : enable
-// #extension GL_EXT_debug_printf : enable
 #extension GL_ARB_viewport_array : enable
 
 layout (points) in;

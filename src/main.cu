@@ -736,16 +736,14 @@ class Multitopo : public VulkanBaseApp, Modelling
     {
 
         if (v_vkSignalSemaphore != VK_NULL_HANDLE) {
-            
-            checkCudaErrors(cudaDestroyExternalSemaphore(m_cudaSignalSemaphore));
+            checkCudaErrors(cudaDestroyExternalSemaphore(m_cudaWaitSemaphore));
             vkDestroySemaphore(device, v_vkSignalSemaphore, nullptr);
         }
+
         if (v_vkWaitSemaphore != VK_NULL_HANDLE) {
-            
-            checkCudaErrors(cudaDestroyExternalSemaphore(m_cudaWaitSemaphore));
+            checkCudaErrors(cudaDestroyExternalSemaphore(m_cudaSignalSemaphore));
             vkDestroySemaphore(device, v_vkWaitSemaphore, nullptr);
         }
-
     }
 
      void destroy_buffers_n_memory()
@@ -1153,7 +1151,7 @@ class Multitopo : public VulkanBaseApp, Modelling
     void getWaitFrameSemaphores(std::vector<VkSemaphore>& wait, std::vector< VkPipelineStageFlags>& waitStages) const {
         if (currentFrame != 0) {
             wait.push_back(v_vkWaitSemaphore);
-            waitStages.push_back(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+            waitStages.push_back(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
         }
     }
 
@@ -1167,7 +1165,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         cudaExternalMemoryHandleDesc externalMemoryHandleDesc = {};
 
 
-        if (handleType & VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT) 
+        if (handleType & VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT) 
         {
             externalMemoryHandleDesc.type = cudaExternalMemoryHandleTypeOpaqueFd;
         }
@@ -2026,7 +2024,13 @@ class Multitopo : public VulkanBaseApp, Modelling
         // Signal vulkan to continue with the updated buffers
         checkCudaErrors(cudaSignalExternalSemaphoresAsync(&m_cudaSignalSemaphore, &signalParams, 1));
 
-        VulkanBaseApp::drawFrame(shift);
+        VulkanBaseApp::cuda_side_done = false;
+        /////Asserting  'VkQueueSubmit' signal the cuda - vulkan semaphore properly /////
+        do
+        {
+            VulkanBaseApp::drawFrame(shift);
+
+        }  while (!VulkanBaseApp::cuda_side_done);
 
         checkCudaErrors(cudaWaitExternalSemaphoresAsync(&m_cudaWaitSemaphore, &waitParams, 1));
         
@@ -2220,8 +2224,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         checkCudaErrors(cudaMemset(d_loadgroup,0, sizeof(REAL3)* 32));
 
     }
-    
- 
+
 
     void initVulkanCuda_semaphores() 
     {
@@ -4133,7 +4136,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         }
     }
 
-    void mainloopone(bool shift)
+    int mainloopone(bool shift)
     {
         
         VulkanBaseApp::push_constants.mouse_click = 0;
@@ -4142,7 +4145,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         gettimeofday(&t1, 0);
 
-        while (!glfwWindowShouldClose(window) && !(ImguiApp::initialise_grid) ) 
+        while(!glfwWindowShouldClose(window)) 
         {
            
             glfwPollEvents();
@@ -4857,13 +4860,15 @@ class Multitopo : public VulkanBaseApp, Modelling
                 }
 
 
-                std::cout<<"Exiting \n"<<std::endl;
+                std::cout<<"Exiting the loop \n"<<std::endl;
                 
                 ImguiApp::execute_done = false;
              
             }
           
         }
+
+        
         std::cout<<"Mainloop Terminated \n"<<std::endl;     
 
         vkDeviceWaitIdle(device);
@@ -4933,6 +4938,12 @@ class Multitopo : public VulkanBaseApp, Modelling
         }
 
         cleanup_cuda_storage_buffer_handle();
+
+
+        std::cout<<"Success exit  \n"<<std::endl;
+
+        return 0;
+        
   
     }
 
@@ -5165,8 +5176,8 @@ class Multitopo : public VulkanBaseApp, Modelling
         VulkanBaseApp::init();
 
         mainloopone(shift);
-
-        printf("Exiting the Application \n");
+        
+        printf("Exiting the Application \n\n");
 
         return 0;
     }
@@ -5177,7 +5188,7 @@ class Multitopo : public VulkanBaseApp, Modelling
 
 int main(int argc, char** argv)
 {
-    bool validation = true;
+    bool validation = false;
 
     std::string validate_data ="";
 

@@ -1064,10 +1064,17 @@ ImguiApp::ImguiApp()
      
         if(!ImguiApp::topo_done_lattice_do && (ImguiApp::checkpoint != 0))
         {
-            ImGui::Text("Executing the data...");
-            ImGui::Text("Please Wait ");
+            if(ImguiApp::primitives || ImguiApp::lattice)
+            {
+                ImGui::Text("Optimisation Data deleted ");
+            }
+            else
+            {
+                ImGui::Text("Executing the data...");
+                ImGui::Text("Please Wait ");
 
-            ImGui::Text("Iteration  %u / %u  ",ImguiApp::Iteration_count, Topopt_val::MaxOptIter);
+                ImGui::Text("Iteration  %u / %u  ",ImguiApp::Iteration_count, Topopt_val::MaxOptIter);
+            }
         }
         else if(ImguiApp::topo_done_lattice_do)
         {
@@ -1085,7 +1092,7 @@ ImguiApp::ImguiApp()
         ImGui::NewLine();
         ImGui::NewLine();
 
-        if(ImGui::Button("RE RUN ") && ImguiApp::topo_done_lattice_do)
+        if(ImGui::Button("RE RUN ") && ImguiApp::topo_done_lattice_do )
         {
             ImguiApp::execute_topo_data = true;
             ImguiApp::topo_done_lattice_do = false;

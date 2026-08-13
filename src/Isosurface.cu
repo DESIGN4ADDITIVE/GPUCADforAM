@@ -270,7 +270,7 @@ void Isosurface::computeIsosurface(float *vol, uint3 raster_grid, float4* pos , 
                                     sizeof(uint), cudaMemcpyDeviceToHost));
             *activeVoxels = lastElement + lastScanElement;
         }
-        // printf("active_voxel  %u  \n",*activeVoxels);
+
         if (*activeVoxels == 0)
         {
             *totalVerts = 0;
@@ -349,7 +349,7 @@ void Isosurface::computeIsosurface(float *vol, uint3 raster_grid, float4* pos , 
                                     sizeof(uint), cudaMemcpyDeviceToHost));
             *activeVoxels = lastElement + lastScanElement;
         }
-        // printf("active_voxel  %u  \n",*activeVoxels);
+
         if (*activeVoxels == 0)
         {
             *totalVerts = 0;

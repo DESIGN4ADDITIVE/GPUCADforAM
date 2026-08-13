@@ -37,7 +37,9 @@ public:
     void copyBuffer(VkBuffer dst, VkBuffer src, VkDeviceSize srcOffset,VkDeviceSize size);
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-    void mainLoop(bool shift);
+
+    static bool cuda_side_done;
+   
    
 
 protected:
@@ -47,6 +49,9 @@ protected:
     bool show_mesh;
     bool shift;
     bool reset;
+    bool initialised;
+    bool swapchain_ready;
+    bool is_minimised;
 
     
 
@@ -166,6 +171,10 @@ protected:
     const GLFWvidmode* videoMode;
     static int screen_width;
     static int screen_height;
+    int w_width;
+    int w_height;
+
+    
  
 private:
     
@@ -192,9 +201,11 @@ private:
     void createCommandBuffers();
     void createSyncObjects();
     void cleanupSwapChain();
+    void cleanSwapChain_data();
     void clean_up();
     void recreateSwapChain();
     void cleanupSyncObjects();
+    void update_attachment_descriptor_sets();
 
     static void resizeCallback(GLFWwindow *window, int width, int height);
 };

@@ -1423,7 +1423,7 @@ void Gratings::normalise_bufferthree(float *dataone, float *datatwo, size_t size
 	}
 	
 
-	if (tx ==0)
+	if (tx == 0)
 	{
 		d_result[blockIdx.x].x = cc[tx];
 

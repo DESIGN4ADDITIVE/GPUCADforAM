@@ -2513,6 +2513,45 @@ void ImguiApp::show_animation_settings()
     ImguiApp::push_constants.p_size_3 = f1_3;
     ImguiApp::push_constants.p_size_4 = f1_4;
 
+
+
+    ImGui::NewLine();
+    ImGui::NewLine();
+
+    
+    if(!ImguiApp::load_icon)
+    {
+        if(ImGui::Button("UNHIDE LOAD ICON"))
+        {
+            ImguiApp::load_icon = true;
+        }
+    }
+    else if(ImGui::Button("HIDE LOAD ICON"))
+    {
+
+        ImguiApp::load_icon = false;
+
+    }
+
+
+    ImGui::NewLine();
+    ImGui::NewLine();
+
+
+    if(!ImguiApp::support_icon)
+    {
+        if(ImGui::Button("UNHIDE SUPPORT ICON"))
+        {
+            ImguiApp::support_icon = true;
+        }
+    }
+    else if(ImGui::Button("HIDE SUPPORT ICON"))
+    {
+
+        ImguiApp::support_icon = false;
+
+    }
+
     ImGui::End();
 }
 

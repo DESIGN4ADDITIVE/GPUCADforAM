@@ -47,7 +47,7 @@ CURRENT_SM := 89
 
 GENCODE_FLAGS += -gencode arch=compute_$(CURRENT_SM),code=compute_$(CURRENT_SM)
 
-ALL_CCFLAGS += --std=c++14 --threads 0 
+ALL_CCFLAGS += --std=c++17 --threads 0 
 LIBRARIES += -lcufft
 
 BUILDDIR = build

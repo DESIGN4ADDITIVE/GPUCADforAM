@@ -2982,7 +2982,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         
         MakeRefStiff_s(RefStiff_s);
         
-        register REAL EleStiff_s[24][24];
+        REAL EleStiff_s[24][24];
         
         //local stiffness matrix develops here 
         MakeEleStiffness_s(EleStiff_s, RefStiff_s,Topopt_val::Youngs_Modulus,Topopt_val::poisson);

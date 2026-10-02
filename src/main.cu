@@ -2952,6 +2952,8 @@ class Multitopo : public VulkanBaseApp, Modelling
             NumX = ImguiApp::bounding_grid.x;
             NumY = ImguiApp::bounding_grid.y;
             NumZ = ImguiApp::bounding_grid.z;
+
+            ImguiApp::grid_value = max(NumX,max(NumY,NumZ));
         }
         
         dx = 1.0;

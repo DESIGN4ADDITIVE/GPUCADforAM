@@ -3060,9 +3060,9 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         selectt.constrained_vol(d_solid,vol_topo,&solid_voxels,Topopt_val::VolumeFraction,NumX,NumY,NumZ);
 
-        printf("solid_voxels  %u \n",solid_voxels);
+        printf("solid_voxels  %u \n\n",solid_voxels);
 
-        printf("Initialisation Completed Successfully \n");
+        printf("Initialisation Completed Successfully \n\n");
 
         ImguiApp::show_analysis = true;
        
@@ -4359,6 +4359,8 @@ class Multitopo : public VulkanBaseApp, Modelling
                     support_count = init_icons("../src/icons/3d_support.obj", device, v_supporticon, v_supporticon_memory, d_supporticon, m_supporticon_Mem);
 
                     printf("Initialisation Completed \n");
+
+                    ImguiApp::data_cleared = false;
                     
                 }
 
@@ -5035,6 +5037,8 @@ class Multitopo : public VulkanBaseApp, Modelling
                 std::cout<<"Exiting the loop \n"<<std::endl;
                 
                 ImguiApp::execute_done = false;
+                
+                ImguiApp::data_cleared = true;
              
             }
           
@@ -5042,6 +5046,46 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         
         std::cout<<"Mainloop Terminated \n"<<std::endl;     
+
+        if(ImguiApp::data_cleared)
+        {
+            if(!ImguiApp::re_create_storageBuffer)
+            {
+                re_createStorageBuffers();
+
+                VulkanBaseApp::update_attachment_descriptor_sets();
+
+                ImguiApp::re_create_storageBuffer = true;
+            }
+
+            vulkan_create_topo_buffers();
+
+            vulkan_create_lattice_buffers();
+
+
+            init_Boundary();
+
+            init_selection();
+
+            lattice_init();
+
+            init_svl();
+
+            init_textures();
+
+            initMC();
+
+            initMC_unitlattice();
+
+            initMC_two();
+
+
+            loadicon_count = init_icons("../src/icons/3d_arrow.obj", device, v_loadicon, v_loadicon_memory, d_loadicon, m_loadicon_Mem);
+
+            support_count = init_icons("../src/icons/3d_support.obj", device, v_supporticon, v_supporticon_memory, d_supporticon, m_supporticon_Mem);
+
+        }
+        
 
         vkDeviceWaitIdle(device);
 

@@ -247,6 +247,8 @@ bool ImguiApp::export_data_optimise = false;
 
 bool ImguiApp::export_data_lattice = false;
 
+bool ImguiApp::data_cleared = false;
+
 ImVec2 ImguiApp::window_extent = {50,50};
 
 ImVec4 ImguiApp::clear_color = ImVec4(0.148f, 0.148f, 0.148f, 1.00f);

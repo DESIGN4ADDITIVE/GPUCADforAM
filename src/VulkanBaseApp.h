@@ -55,7 +55,7 @@ protected:
 
     
 
-    static const size_t max_inflight_frames;
+    static uint max_inflight_frames;
 
     const std::string appName;
     const bool enableValidation;
@@ -125,7 +125,7 @@ protected:
     size_t currentFrame;
     bool framebufferResized;
     uint8_t  vkDeviceUUID[VK_UUID_SIZE];
-    uint grid_value;
+    
     
     virtual void initVulkanCuda_semaphores() {};
     virtual void fillRenderingCommandBuffer(VkCommandBuffer& buffer) {};
@@ -163,11 +163,12 @@ protected:
     virtual void updateUniformBuffer(uint32_t imageIndex,bool shift);
     virtual void update_inputevents();
     virtual void drawFrame(bool shift);
-    virtual void createStorageBuffers(size_t nVerts);
+    virtual void createStorageBuffers();
 
     virtual void erase_topo_data();
     virtual void erase_lattice_data();
     virtual void erase_primitive_data();
+    virtual void update_attachment_descriptor_sets();
 
     void erase_previous_data();
 
@@ -212,7 +213,7 @@ private:
     void clean_up();
     void recreateSwapChain();
     void cleanupSyncObjects();
-    void update_attachment_descriptor_sets();
+    
 
     static void resizeCallback(GLFWwindow *window, int width, int height);
 };

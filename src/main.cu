@@ -653,7 +653,6 @@ class Multitopo : public VulkanBaseApp, Modelling
 
         //////////////////////////////////////////////////////////////// 
     {
-           
         char aone[] = "../src/shaders/structure_write_grid.vert.spv";
         char atwo[] = "../src/shaders/structure_write_grid.geom.spv";
         char athree[]="../src/shaders/structure_write_grid.frag.spv";
@@ -1657,18 +1656,40 @@ class Multitopo : public VulkanBaseApp, Modelling
         return sizeof(UniformBufferObject);
     }
 
-    void updateStorageBuffer_one(uint32_t imageIndex, bool load_selection, bool boundary_selection, bool delete_selection)
+    void updateStorageBuffer_two(uint32_t imageIndex, bool load_selection, bool boundary_selection, bool delete_selection)
     {
         
         if(imageIndex == 0)
         {
             
-            selectt.facet_selection(d_cudastorageBuffers[0],d_cudastorageBuffers[1],nfacets, load_selection, boundary_selection, delete_selection);
+            selectt.facet_selection_two(d_cudastorageBuffers[0],d_cudastorageBuffers[1],nfacets, load_selection, boundary_selection, delete_selection);
         }
         else if(imageIndex == 1)
         {
           
-            selectt.facet_selection(d_cudastorageBuffers[1],d_cudastorageBuffers[0],nfacets, load_selection, boundary_selection, delete_selection);
+            selectt.facet_selection_two(d_cudastorageBuffers[1],d_cudastorageBuffers[0],nfacets, load_selection, boundary_selection, delete_selection);
+        }
+        getLastCudaError("Failed in updating storage buffer in cuda \n");
+       
+    }
+
+    void updateStorageBuffer_three(uint32_t imageIndex, bool load_selection, bool boundary_selection, bool delete_selection)
+    {
+        
+        if(imageIndex == 0)
+        {
+            
+            selectt.facet_selection_three(d_cudastorageBuffers[0],d_cudastorageBuffers[1],d_cudastorageBuffers[2],nfacets, load_selection, boundary_selection, delete_selection);
+        }
+        else if(imageIndex == 1)
+        {
+          
+            selectt.facet_selection_three(d_cudastorageBuffers[1],d_cudastorageBuffers[0],d_cudastorageBuffers[2],nfacets, load_selection, boundary_selection, delete_selection);
+        }
+        else if (imageIndex == 2)
+        {
+            selectt.facet_selection_three(d_cudastorageBuffers[2],d_cudastorageBuffers[0],d_cudastorageBuffers[1],nfacets, load_selection, boundary_selection, delete_selection);
+
         }
         getLastCudaError("Failed in updating storage buffer in cuda \n");
        
@@ -2347,8 +2368,10 @@ class Multitopo : public VulkanBaseApp, Modelling
 
     }
 
-    void createStorageBuffers(size_t nVerts)
+    void createStorageBuffers()
     {
+        size_t Verts_num = int((std::max(((ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * 4),300000) / 3)) + 3;
+        
         storageBuffers.resize(swapChainImages.size());
 
         storageMemory.resize(swapChainImages.size());
@@ -2360,13 +2383,40 @@ class Multitopo : public VulkanBaseApp, Modelling
         for (size_t i = 0; i < storageBuffers.size(); i++) 
         {
           
-            createExternalBuffer(nVerts * sizeof(float),
+            createExternalBuffer(Verts_num * sizeof(float),
                              VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                              getDefaultMemHandleType(),
                              storageBuffers[i], storageMemory[i]);
         
-            importCudaExternalMemory((void **)&d_cudastorageBuffers[i], d_cudastorageMemory[i], storageMemory[i], nVerts * sizeof(float), getDefaultMemHandleType());
+        }
+        
+        ImguiApp::create_storageBuffer = true;
+    }
+
+
+    void re_createStorageBuffers()
+    {
+        size_t Verts_num = int((std::max(((ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * 4),300000) / 3)) + 3;
+        
+        storageBuffers.resize(swapChainImages.size());
+
+        storageMemory.resize(swapChainImages.size());
+
+        d_cudastorageBuffers.resize(swapChainImages.size());
+
+        d_cudastorageMemory.resize(swapChainImages.size());
+
+        for (size_t i = 0; i < storageBuffers.size(); i++) 
+        {
+          
+            createExternalBuffer(Verts_num * sizeof(float),
+                             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                             getDefaultMemHandleType(),
+                             storageBuffers[i], storageMemory[i]);
+        
+            importCudaExternalMemory((void **)&d_cudastorageBuffers[i], d_cudastorageMemory[i], storageMemory[i], Verts_num * sizeof(float), getDefaultMemHandleType());
             getLastCudaError("Cuda External Memory - Storage Buffer \n");
         }
         
@@ -2414,6 +2464,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         checkCudaErrors(cudaMemset(d_selection2, 0.0, sizeof(*d_selection2)*NumX2 * NumY2 * NumZ2));
         checkCudaErrors(cudaMemset(d_cudastorageBuffers[0], 0.0, (max_nfacets) * sizeof(*d_cudastorageBuffers[0])));
         checkCudaErrors(cudaMemset(d_cudastorageBuffers[1], 0.0, (max_nfacets) * sizeof(*d_cudastorageBuffers[1])));
+        checkCudaErrors(cudaMemset(d_cudastorageBuffers[2], 0.0, (max_nfacets) * sizeof(*d_cudastorageBuffers[2])));
         checkCudaErrors(cudaMemset(d_loadgroup, 0, sizeof(*d_loadgroup)*32));
 
      
@@ -2595,40 +2646,6 @@ class Multitopo : public VulkanBaseApp, Modelling
         vkFreeMemory(device, stagingMemory, nullptr);
     }
 
-    template<typename T> 
-    void fill_storage_buffer(VkDevice device,std::vector<VkBuffer> buffers,const size_t nVerts,int Nx,int Ny, int Nz, float val)
-    {
-        void *stagingBase;
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingMemory;
-        VkDeviceSize stagingSz = nVerts * sizeof(float);
-        createBuffer(stagingSz, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingMemory);
-
-        vkMapMemory(device, stagingMemory, 0, stagingSz, 0, &stagingBase);
-        
-        uint cou = 0;
-        float *heightval = (float *)stagingBase;
-
-        for (size_t z =0; z<Nz; z++){
-            for (size_t y = 0; y < Ny; y++) {
-                for (size_t x = 0; x < Nx; x++) {
-                    
-                    heightval[cou] = val;
-                    
-                    cou++;
-                }
-            }
-        }
-        for(int i =0 ; i < swapChainImages.size(); i++)
-        {
-            copyBuffer(buffers[i], stagingBuffer,0, nVerts * sizeof(float));
-        }
-
-        vkUnmapMemory(device, stagingMemory);
-        vkDestroyBuffer(device, stagingBuffer, nullptr);
-        vkFreeMemory(device, stagingMemory, nullptr);
-    }
 
 
     template<typename T> 
@@ -2654,7 +2671,7 @@ class Multitopo : public VulkanBaseApp, Modelling
             cou++;
         }
 
-        for(int i =0 ; i < swapChainImages.size(); i++)
+        for(int i = 0 ; i < swapChainImages.size(); i++)
         {
             copyBuffer(buffers[i], stagingBuffer,0, nfacets * sizeof(T));
         }
@@ -3137,7 +3154,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         while(OptIter < Topopt_val::MaxOptIter)
         {
             
-            cout<<"OptIter "<<OptIter<<endl;
+            cout<<"OptIter "<<OptIter<<endl<<endl;
 
             ImguiApp::Iteration_count = OptIter;
         
@@ -4295,6 +4312,28 @@ class Multitopo : public VulkanBaseApp, Modelling
 
                     lattice.NZ = NumZ;
 
+                    if(!ImguiApp::re_create_storageBuffer)
+                    {
+                        if(ImguiApp::create_storageBuffer)
+                        {
+
+                            for (size_t i = 0; i < storageBuffers.size(); i++) 
+                            {
+                                vkDestroyBuffer(device, storageBuffers[i], nullptr);
+                                vkFreeMemory(device, storageMemory[i], nullptr);
+                            }
+
+                            ImguiApp::create_storageBuffer = false;
+                        }
+
+                        re_createStorageBuffers();
+
+                        VulkanBaseApp::update_attachment_descriptor_sets();
+
+                        ImguiApp::re_create_storageBuffer = true;
+                    }
+
+
                     vulkan_create_topo_buffers();
 
                     vulkan_create_lattice_buffers();
@@ -4332,8 +4371,16 @@ class Multitopo : public VulkanBaseApp, Modelling
                 
                 uint32_t currentFrmIdx = (currentFrame - 1) % ( swapChainImages.size());
 
-                updateStorageBuffer_one(currentFrmIdx, load_selection, boundary_selection, delete_selection);
-                
+                if(VulkanBaseApp::max_inflight_frames == 3)
+                {
+                    updateStorageBuffer_three(currentFrmIdx, load_selection, boundary_selection, delete_selection);
+                }
+                else if(VulkanBaseApp::max_inflight_frames == 2)
+                {
+                    updateStorageBuffer_two(currentFrmIdx, load_selection, boundary_selection, delete_selection);
+
+                }
+
             }
 
     
@@ -4969,6 +5016,21 @@ class Multitopo : public VulkanBaseApp, Modelling
                     ImguiApp::vulkan_buffer_created = false;
                 }
 
+                if(ImguiApp::re_create_storageBuffer)
+                {
+                    
+                    cleanup_cuda_storage_buffer_handle();
+                    
+                    for (size_t i = 0; i < storageBuffers.size(); i++) 
+                    {
+                        vkDestroyBuffer(device, storageBuffers[i], nullptr);
+                        vkFreeMemory(device, storageMemory[i], nullptr);
+                    }
+
+                    ImguiApp::re_create_storageBuffer = false;
+
+                }
+
 
                 std::cout<<"Exiting the loop \n"<<std::endl;
                 
@@ -5025,7 +5087,7 @@ class Multitopo : public VulkanBaseApp, Modelling
         {
             cleanup_textures();
         }
-
+        
         if(ImguiApp::lattice_buffer_created)
         {
             destroy_lattice_buffers();
@@ -5047,7 +5109,10 @@ class Multitopo : public VulkanBaseApp, Modelling
             cleanup_selection();
         }
 
-        cleanup_cuda_storage_buffer_handle();
+        if(ImguiApp::re_create_storageBuffer)
+        {
+            cleanup_cuda_storage_buffer_handle();
+        }
 
 
         std::cout<<"Success exit  \n"<<std::endl;

@@ -55,7 +55,7 @@ bool VulkanBaseApp::cuda_side_done = false;
 
 
 static const char *validationLayers[] = { "VK_LAYER_KHRONOS_validation" };
-static const size_t MAX_FRAMES_IN_FLIGHT = 2;
+uint VulkanBaseApp::max_inflight_frames = 3;
 
 
 
@@ -313,7 +313,7 @@ void VulkanBaseApp::initVulkan()
     createDepthResources();
     createFramebuffers();
     initVulkanCuda_semaphores();
-    createStorageBuffers(int((256*256*256*4)/3)+ 3 );
+    createStorageBuffers();
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -354,8 +354,8 @@ void VulkanBaseApp::initImgui()
         init_info.DescriptorPool = descriptorPool;
         init_info.RenderPass = renderPass;
         init_info.Subpass = 1;
-        init_info.MinImageCount = MAX_FRAMES_IN_FLIGHT;
-        init_info.ImageCount = MAX_FRAMES_IN_FLIGHT;
+        init_info.MinImageCount = max_inflight_frames;
+        init_info.ImageCount = max_inflight_frames;
         init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
         init_info.Allocator = nullptr;
         init_info.CheckVkResultFn = check_vk_result;
@@ -647,7 +647,7 @@ void VulkanBaseApp::createDevice()
 
     VkPhysicalDeviceFeatures deviceFeatures = {};
     deviceFeatures.fillModeNonSolid = true;
-    //myline
+
     deviceFeatures.geometryShader = true;
     deviceFeatures.multiViewport = true;
     deviceFeatures.wideLines = true;
@@ -774,13 +774,32 @@ void VulkanBaseApp::createSwapChain()
         format = chooseSwapSurfaceFormat(formats);
         presentMode = chooseSwapPresentMode(presentModes);
         extent = chooseSwapExtent(window, capabilities);
-        imageCount = MAX_FRAMES_IN_FLIGHT;
+        imageCount = max_inflight_frames;
         if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount) {
             imageCount = capabilities.maxImageCount;
         }
         if (capabilities.minImageCount > 0 && imageCount < capabilities.minImageCount) {
             imageCount = capabilities.minImageCount;
         }
+        
+        if(imageCount >= 3)
+        {
+            max_inflight_frames = 3;
+            imageCount = 3;
+        }
+        else if(imageCount >= 2)
+        {
+            max_inflight_frames = 2;
+            imageCount = 2;
+        }
+        else
+        {
+            throw std::runtime_error("'Imagecount' and 'max_inflight_frames' value should be either '3' or '2'");
+        }
+
+        printf("Image count  %u  \n",imageCount);
+        printf("max inflight frames  %u  \n",max_inflight_frames);
+        
     }
 
     swapChainFormat = format.format;
@@ -1168,7 +1187,7 @@ VkShaderModule createShaderModule(VkDevice device, const char *filename)
 }
 
 
-void VulkanBaseApp::createStorageBuffers(size_t nVerts)
+void VulkanBaseApp::createStorageBuffers()
 {
 
 }
@@ -1840,27 +1859,27 @@ void VulkanBaseApp::createDescriptorPool()
     std::array<VkDescriptorPoolSize, 5> poolSizes{};
 
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolSizes[0].descriptorCount = static_cast<uint32_t>(max_inflight_frames);
 
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolSizes[1].descriptorCount = static_cast<uint32_t>(max_inflight_frames);
 
     poolSizes[2].type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-    poolSizes[2].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolSizes[2].descriptorCount = static_cast<uint32_t>(max_inflight_frames);
 
     poolSizes[3].type = VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT;
-    poolSizes[3].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolSizes[3].descriptorCount = static_cast<uint32_t>(max_inflight_frames);
 
 
     poolSizes[4].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSizes[4].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT *4);
+    poolSizes[4].descriptorCount = static_cast<uint32_t>(max_inflight_frames *4);
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT)*4;
+    poolInfo.maxSets = static_cast<uint32_t>(max_inflight_frames)*4;
 
     if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
         throw std::runtime_error("failed to create descriptor pool!");
@@ -1904,7 +1923,7 @@ void VulkanBaseApp::createDescriptorSets()
 
         VkDescriptorBufferInfo bufferInfo_1 = {};
         bufferInfo_1.offset = 0;
-        bufferInfo_1.range = int(((256 * 256 * 256 * 4) / 3)) + 3;
+        bufferInfo_1.range = int((std::max(((ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * 4),300000) / 3)) + 3;
         bufferInfo_1.buffer = storageBuffers[i];
 
         VkWriteDescriptorSet descriptorWriteone = {};
@@ -1956,7 +1975,7 @@ void VulkanBaseApp::createDescriptorSetsread()
 
         VkDescriptorBufferInfo bufferInfoone = {};
         bufferInfoone.offset = 0;
-        bufferInfoone.range = int((256 * 256 * 256 * 4) / 3) + 3;
+        bufferInfoone.range = int((std::max(((ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * 4),300000) / 3)) + 3;
         bufferInfoone.buffer = storageBuffers[i];
 
         VkWriteDescriptorSet descriptorWriteone = {};
@@ -2025,7 +2044,7 @@ void VulkanBaseApp::update_attachment_descriptor_sets()
 
         VkDescriptorBufferInfo bufferInfo_1 = {};
         bufferInfo_1.offset = 0;
-        bufferInfo_1.range = int(((256 * 256 * 256 * 4) / 3)) + 3;
+        bufferInfo_1.range = int((std::max(((ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * 4),300000) / 3)) + 3;
         bufferInfo_1.buffer = storageBuffers[i];
 
         VkWriteDescriptorSet descriptorWriteone = {};
@@ -2066,7 +2085,7 @@ void VulkanBaseApp::update_attachment_descriptor_sets()
 
         VkDescriptorBufferInfo bufferInfoone = {};
         bufferInfoone.offset = 0;
-        bufferInfoone.range = int((256 * 256 * 256 * 4) / 3) + 3;
+        bufferInfoone.range = int((std::max(((ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * (ImguiApp::grid_value * 2) * 4),300000) / 3)) + 3;
         bufferInfoone.buffer = storageBuffers[i];
 
         VkWriteDescriptorSet descriptorWriteone = {};
@@ -3101,11 +3120,11 @@ void VulkanBaseApp::createSyncObjects()
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-    imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    inFlightFences.resize(max_inflight_frames);
+    imageAvailableSemaphores.resize(max_inflight_frames);
+    renderFinishedSemaphores.resize(max_inflight_frames);
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < max_inflight_frames; i++) {
         if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create image available semaphore!");
         }
@@ -3360,7 +3379,7 @@ void VulkanBaseApp::drawFrame(bool shift)
         return;
     }
 
-    size_t currentFrameIdx = currentFrame % MAX_FRAMES_IN_FLIGHT;
+    size_t currentFrameIdx = currentFrame % max_inflight_frames;
 
     ////wait for fence to get signalled state ///////////////
     VkResult fen_result = vkWaitForFences(device, 1, &inFlightFences[currentFrameIdx], VK_TRUE, std::numeric_limits<uint64_t>::max());
@@ -3709,7 +3728,7 @@ void VulkanBaseApp::clean_up()
 }
 
 void VulkanBaseApp::cleanupSyncObjects() {
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < max_inflight_frames; i++) {
         vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
         vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
         vkDestroyFence(device, inFlightFences[i], nullptr);

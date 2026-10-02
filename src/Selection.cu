@@ -235,7 +235,7 @@ bool boundary_selection, bool delete_selection)
 	cudaDeviceSynchronize();
 }
 
-__global__ void facet_selection_kernel(float* d_storagebuffer_1, float* d_storagebuffer_2, int nfacets, bool load_selection,
+__global__ void facet_selection_kernel_two(float* d_storagebuffer_1, float* d_storagebuffer_2, int nfacets, bool load_selection,
 bool boundary_selection, bool delete_selection)
 {
 	int idx = (blockDim.x * blockIdx.x) + threadIdx.x;
@@ -275,13 +275,73 @@ bool boundary_selection, bool delete_selection)
 	}
 }
 
-void Selection::facet_selection(float* d_storagebuffer_1, float* d_storagebuffer_2, int nfacets, bool load_selection,
+void Selection::facet_selection_two(float* d_storagebuffer_1, float* d_storagebuffer_2, int nfacets, bool load_selection,
 bool boundary_selection, bool delete_selection)
 {
     dim3 grids(ceil((nfacets)/float(1024)),1,1);
 	dim3 tids(1024,1,1);
 	
-	facet_selection_kernel<<<grids,tids>>>(d_storagebuffer_1,d_storagebuffer_2,nfacets, load_selection,
+	facet_selection_kernel_two<<<grids,tids>>>(d_storagebuffer_1,d_storagebuffer_2,nfacets, load_selection,
+	boundary_selection, delete_selection);
+
+	cudaDeviceSynchronize();
+}
+
+
+
+__global__ void facet_selection_kernel_three(float* d_storagebuffer_1, float* d_storagebuffer_2, float* d_storagebuffer_3, int nfacets, bool load_selection,
+bool boundary_selection, bool delete_selection)
+{
+	int idx = (blockDim.x * blockIdx.x) + threadIdx.x;
+	int size = nfacets;
+	float val1 = 0;
+	float val2 = 0;
+	float val3 = 0;
+	if(idx < size)
+	{
+		val1 = d_storagebuffer_1[idx];
+		val2 = d_storagebuffer_2[idx];
+		val3 = d_storagebuffer_2[idx];
+		
+		if(boundary_selection )
+		{
+			if ((val1 == -1.0) && ((val2 != -1.0) || (val3 != -1.0)))
+			{
+			
+				d_storagebuffer_2[idx] = -1.0;
+				d_storagebuffer_3[idx] = -1.0;
+			}
+		}
+		else if (load_selection)
+		{
+			if ((val1 == 1.0) && ((val2 != 1.0) || (val3 != 1.0)))
+			{
+			
+				d_storagebuffer_2[idx] = 1.0;
+				d_storagebuffer_3[idx] = 1.0;
+			}
+		}
+		
+		else if(delete_selection)
+		{
+			if ((val1 == 0.0) && ((val2 != 0.0) || (val3 != 0.0)))
+			{
+				d_storagebuffer_2[idx] = 0.0;
+				d_storagebuffer_3[idx] = 0.0;
+			}
+		}
+	
+	}
+}
+
+
+void Selection::facet_selection_three(float* d_storagebuffer_1, float* d_storagebuffer_2,float* d_storagebuffer_3, int nfacets, bool load_selection,
+bool boundary_selection, bool delete_selection)
+{
+    dim3 grids(ceil((nfacets)/float(1024)),1,1);
+	dim3 tids(1024,1,1);
+	
+	facet_selection_kernel_three<<<grids,tids>>>(d_storagebuffer_1,d_storagebuffer_2, d_storagebuffer_3,nfacets, load_selection,
 	boundary_selection, delete_selection);
 
 	cudaDeviceSynchronize();

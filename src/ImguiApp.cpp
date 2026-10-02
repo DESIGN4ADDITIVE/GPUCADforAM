@@ -3,7 +3,7 @@
 #include "../src/general/topopt_defines.h"
 #include "math.h"
 
-int ImguiApp::grid_value;
+int ImguiApp::grid_value = 32;
 
 int ImguiApp::checkpoint = 0;
 
@@ -276,6 +276,9 @@ bool ImguiApp::structural = false;
 bool ImguiApp::thermal = false;
 bool ImguiApp::primitives = false;
 bool ImguiApp::lattice = false;
+
+bool ImguiApp::re_create_storageBuffer = false;
+bool ImguiApp::create_storageBuffer = false;
 
 bool ImguiApp::displace_grid = true;
 
@@ -1050,7 +1053,7 @@ ImguiApp::ImguiApp()
         }
     }
     
-    if((execute_code_num == 1) && (execute_signal))
+    if((execute_code_num == 1) && (*execute_signal))
     {
         ImguiApp::execute_topo_data = true;
         *execute_signal = false;
@@ -1212,7 +1215,7 @@ ImguiApp::ImguiApp()
         }
     }
     
-    if((execute_lattice_num == 1) && (execute_signal))
+    if((execute_lattice_num == 1) && (*execute_signal))
     {
         ImguiApp::execute_lattice_data = true;
         *execute_signal = false;

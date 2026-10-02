@@ -328,6 +328,8 @@ class ImguiApp
     static ImVec2 window_extent;
 
     static ImVec4 clear_color;
+    static bool re_create_storageBuffer;
+    static bool create_storageBuffer;
 
     ImguiApp();
     

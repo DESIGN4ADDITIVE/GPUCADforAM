@@ -58,55 +58,57 @@ LATTICE = Results_Lattice
 OPTIMISE = Results_Optimise
 
 ################################################################################
-msg1 := "Compiling Shaders  - Step 1 of 24"
+msg1 := "Compiling Shaders  - Step 1 of 25"
 
-msg2 := "Compiling imgui_widgets File 'imgui_folder/imgui_widgets.cpp' - Step 2 of 24"
+msg2 := "Compiling imgui_widgets File 'imgui_folder/imgui_widgets.cpp' - Step 2 of 25"
 
-msg3 := "Compiling imgui_tables File 'imgui_folder/imgui_tables.cpp' - Step 3 of 24"
+msg3 := "Compiling imgui_tables File 'imgui_folder/imgui_tables.cpp' - Step 3 of 25"
 
-msg4 := "Compiling imgui_impl_glfw File 'imgui_folder/imgui_impl_glfw.cpp' - Step 4 of 24"
+msg4 := "Compiling imgui_impl_glfw File 'imgui_folder/imgui_impl_glfw.cpp' - Step 4 of 25"
 
-msg5 := "Compiling imgui_draw File 'imgui_folder/imgui_draw.cpp' - Step 5 of 24"
+msg5 := "Compiling imgui_draw File 'imgui_folder/imgui_draw.cpp' - Step 5 of 25"
 
-msg6 := "Compiling imgui_demo File 'imgui_folder/imgui_demo.cpp' - Step 6 of 24"
+msg6 := "Compiling imgui_demo File 'imgui_folder/imgui_demo.cpp' - Step 6 of 25"
 
-msg7 := "Compiling imgui File 'imgui_folder/imgui.cpp' - Step 7 of 24"
+msg7 := "Compiling imgui File 'imgui_folder/imgui.cpp' - Step 7 of 25"
 
-msg8 := "Compiling imgui_impl_vulkan File 'imgui_folder/imgui_impl_vulkan.cpp' - Step 8 of 24"
+msg8 := "Compiling imgui_impl_vulkan File 'imgui_folder/imgui_impl_vulkan.cpp' - Step 8 of 25"
 
-msg9 := "Compiling ImguiApp File 'ImguiApp.cpp' - Step 9 of 24"
+msg9 := "Compiling ImguiApp File 'ImguiApp.cpp' - Step 9 of 25"
 
-msg10 := "Compiling general_kernels File 'gpu_kernels/general_kernels.cu' - Step 10 of 24"
+msg10 := "Compiling general_kernels File 'gpu_kernels/general_kernels.cu' - Step 10 of 25"
 
-msg11 := "Compiling Optimisation_kernels File 'gpu_kernels/Optimisation_kernels.cu' - Step 11 of 24"
+msg11 := "Compiling Optimisation_kernels File 'gpu_kernels/Optimisation_kernels.cu' - Step 11 of 25"
 
-msg12 := "Compiling Selection File 'Selection.cu' - Step 12 of 24"
+msg12 := "Compiling Selection File 'Selection.cu' - Step 12 of 25"
 
-msg13 := "Compiling File_ouput File 'File_ouput.cu' - Step 13 of 24"
+msg13 := "Compiling File_ouput File 'File_ouput.cu' - Step 13 of 25"
 
-msg14 := "Compiling Fft_lattice File 'lattice_files/Fft_lattice.cu' - Step 14 of 24"
+msg14 := "Compiling Fft_lattice File 'lattice_files/Fft_lattice.cu' - Step 14 of 25"
 
-msg15 := "Compiling Interpolations File 'Interpolations.cu' - Step 15 of 24"
+msg15 := "Compiling Interpolations File 'Interpolations.cu' - Step 15 of 25"
 
-msg16 := "Compiling Gratings File 'lattice_files/Gratings.cu' - Step 16 of 24"
+msg16 := "Compiling Gratings File 'lattice_files/Gratings.cu' - Step 16 of 25"
 
-msg17 := "Compiling Structuralsim File 'topo_structural/Structuralsim.cu' - Step 17 of 24"
+msg17 := "Compiling Structuralsim File 'topo_structural/Structuralsim.cu' - Step 17 of 25"
 
-msg18 := "Compiling Thermalsim File 'topo_thermal/Thermalsim.cu' - Step 18 of 24"
+msg18 := "Compiling Thermalsim File 'topo_thermal/Thermalsim.cu' - Step 18 of 25"
 
-msg19 := "Compiling Modelling File 'Modelling.cu' - Step 19 of 24"
+msg19 := "Compiling Modelling File 'Modelling.cu' - Step 19 of 25"
 
-msg20 := "Compiling Isosurface File 'Isosurface.cu' - Step 20 of 24"
+msg20 := "Compiling Isosurface File 'Isosurface.cu' - Step 20 of 25"
 
-msg21 := "Compiling MarchingCubes_kernel File 'MarchingCubes_kernel.cu' - Step 21 of 24"
+msg21 := "Compiling MarchingCubes_kernel File 'MarchingCubes_kernel.cu' - Step 21 of 25"
 
-msg22 := "Compiling VulkanBaseApp File 'VulkanBaseApp.cpp' - Step 22 of 24"
+msg22 := "Compiling VulkanBaseApp File 'VulkanBaseApp.cpp' - Step 22 of 25"
 
-msg23 := "Compiling main File 'main.cu' - Step 23 of 24"
+msg23 := "Compiling App_Module File 'App_Module.cpp' - Step 23 of 25"
 
-msg24 := "Building executable 'GPUCADforAM' - Step 24 of 24"
+msg24 := "Compiling main File 'main.cu' - Step 24 of 25"
 
-msg25 := "Compilation Completed !"
+msg25 := "Building executable 'GPUCADforAM' - Step 25 of 25"
+
+msg26 := "Compilation Completed !"
 ################################################################################
 
 
@@ -222,20 +224,29 @@ $(BUILDDIR)/VulkanBaseApp.o:src/VulkanBaseApp.cpp
 	@echo $(msg22)
 	@$(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
-$(BUILDDIR)/main.o:src/main.cu
+$(BUILDDIR)/App_Module.o:src/App_Module.cpp
 	@echo $(msg23)
+	@$(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+
+$(BUILDDIR)/main.o:src/main.cu
+	@echo $(msg24)
 	@$(NVCC) $(INCLUDES) $(ALL_CCFLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 # $(info    LIBRARIES is $(LIBRARIES))
 
 
-OBJS = $(addprefix $(BUILDDIR)/,imgui_widgets.o imgui_tables.o imgui_impl_glfw.o imgui_draw.o imgui_demo.o imgui.o imgui_impl_vulkan.o ImguiApp.o general_Kernels.o Optimisation_Kernels.o Selection.o File_output.o Fft_lattice.o Interpolations.o Gratings.o Structuralsim.o Thermalsim.o Modelling.o Isosurface.o MarchingCubes_kernel.o VulkanBaseApp.o main.o)
+OBJS = $(addprefix $(BUILDDIR)/,imgui_widgets.o imgui_tables.o imgui_impl_glfw.o \
+imgui_draw.o imgui_demo.o imgui.o imgui_impl_vulkan.o ImguiApp.o general_Kernels.o \
+Optimisation_Kernels.o Selection.o File_output.o \
+Fft_lattice.o Interpolations.o Gratings.o Structuralsim.o Thermalsim.o Modelling.o \
+Isosurface.o MarchingCubes_kernel.o VulkanBaseApp.o \
+App_Module.o main.o)
 
 $(BINDIR)/GPUCADforAM: $(OBJS)
-	@echo $(msg24)
+	@echo $(msg25)
 	@$(NVCC) $(ALL_LDFLAGS) $(GENCODE_FLAGS) -o $@ $+ $(LIBRARIES)
 
-	@echo $(msg25)
+	@echo $(msg26)
 	
 
 run: build

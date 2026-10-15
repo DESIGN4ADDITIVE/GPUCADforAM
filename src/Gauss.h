@@ -4,6 +4,9 @@
 
 #pragma once
 
+#ifndef _GAUSS_H_
+#define _GAUSS_H_
+
 //These weights and Pos are for the Cube [-1 +1]^3
 REAL weight[27];
 REAL EvalPos[27][3];
@@ -81,3 +84,5 @@ REAL GaussIntegrate(REAL (*Func)(REAL, REAL, REAL), REAL a, REAL b)
   }
   return fac1*fac1*fac1*Value;
 }
+
+#endif

@@ -96,7 +96,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityF
 VulkanBaseApp::VulkanBaseApp(const std::string& appName, bool enableValidation) :
     appName(appName),
     enableValidation(enableValidation),
-    vpcount(1),
     instance(VK_NULL_HANDLE),
     window(nullptr),
     debugMessenger(VK_NULL_HANDLE),
@@ -125,8 +124,6 @@ VulkanBaseApp::VulkanBaseApp(const std::string& appName, bool enableValidation) 
     pipelineLayout(VK_NULL_HANDLE),
     pipelineLayoutread(VK_NULL_HANDLE),
     swapChainFramebuffers(),
-    viewports(),
-    scissors(),
     commandPool(VK_NULL_HANDLE),
     commandBuffers(),
     imageAvailableSemaphores(),
@@ -797,8 +794,8 @@ void VulkanBaseApp::createSwapChain()
             throw std::runtime_error("'Imagecount' and 'max_inflight_frames' value should be either '3' or '2'");
         }
 
-        printf("Image count  %u  \n",imageCount);
-        printf("max inflight frames  %u  \n",max_inflight_frames);
+        printf("Image count  %u  \n\n",imageCount);
+        printf("Max Inflight Frames  %u  \n\n",max_inflight_frames);
         
     }
 
@@ -1677,12 +1674,6 @@ void VulkanBaseApp::createGraphicsPipeline()
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-
-    viewportState.viewportCount = 1;
-    viewportState.scissorCount = 1;
-    viewportState.pViewports = &viewports[0];
-    viewportState.pScissors = &scissors[0];
-
     pipelineInforead.pColorBlendState = &colorBlendingone;
 
     if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInforead, nullptr, &pipelines.graphicsPipelineoneread) != VK_SUCCESS) {
@@ -1712,12 +1703,6 @@ void VulkanBaseApp::createGraphicsPipeline()
     rasterizer.lineWidth = 1.0f;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-
-    viewportState.viewportCount = 1;
-    viewportState.scissorCount = 1;
-    viewportState.pViewports = &viewports[0];
-    viewportState.pScissors = &scissors[0];
 
     pipelineInforead.pColorBlendState = &colorBlendingone;
 

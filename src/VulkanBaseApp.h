@@ -97,9 +97,6 @@ protected:
     VkPipelineLayout pipelineLayoutread;
  
     std::vector<VkFramebuffer> swapChainFramebuffers;
-    int vpcount;
-    std::vector< VkViewport> viewports ;
-    std::vector<VkRect2D> scissors;
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;
     std::vector<VkSemaphore> imageAvailableSemaphores;
